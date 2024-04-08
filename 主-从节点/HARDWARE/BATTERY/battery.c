@@ -10,7 +10,7 @@ float BATTERY_Scan(void)
 {
     u16 adcx;
     float R1=1;
-    float R2=4.7;
+    float R2=4;
     // 3.6V~4.2V
     float max_battery_quantity=12.6;
     float min_battery_quantity=10.8;
