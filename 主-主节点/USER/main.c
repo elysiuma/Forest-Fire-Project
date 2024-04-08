@@ -18,9 +18,9 @@
 uint8_t EnableMaster = 1;		  // 主从选择 1为主机，0为从机
 u8 is_debug = 1;				  // 是否调试模式，1为调试模式，0为正常模式
 u8 query_node_data_max_times = 5; // 查询节点数据最大次数
-u8 is_lora = 1;					  // 是否启动lora模块
+u8 is_lora = 0;					  // 是否启动lora模块
 u8 is_gps = 1;					  // 是否启动GPS模块
-u8 is_4g = 1;					  // 是否启动4G模块,需要先启动lora和gps
+u8 is_4g = 0;					  // 是否启动4G模块,需要先启动lora和gps
 
 // 函数申明
 void UART4_Handler(void); // 处理串口4PC通信的内容
@@ -33,6 +33,7 @@ int main(void)
 	float co2 = 0; // 烟雾浓度
 	float is_co2_collect_init = 0; // 是否已经收集了至少10个co2数据了，未满10个均值需要动态考虑
 	u8 co2_idx = 0;
+
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2); // 设置系统中断优先级分组2
 	delay_init(168);								// 初始化延时函数
 	uart4_init(9600);								// 初始化串口波特率为9600
@@ -57,9 +58,10 @@ int main(void)
 	LED = 1;
 	MQ2 = 1;
 
-	IIC_Init(); // I2C initialize
-	SHT2X_Init();
-	bmp280_uint();
+	// TODO: 临时禁用I2C传感器
+	// IIC_Init(); // I2C initialize
+	// SHT2X_Init();
+	// bmp280_uint();
 	delay_ms(500);
 
 	while (1)
@@ -102,24 +104,25 @@ int main(void)
 		}
 		// printf("bmp T: %f\r\n", bmp280_get_temperature());
 
-		SHT2X_T = SHT2X_TEST_T(); // get temperature of SHT2X.
-		// printf("raw T: %f\r\n", SHT2X_T);
-		SHT2X_T = 1.055 * SHT2X_T - 3.455;
-		SHT2X_T += 0.4;
+		// I2C传感器执行
+		// SHT2X_T = SHT2X_TEST_T(); // get temperature of SHT2X.
+		// // printf("raw T: %f\r\n", SHT2X_T);
+		// SHT2X_T = 1.055 * SHT2X_T - 3.455;
+		// SHT2X_T += 0.4;
 
-		BMP280_T = bmp280_get_temperature();
-		// printf("bmp_t:%f\r\n", BMP280_T);
-		BMP280_P = bmp280_get_pressure(); // get pressure of bmp280.
-		BMP280_P = (BMP280_P - 1.19) / 100;
+		// BMP280_T = bmp280_get_temperature();
+		// // printf("bmp_t:%f\r\n", BMP280_T);
+		// BMP280_P = bmp280_get_pressure(); // get pressure of bmp280.
+		// BMP280_P = (BMP280_P - 1.19) / 100;
 
-		SHT2X_H = SHT2X_TEST_RH(); // get humidity of SHT2X.
-		// printf("raw H: %f\r\n", SHT2X_H);
-		SHT2X_H = 0.976 * SHT2X_H + 6.551;
+		// SHT2X_H = SHT2X_TEST_RH(); // get humidity of SHT2X.
+		// // printf("raw H: %f\r\n", SHT2X_H);
+		// SHT2X_H = 0.976 * SHT2X_H + 6.551;
 
-		printf("smoke: %f\r\n", co2);
-		printf("pressure: %f\r\n", BMP280_P);
-		printf("temperature: %f\r\n", SHT2X_T);
-		printf("humidity: %f\r\n", SHT2X_H);
+		// printf("smoke: %f\r\n", co2);
+		// printf("pressure: %f\r\n", BMP280_P);
+		// printf("temperature: %f\r\n", SHT2X_T);
+		// printf("humidity: %f\r\n", SHT2X_H);
 
 		// 读取电池电压
 		battery = BATTERY_Scan();
@@ -145,6 +148,7 @@ int main(void)
 		if (is_lora && check_LORA_Receive())
 			LORA_Handler(); // 处理LORA通信的内容
 
+		// TODO: 这一步操作实际没有效果，校时为按需校时
 		if (is_gps && check_GPS_Receive())
 			GPS_Handler(); // 处理GPS通信的内容
 
@@ -455,13 +459,13 @@ void GPS_Handler(void)
 		return;
 	}
 	// 测试打印数据
-	/*
+	
 	for (t = 0; t < rec_len; t++)
 	{
 		USART_SendData(UART4, temp_rec[t]); // 向串口4发送数据
 		while (USART_GetFlagStatus(UART4, USART_FLAG_TC) != SET); // 等待发送结束
 	}
-	*/
+	
 	// 检测是否是完整的GPS数据包
 	if (temp_rec[3] == 0x47 && temp_rec[4] == 0x47 && temp_rec[5] == 0x41)
 	{
