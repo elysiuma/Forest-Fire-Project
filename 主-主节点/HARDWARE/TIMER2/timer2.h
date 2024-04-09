@@ -4,8 +4,6 @@
 #include "stdio.h"
 #include "sys.h" 
 
-extern u8 data_u8[24];
-
-void Timer_mq2_Init(void);
+void Timer_mq2_Init(u16 interval);
 
 #endif
