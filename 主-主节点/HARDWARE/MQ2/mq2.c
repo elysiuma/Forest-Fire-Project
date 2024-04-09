@@ -94,8 +94,8 @@ float MQ2_Scan(void)
     {
 	    MQ2_PPM_Calibration(RS);
     }
-    printf("Vrl=%f, RS=%f, R0=%f\r\n", Vrl, RS, R0);
     co2_ppm = 613.9f * pow(RS/R0, -2.074f);
+    // printf("Vrl=%f, RS=%f, R0=%f\r\n", Vrl, RS, R0);
 
     return co2_ppm;
 }
