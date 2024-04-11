@@ -73,6 +73,7 @@ void MQ2_Switch(u8 flag)
 void MQ2_PPM_Calibration(float RS)
 {
     R0 = RS / pow(CAL_PPM_CO2 / 613.9f, 1 / -2.074f);
+    printf("CAL_RESet MQ2 R0=%f\r\n", R0);
 }
 
 float MQ2_Scan(void)

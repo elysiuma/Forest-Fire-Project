@@ -25,11 +25,11 @@ float BATTERY_Scan(void)
     battery_quantity_percent = (battery_quantity-min_battery_quantity)/(max_battery_quantity-min_battery_quantity)*100;
     // 百分比取一位小数
     battery_quantity_percent = (int)(battery_quantity_percent*10+0.5)/10.0;
-    printf("battery_quantity=%f, battery_quantity_percent=%f\r\n",battery_quantity,battery_quantity_percent);
+    // printf("battery_quantity=%f, battery_quantity_percent=%f\r\n",battery_quantity,battery_quantity_percent);
     if (battery_quantity_percent>100)
     {
         battery_quantity_percent=100;
-        printf("battery_quantity_percent>100, set to 100\r\n");
+        // printf("battery_quantity_percent>100, set to 100\r\n");
     }
     return battery_quantity_percent;
 }

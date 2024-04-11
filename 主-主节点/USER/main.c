@@ -3,6 +3,7 @@
 #include "usart4.h"
 #include "led.h"
 #include "mq2.h"
+#include "mq7.h"
 #include "adc.h"
 #include "battery.h"
 #include "lora.h"
@@ -15,7 +16,7 @@
 #include "bmp280.h"
 #include "SHT2X.h"
 
-#define MQ2PreheatInterval 20 // MQ2预热时间间隔，单位为秒  至少为20秒
+#define MQ2PreheatInterval 10 // MQ2预热时间间隔，单位为秒  至少为20秒
 #define GPSTimeInterval 120	// GPS时间校时间隔，单位为秒  测试时2分钟一次，正式为5分钟一次
 
 uint8_t EnableMaster = 1;		  // 主从选择 1为主机，0为从机
@@ -41,14 +42,15 @@ int main(void)
 	LED_Init();										// 初始化LED
 
 	MQ2_Init();
-	Timer_mq2_Init(MQ2PreheatInterval); 	// 初始化MQ2定时器，每20秒状态位递增，用于MQ2的预热（20秒）和测量
+	MQ7_Init();
+	Timer_mq2_Init(MQ2PreheatInterval); 	// 初始化MQ2定时器，每MQ2PreheatInterval秒状态位递增，用于MQ2的预热（20秒）和测量
 	BATTERY_Init();
 	if (is_4g)
 		mqtt4g_init();
 	customRTC_Init();
 	if (is_gps)
 		GPS_Init();
-	Timer_Init(GPSTimeInterval); // 初始化定时器，TIM2用于读取gps时间给RTC校时, 间隔单位为秒，interval*12为校时总周期
+	Timer_Init(GPSTimeInterval); // 初始化定时器，TIM2用于读取gps时间给RTC校时, 间隔单位为秒，GPSTimeInterval*12为校时总周期
 	
 	if (is_lora)
 	{
@@ -58,6 +60,7 @@ int main(void)
 
 	LED = 1;
 	MQ2 = 1;
+	MQ7 = 1;
 
 	// TODO: 临时禁用I2C传感器
 	// IIC_Init(); // I2C initialize
@@ -85,7 +88,8 @@ int main(void)
 		{
 			printf("MQ2_Scan state=%d\r\n", mq2_state_count);
 			co2 = MQ2_Scan();
-			printf("co2: %.2f\r\n", co2);
+			co_latest = MQ7_Scan();
+			printf("CO2: %.2f, CO: %.2f\r\n", co2, co_latest);
 			flag_mq2_is_need_measure = 0;
 		}
 		// printf("bmp T: %f\r\n", bmp280_get_temperature());

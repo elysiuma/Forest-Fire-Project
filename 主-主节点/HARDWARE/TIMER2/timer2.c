@@ -1,6 +1,7 @@
 #include "sys.h"
 #include "timer2.h"
 #include "mq2.h"
+#include "mq7.h"
 #include "lora.h"
 
 
@@ -48,11 +49,13 @@ void TIM5_IRQHandler(void)
             {
                 // MQ2启动时间到，关闭MQ2
                 MQ2_Switch(0);
+                MQ7_Switch(0);
                 mq2_state_count = 0;
             }
             else if (mq2_state_count==1)
             {
                 MQ2_Switch(1); // 启动预热
+                MQ7_Switch(1);
                 flag_mq2_is_need_measure = 0;   // 即使有未进行的测量，预热期间也需关闭测量
             }
             else
@@ -64,6 +67,7 @@ void TIM5_IRQHandler(void)
             {
                 // MQ2关闭时间到
                 MQ2_Switch(1);
+                MQ7_Switch(1);
                 mq2_state_count = 0;
             }
             else
