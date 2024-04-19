@@ -9,8 +9,8 @@
 #include "lora.h"
 #include "timer.h"
 #include "usart3.h"
-#include "string.h"
-#include "stdlib.h"
+#include <string.h>
+#include <stdlib.h>
 
 uint8_t EnableMaster=0;//主从选择 1为主机，0为从机
 
@@ -22,14 +22,14 @@ u8 query_rec[50];
 u8 query_rec_len=0;
 float co2_queue[10] = {0}; //最近10次的烟雾浓度
 u8 co2_idx = 0;
-//float data[6]={0};	//风速data[0] 风向1 温度2 气压3 湿度4 烟雾5
+//float data[6]={0};	//风速data[0] 风向1 温度2 气压3 湿度4 烟雾5 电量6
 u8 data_u8[28] = {0};
 union data{
 	float f;
 	u8 ch[4];
 } data_1;
-u8 query_windsensor[11] = {0x24, 0x41, 0x44, 0x2C, 0x30, 0x34, 0x2A, 0x36, 0x33, 0x0D, 0x0A};
-u8 cab_windsensor[11] = {0x24, 0x41, 0x5A, 0x2C, 0x30, 0x34, 0x2A, 0x37, 0x39, 0x0D, 0x0A};
+u8 query_windsensor[11] = {0x24, 0x41, 0x44, 0x2C, 0x30, 0x34, 0x2A, 0x36, 0x33, 0x0D, 0x0A};	// 风速风向请求
+u8 cab_windsensor[11] = {0x24, 0x41, 0x5A, 0x2C, 0x30, 0x34, 0x2A, 0x37, 0x39, 0x0D, 0x0A};		// 风速风向校准
 void get_data(char*);
 
 int main(void)
@@ -58,7 +58,7 @@ int main(void)
 		float co2_sum=0, co2;
 		
 		if(MQ2)	//工作时才采数据
- 		{
+		{
 			co2 = MQ2_Scan();
 			//printf("co2: %f\r\n", co2);
 		
@@ -106,6 +106,8 @@ int main(void)
 			printf("data analyzing...\r\n");
 			get_data(temp_rec);
 		}
+		else
+			printf("no data!!!\r\n");
 		printf("windsensor query finished...\r\n");
 		for(i=0;i<28;i++)
 			printf("%02x ", data_u8[i]);
