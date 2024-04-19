@@ -1,5 +1,6 @@
 #include "mq2.h"
 #include "adc.h"
+#include "flash.h"
 #include <math.h>
 
 #define CAL_PPM_CO2 20  // 校准环境中烟雾PPM值
@@ -76,12 +77,32 @@ void MQ2_PPM_Calibration(float RS)
     printf("CAL_RESet MQ2 R0=%f\r\n", R0);
 }
 
+float MQ2_Get_R0_from_flash(void)
+{
+    //从flash中获取R0
+    float read_buf[2]={0};
+    int len = 0;
+    read_from_flash(read_buf, &len);
+    return read_buf[0];  
+}
+
+u8 MQ2_is_R0_valid(float _R0)
+{
+    //判断_R0是否有效(单位为M欧)
+    if (_R0 > 0.00001)  // 判断非0为有效
+    {
+        return 1;
+    }
+    return 0;
+}
+
 float MQ2_Scan(void)
 {
     u16 adcx;
     u16 co2_ppm;
     float Vrl;  // 电路输出电压
     float RS;   // 传感器等效阻值
+    float R0_temp = 0;  // 临时存储R0,来源于flash
     // 若未开启MQ2则自动启动
     if (!flag_mq2){
         MQ2_Switch(1);
@@ -91,12 +112,51 @@ float MQ2_Scan(void)
     Vrl = 2.5f * adcx / 4095.f;  //获取计算后的带小数的实际电压值	ADC输入电压范围0~2.5V， 12位ADC， 2^12=4096，2.5v是用额外的稳压器模块输入
     Vrl = Vrl * 2;                          //根据电路图得到AO端电压值
     RS = (5 - Vrl) / Vrl * MQ2_RL;           //计算传感器等效阻值
-    if(R0 < 0.00001) // 若未校准则自动校准(初始电阻小于10欧)
+    if(!MQ2_is_R0_valid(R0)) // 若未校准则自动校准(初始电阻小于10欧)
     {
-	    MQ2_PPM_Calibration(RS);
+        R0_temp = MQ2_Get_R0_from_flash();
+        if (MQ2_is_R0_valid(R0_temp)
+        {
+            // 从flash中获取R0，并替换
+            R0 = R0_temp;
+            printf("Get MQ2 R0 from flash=%f\r\n", R0);
+        }
+        else
+        {
+            // flash里面的R0无效，重新校准
+            MQ2_PPM_Calibration(RS);
+            write_to_flash();   // 写入flash
+            printf("CAL MQ2 R0=%f\r\n, write to flash", R0);
+        }
     }
     co2_ppm = 613.9f * pow(RS/R0, -2.074f);
     // printf("Vrl=%f, RS=%f, R0=%f\r\n", Vrl, RS, R0);
 
     return co2_ppm;
 }
+
+float MQ2_Get_R0(void)
+{
+    //获取R0
+    return R0;  
+}
+
+// 从flash中获取R0
+float MQ2_Get_R0_from_flash(void)
+{
+    //从flash中获取R0
+    float read_buf[2]={0};
+    int len = 0;
+    read_from_flash(read_buf, &len);
+    return read_buf[0];  
+}
+
+// 将R0写入flash
+void write_to_flash(void)
+{
+    //将R0写入flash
+    u16 write_buf[2]={0};
+    write_buf[0] = (u16)R0;
+    write_to_flash(write_buf, 1);
+}
+ 

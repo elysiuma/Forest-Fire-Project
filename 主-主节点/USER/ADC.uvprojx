@@ -337,7 +337,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F40_41xxx,USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\CORE;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart4;..\USER;..\HARDWARE\LED;..\HARDWARE\ADC;..\HARDWARE\MQ2;..\HARDWARE\BATTERY;..\HARDWARE\LORA;..\HARDWARE\SPI;..\HARDWARE\GPS;..\HARDWARE\TIMER;..\HARDWARE\USART2;..\HARDWARE\USART3;..\FWLIB\inc;..\HARDWARE\RTC;..\HARDWARE\MQTT4G;..\HARDWARE\BMP280;..\HARDWARE\I2C;..\HARDWARE\SHT2X;..\HARDWARE\TIMER2;..\HARDWARE\MQ7</IncludePath>
+              <IncludePath>..\CORE;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart4;..\USER;..\HARDWARE\LED;..\HARDWARE\ADC;..\HARDWARE\MQ2;..\HARDWARE\BATTERY;..\HARDWARE\LORA;..\HARDWARE\SPI;..\HARDWARE\GPS;..\HARDWARE\TIMER;..\HARDWARE\USART2;..\HARDWARE\USART3;..\FWLIB\inc;..\HARDWARE\RTC;..\HARDWARE\MQTT4G;..\HARDWARE\BMP280;..\HARDWARE\I2C;..\HARDWARE\SHT2X;..\HARDWARE\TIMER2;..\HARDWARE\MQ7;..\SYSTEM\flash</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -510,6 +510,11 @@
               <FileName>usart4.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\SYSTEM\usart4\usart4.c</FilePath>
+            </File>
+            <File>
+              <FileName>flash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\SYSTEM\flash\flash.c</FilePath>
             </File>
           </Files>
         </Group>

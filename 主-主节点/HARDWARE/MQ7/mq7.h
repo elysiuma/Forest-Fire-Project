@@ -19,4 +19,5 @@ void MQ7_Init(void); //初始化
 void MQ7_Switch(u8 flag); //传感器开关
 float MQ7_Scan(void);   //读取数据
 void MQ7_PPM_Calibration(float RS); //校准
+float MQ7_Get_R0(void); //获取R0
 #endif

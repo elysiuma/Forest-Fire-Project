@@ -92,3 +92,8 @@ float MQ7_Scan(void)
 
     return co_ppm;
 }
+
+float MQ7_Get_R0(void)
+{
+    return R0;
+}

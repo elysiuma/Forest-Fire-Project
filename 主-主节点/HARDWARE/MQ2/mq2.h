@@ -17,4 +17,7 @@ void MQ2_Init(void); //初始化
 void MQ2_Switch(u8 flag); //传感器开关
 float MQ2_Scan(void);   //读取数据
 void MQ2_PPM_Calibration(float RS); //校准
+float MQ2_Get_R0(void); //返回R0
+float MQ2_Get_R0_from_flash(void); //从flash中获取R0
+u8 MQ2_is_R0_valid(float _R0); //判断_R0是否有效
 #endif
