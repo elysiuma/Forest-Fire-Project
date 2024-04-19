@@ -33,6 +33,8 @@ extern u8  UART4_RX_BUF[USART4_REC_LEN]; //接收缓冲,最大USART_REC_LEN个字节.末字
 extern u16 UART4_RX_STA;         		//接收状态标记	
 //如果想串口中断接收，请不要注释以下宏定义
 void uart4_init(u32 bound);
+void USART4_DATA(u8 *buf,u8 len);           //发送数据
+void USART4_Receive_Data(u8 *buf,u8 *len);
 #endif
 
 

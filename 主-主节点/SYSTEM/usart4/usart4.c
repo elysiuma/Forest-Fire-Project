@@ -31,7 +31,7 @@
 //V1.5修改说明
 //1,增加了对UCOSII的支持
 ////////////////////////////////////////////////////////////////////////////////// 	  
- 
+
 
 //////////////////////////////////////////////////////////////////
 //加入以下代码,支持printf函数,而不需要选择use MicroLIB	  
@@ -57,7 +57,7 @@ int fputc(int ch, FILE *f)
 	return ch;
 }
 #endif
- 
+
 #if EN_UART4_RX   //如果使能了接收
 //串口4中断服务程序
 //注意,读取USARTx->SR能避免莫名其妙的错误   	
@@ -72,13 +72,13 @@ u16 UART4_RX_STA=0;       //接收状态标记
 //bound:波特率
 void uart4_init(u32 bound){
    //GPIO端口设置
-  GPIO_InitTypeDef GPIO_InitStructure;
+	GPIO_InitTypeDef GPIO_InitStructure;
 	USART_InitTypeDef USART_InitStructure;
 	NVIC_InitTypeDef NVIC_InitStructure;
 	
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC,ENABLE); //使能GPIOC时钟
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART4,ENABLE);//使能USART4时钟
- 
+
 	//串口4对应引脚复用映射
 	GPIO_PinAFConfig(GPIOC,GPIO_PinSource10,GPIO_AF_UART4); //GPIOC10复用为USART4
 	GPIO_PinAFConfig(GPIOC,GPIO_PinSource11,GPIO_AF_UART4); //GPIOC11复用为USART4
@@ -171,14 +171,44 @@ void UART4_IRQHandler(void)                	//串口4中断服务程序
 				}
 			}
 		}   		 
-  } 
+} 
 #if SYSTEM_SUPPORT_OS 	//如果SYSTEM_SUPPORT_OS为真，则需要支持OS.
 	OSIntExit();  											 
 #endif
-} 
+}
+void USART4_DATA(u8 *buf, u8 len)
+{
+	u8 t;
+	for (t = 0; t < len; t++)
+	{
+		USART_SendData(UART4, buf[t]);
+		while (USART_GetFlagStatus(UART4, USART_FLAG_TC) != SET)
+			;
+	}
+	// while(USART_GetFlagStatus(USART3,USART_FLAG_TC)==RESET);
+	// USART3_RX_CNT=0;
+}
+
+void USART4_Receive_Data(u8 *buf,u8 *len)
+{
+	u8 i=0;		
+	u8 data_len=UART4_RX_STA&0x3fff;
+	delay_ms(10);	
+	// 打印接收到的数据
+	//printf("data_len: %i, len: %i", data_len, *len);
+	if(data_len>0)
+	{
+		for(i=0;i<data_len;i++)
+		{
+			buf[(*len)+i]=UART4_RX_BUF[i];	
+		}	
+		*len+=data_len;	
+		UART4_RX_STA=0;	
+	}
+}
 #endif	
 
- 
+
 
 
 
