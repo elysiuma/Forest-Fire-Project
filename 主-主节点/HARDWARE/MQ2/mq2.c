@@ -115,7 +115,7 @@ float MQ2_Scan(void)
     if(!MQ2_is_R0_valid(R0)) // 若未校准则自动校准(初始电阻小于10欧)
     {
         R0_temp = MQ2_Get_R0_from_flash();
-        if (MQ2_is_R0_valid(R0_temp)
+        if (MQ2_is_R0_valid(R0_temp))   
         {
             // 从flash中获取R0，并替换
             R0 = R0_temp;
@@ -141,22 +141,4 @@ float MQ2_Get_R0(void)
     return R0;  
 }
 
-// 从flash中获取R0
-float MQ2_Get_R0_from_flash(void)
-{
-    //从flash中获取R0
-    float read_buf[2]={0};
-    int len = 0;
-    read_from_flash(read_buf, &len);
-    return read_buf[0];  
-}
-
-// 将R0写入flash
-void write_to_flash(void)
-{
-    //将R0写入flash
-    u16 write_buf[2]={0};
-    write_buf[0] = (u16)R0;
-    write_to_flash(write_buf, 1);
-}
  

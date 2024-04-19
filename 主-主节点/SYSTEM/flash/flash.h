@@ -26,7 +26,7 @@
 uint16_t STMFLASH_GetFlashSector(u32 addr);  
 
 void write_to_flash(void);
-void read_from_flash(float *FlashReadBuf);    // 从flash中读取数据
+void read_from_flash(float *FlashReadBuf, int *len);    // 从flash中读取数据
 
 void read_flash(uint16_t *FlashReadBuf);
 int write_flash(uint16_t *FlashWriteBuf);

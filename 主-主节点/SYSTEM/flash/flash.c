@@ -1,6 +1,7 @@
 #include "flash.h"
 #include "mq2.h"
 #include "mq7.h"
+#include "stm32f4xx_flash.h"
 
 uint16_t write_data[DATA_FLASH_SAVE_NUM];
 uint16_t read_data[DATA_FLASH_SAVE_NUM];
@@ -25,7 +26,7 @@ uint16_t STMFLASH_GetFlashSector(u32 addr)
 //将数据写入内存 16位数据
 int write_flash(uint16_t *FlashWriteBuf)
 {
-	
+	int i;
 	uint32_t StartAddr;
 	StartAddr = FLASH_SAVE_ADDR;
 
@@ -38,7 +39,7 @@ int write_flash(uint16_t *FlashWriteBuf)
 		return TEST_ERROR;
 	}
 	
-	for (int i = 0; i < DATA_FLASH_SAVE_NUM; i++)
+	for (i = 0; i < DATA_FLASH_SAVE_NUM; i++)
 	{
 		if (FLASH_COMPLETE != FLASH_ProgramHalfWord(StartAddr, FlashWriteBuf[i]))	//写入16位数据
 		{			
@@ -55,8 +56,9 @@ int write_flash(uint16_t *FlashWriteBuf)
 //从内存读数据 16位数据
 void read_flash(uint16_t *FlashReadBuf)
 {
+	int i;
 	uint32_t StartAddr = FLASH_SAVE_ADDR;
-	for (int i = 0; i < DATA_FLASH_SAVE_NUM; i++)
+	for (i = 0; i < DATA_FLASH_SAVE_NUM; i++)
 	{
 		FlashReadBuf[i] = *(__IO uint16_t*)StartAddr;
 		StartAddr += 2;
