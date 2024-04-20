@@ -26,12 +26,12 @@ uint8_t EnableMaster = 1;		  	// 主从选择 1为主机，0为从机
 u8 is_debug = 1;				  	// 是否调试模式，1为调试模式，0为正常模式
 u8 query_node_data_max_times = 5; 	// 查询节点数据最大次数
 u8 is_lora = 0;					  	// 是否启动lora模块
-u8 is_gps = 1;					  	// 是否启动GPS模块
-u8 is_4g = 1;					  	// 是否启动4G模块,需要先启动lora和gps
-u8 rec_len=0;						//
+u8 is_gps = 0;					  	// 是否启动GPS模块
+u8 is_4g = 0;					  	// 是否启动4G模块,需要先启动lora和gps
+u8 is_wind_sensor = 0;				// 是否启动风速风向传感器
 u8 query_windsensor[11] = {0x24, 0x41, 0x44, 0x2C, 0x30, 0x34, 0x2A, 0x36, 0x33, 0x0D, 0x0A};	// 向风速传感器请求数据
 u8 cab_windsensor[11] = {0x24, 0x41, 0x5A, 0x2C, 0x30, 0x34, 0x2A, 0x37, 0x39, 0x0D, 0x0A};		// 风速风向校准
-u8 data_u8[28] = {0};				// 用于存储数据
+
 union data{
 	float f;
 	u8 ch[4];
@@ -43,7 +43,7 @@ void LORA_Handler(void);  	// 处理LORA通信的内容
 void GPS_Handler(void);	  	// 处理GPS通信的内容
 // 用于解析数据
 void DATA_Handler(float *temp, float *pres, float *humi, float *wind_sp, float *wind_dir, float *smoke, float *batt);																																	
-void get_data(char*);		// 用于解析数据
+void get_data(char*, u8*);		// 用于解析数据
 int main(void)
 {
 	float co2 = 0; // 烟雾浓度
@@ -162,15 +162,18 @@ int main(void)
 		if (is_gps && check_GPS_Receive())
 			GPS_Handler(); // 处理GPS通信的内容
 
-		// 向传感器要数据
-		printf("query windsensor...\r\n");
-		USART6_DATA(query_windsensor, 11);
-		delay_ms(3000);
-		if (USART6_RX_STA&0x8000)
+		// 向风速风向传感器串口要数据
+		if (is_wind_sensor)
 		{
-			DATA_Handler(&SHT2X_T, &BMP280_P, &SHT2X_H, &wind_speed, &wind_direction, &co2, &battery);
+			printf("query windsensor...\r\n");
+			USART6_DATA(query_windsensor, 11);
+			delay_ms(3000);
+			if (USART6_RX_STA&0x8000)
+			{
+				DATA_Handler(&SHT2X_T, &BMP280_P, &SHT2X_H, &wind_speed, &wind_direction, &co2, &battery);
+			}
 		}
-		rec_len=0;
+		
 
 		if (is_lora)
 		{
@@ -524,6 +527,7 @@ void DATA_Handler(float *temp, float *pres, float *humi, float *wind_sp, float *
 {
 	u8 i;
 	u8 temp_rec[300];
+	u8 rec_len=0;
 	u8 wind_speed[4] = {0};
     u8 wind_direction[4] = {0};
     u8 temperature[4] = {0};
@@ -531,13 +535,14 @@ void DATA_Handler(float *temp, float *pres, float *humi, float *wind_sp, float *
     u8 humidity[4] = {0};
     u8 _smoke[4] = {0};
 	u8 battery[4] = {0};
+	u8 data_u8[28] = {0};				// 用于存储数据
 
 	if (is_debug) printf("get windsensor data!\r\n");
 	USART6_Receive_Data(temp_rec, &rec_len);
 	// puts(temp_rec);
 	if (is_debug) printf("\r\n");
 	if (is_debug) printf("data analyzing...\r\n");
-	get_data(temp_rec);
+	get_data(temp_rec, data_u8);
 	
 	if (is_debug) 
 	{
@@ -566,7 +571,7 @@ void DATA_Handler(float *temp, float *pres, float *humi, float *wind_sp, float *
 	*batt = *(float *)(battery);
 }
 
-void get_data(char* data_str)
+void get_data(char* data_str, u8* data_u8)
 {
 	u8 i = 0, flag = 0, j = 0, k = 0, t = 0;
 	float data_float;
