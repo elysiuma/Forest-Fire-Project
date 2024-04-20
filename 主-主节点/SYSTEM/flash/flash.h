@@ -6,7 +6,13 @@
 #define  TEST_ERROR    -1
 #define  TEST_SUCCESS  0 
 
-#define DATA_FLASH_SAVE_NUM 4   //存储数据个数（两个float）
+#define DATA_FLASH_SAVE_NUM 6   //存储数据个数
+// 1    mq2的R0是否正确
+// h    mq2的R0的整数部分
+// s    mq2的R0的小数部分
+// 1    mq7的R0是否正确
+// h    mq7的R0的整数部分
+// s    mq7的R0的小数部分
  
 #define FLASH_SAVE_ADDR  ADDR_FLASH_SECTOR_4    //扇区有64kb的大小 一般寸几个数据已经足够
 //FLASH 扇区的起始地址

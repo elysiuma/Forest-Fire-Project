@@ -126,7 +126,7 @@ float MQ2_Scan(void)
             // flash里面的R0无效，重新校准
             MQ2_PPM_Calibration(RS);
             write_to_flash();   // 写入flash
-            printf("CAL MQ2 R0=%f\r\n, write to flash", R0);
+            printf("write to flash %f\r\n", R0);
         }
     }
     co2_ppm = 613.9f * pow(RS/R0, -2.074f);

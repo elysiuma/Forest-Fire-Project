@@ -74,6 +74,7 @@ float MQ7_Scan(void)
     u16 co_ppm;
     float Vrl;  // 电路输出电压
     float RS;   // 传感器等效阻值
+    float R0_temp;  // 从flash中读取的R0
     // 若未开启MQ7则自动启动
     if (!flag_mq7){
         MQ7_Switch(1);
@@ -83,9 +84,22 @@ float MQ7_Scan(void)
     Vrl = 2.5f * adcx / 4095.f;  //获取计算后的带小数的实际电压值	ADC输入电压范围0~2.5V， 12位ADC， 2^12=4096，2.5v是用额外的稳压器模块输入
     Vrl = Vrl * 2;                          //根据电路图得到AO端电压值
     RS = (5 - Vrl) / Vrl * MQ7_RL;           //计算传感器等效阻值
-    if(R0 < 0.00001) // 若未校准则自动校准(初始电阻小于10欧)
+    if(!MQ7_is_R0_valid(R0)) // 若未校准则自动校准(初始电阻小于10欧)
     {
-	    MQ7_PPM_Calibration(RS);
+        R0_temp = MQ7_Get_R0_from_flash();
+        if (MQ7_is_R0_valid(R0_temp))   
+        {
+            // 从flash中获取R0，并替换
+            R0 = R0_temp;
+            printf("Get MQ2 R0 from flash=%f\r\n", R0);
+        }
+        else
+        {
+            // flash里面的R0无效，重新校准
+            MQ7_PPM_Calibration(RS);
+            write_to_flash();   // 写入flash
+            printf("write to flash %f\r\n", R0);
+        }
     }
     co_ppm = 98.322f * pow(RS/R0, -1.458f);
     // printf("Vrl=%f, RS=%f, R0=%f\r\n", Vrl, RS, R0);
@@ -96,4 +110,23 @@ float MQ7_Scan(void)
 float MQ7_Get_R0(void)
 {
     return R0;
+}
+
+float MQ7_Get_R0_from_flash(void)
+{
+    //从flash中获取R0
+    float read_buf[2]={0};
+    int len = 0;
+    read_from_flash(read_buf, &len);
+    return read_buf[1];  
+}
+
+u8 MQ7_is_R0_valid(float _R0)
+{
+    //判断_R0是否有效(单位为M欧)
+    if (_R0 > 0.00001)  // 判断非0为有效
+    {
+        return 1;
+    }
+    return 0;
 }

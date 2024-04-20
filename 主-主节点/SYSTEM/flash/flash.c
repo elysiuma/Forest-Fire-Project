@@ -99,11 +99,13 @@ void write_to_flash(void)
 	mq7_R0 = MQ7_Get_R0();
 	// 将float转换为两个uint16_t
 	float_to_uint16(mq2_R0, u16_buf);
-	write_data[0] = u16_buf[0];
-	write_data[1] = u16_buf[1];
+	write_data[0] = 1;
+	write_data[1] = u16_buf[0];
+	write_data[2] = u16_buf[1];
 	float_to_uint16(mq7_R0, u16_buf);
-	write_data[2] = u16_buf[0];
-	write_data[3] = u16_buf[1];
+	write_data[3] = 1;
+	write_data[4] = u16_buf[0];
+	write_data[5] = u16_buf[1];
 	if(TEST_SUCCESS!=write_flash(write_data))	
 		return;  //写入错误
 }
@@ -113,7 +115,21 @@ void read_from_flash(float *FlashReadBuf, int *len)
 {
 	memset(read_data, 0, sizeof(read_data));
 	read_flash(read_data);
-	FlashReadBuf[0] = uint16_to_float(&read_data[0]);	// MQ2 R0
-	FlashReadBuf[1] = uint16_to_float(&read_data[2]);	// MQ7 R0
+	if (read_data[0] == 1)
+	{
+		FlashReadBuf[0] = uint16_to_float(&read_data[1]);	// MQ2 R0
+	}
+	else
+	{
+		FlashReadBuf[0] = 0;	// 未校准
+	}
+	if (read_data[3] == 1)
+	{
+		FlashReadBuf[1] = uint16_to_float(&read_data[4]);	// MQ7 R0
+	}
+	else
+	{
+		FlashReadBuf[1] = 0;
+	}
 	*len = 2;
 }

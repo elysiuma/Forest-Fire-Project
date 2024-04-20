@@ -29,6 +29,7 @@ u8 is_lora = 0;					  	// 是否启动lora模块
 u8 is_gps = 0;					  	// 是否启动GPS模块
 u8 is_4g = 0;					  	// 是否启动4G模块,需要先启动lora和gps
 u8 is_wind_sensor = 0;				// 是否启动风速风向传感器
+u8 is_battery = 0;					// 是否启动电池电压检测
 u8 query_windsensor[11] = {0x24, 0x41, 0x44, 0x2C, 0x30, 0x34, 0x2A, 0x36, 0x33, 0x0D, 0x0A};	// 向风速传感器请求数据
 u8 cab_windsensor[11] = {0x24, 0x41, 0x5A, 0x2C, 0x30, 0x34, 0x2A, 0x37, 0x39, 0x0D, 0x0A};		// 风速风向校准
 
@@ -66,12 +67,10 @@ int main(void)
 	MQ2_Init();
 	MQ7_Init();
 	Timer_mq2_Init(MQ2PreheatInterval); 	// 初始化MQ2定时器，每MQ2PreheatInterval秒状态位递增，用于MQ2的预热（20秒）和测量
-	BATTERY_Init();
-	if (is_4g)
-		mqtt4g_init();
+	if (is_battery)	BATTERY_Init();
+	if (is_4g)	mqtt4g_init();
 	customRTC_Init();
-	if (is_gps)
-		GPS_Init();
+	if (is_gps)	GPS_Init();
 	Timer_Init(GPSTimeInterval); // 初始化定时器，TIM2用于读取gps时间给RTC校时, 间隔单位为秒，GPSTimeInterval*12为校时总周期
 	
 	if (is_lora)
@@ -89,10 +88,13 @@ int main(void)
 	// SHT2X_Init();
 	// bmp280_uint();
 	delay_ms(500);
-	if (is_debug) printf("calibrating windsensor...please ensure NO WIND\r\n");
-	USART6_DATA(cab_windsensor, 11);
-	printf("calibration DONE\r\n");
-	delay_ms(1000);
+	if (is_wind_sensor)
+	{
+		if (is_debug) printf("calibrating windsensor...please ensure NO WIND\r\n");
+		USART6_DATA(cab_windsensor, 11);
+		if (is_debug) printf("calibration DONE\r\n");
+		delay_ms(1000);
+	}
 
 	while (1)
 	{
@@ -135,9 +137,12 @@ int main(void)
 		// if (is_debug) printf("humidity: %f\r\n", SHT2X_H);
 
 		// 读取电池电压
-		battery = BATTERY_Scan();
-		if (is_debug) printf("battery: %.2f%%\r\n", battery);
-		if (is_debug) printf("\r\n");
+		if (is_battery)
+		{
+			battery = BATTERY_Scan();
+			if (is_debug) printf("battery: %.2f%%\r\n", battery);
+			if (is_debug) printf("\r\n");
+		}
 
 		//	如果lora模块未初始化成功，尝试重新初始化
 		if (is_lora && !is_lora_init)

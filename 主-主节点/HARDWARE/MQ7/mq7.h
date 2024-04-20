@@ -20,4 +20,6 @@ void MQ7_Switch(u8 flag); //传感器开关
 float MQ7_Scan(void);   //读取数据
 void MQ7_PPM_Calibration(float RS); //校准
 float MQ7_Get_R0(void); //获取R0
+float MQ7_Get_R0_from_flash(void); //从flash中获取R0
+u8 MQ7_is_R0_valid(float _R0); //判断_R0是否有效
 #endif
