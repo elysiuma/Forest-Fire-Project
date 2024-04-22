@@ -66,7 +66,7 @@ int main(void)
 
 	MQ2_Init();
 	MQ7_Init();
-	Timer_mq2_Init(MQ2PreheatInterval); 	// 初始化MQ2定时器，每MQ2PreheatInterval秒状态位递增，用于MQ2的预热（20秒）和测量
+	Timer_mq2_Init(MQ2PreheatInterval); 	// 初始化MQ2定时器，每MQ2PreheatInterval秒状态位递增，用于MQ2的预热（20秒）和测量，MQ7共用一个定时器
 	if (is_battery)	BATTERY_Init();
 	if (is_4g)	mqtt4g_init();
 	customRTC_Init();
@@ -105,7 +105,7 @@ int main(void)
 		u8 is_query_node_success = 0;	  // 是否成功查询到节点数据
 		u8 data_str[300];				  // 用于存储发送给服务器的数据
 
-		// 读取烟雾浓度最近10次平均数据
+		// 读取烟雾浓度
 		if (flag_mq2_is_need_measure) // 需要测量时采集MQ2数据
 		{
 			printf("MQ2_Scan state=%d\r\n", mq2_state_count);
