@@ -222,6 +222,12 @@ void delay_ms(u16 nms)
 	}
 	if(remain)delay_xms(remain);
 } 
+
+void Delay(uint32_t nCount)//short delay
+{
+  for(; nCount != 0; nCount--);
+}
+
 #endif
 			 
 

@@ -7,7 +7,7 @@
 static float R0 = 0; // 元件在洁净空气中的阻值
 
 uint8_t flag_mq7 = 1;   //初始为启动
-u8 is_force_calibrate = 1; // 是否强制校准
+u8 is_force_calibrate = 0; // 是否强制校准
 // u8 mq7_state_count = 0;
 // u8 flag_mq7_is_need_measure = 0;
 

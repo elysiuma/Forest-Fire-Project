@@ -6,7 +6,7 @@
 #define CAL_PPM_CO2 20  // 校准环境中烟雾PPM值
 #define MQ2_RL 2		// RL阻值(M欧)
 static float R0 = 0; // 元件在洁净空气中的阻值
-static u8 is_force_calibrate = 1; // 是否强制校准
+static u8 is_force_calibrate = 0; // 是否强制校准
 
 uint8_t flag_mq2 = 1;   //初始为启动
 u8 mq2_state_count = 0;

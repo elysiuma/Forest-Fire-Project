@@ -6,6 +6,8 @@
 #include "mq2.h"
 #include "mq7.h"
 #include "adc.h"
+#include "bmp280.h"
+#include "SHT2X.h"
 #include "battery.h"
 #include "lora.h"
 #include "timer.h"
@@ -17,6 +19,7 @@
 
 uint8_t EnableMaster=0;				//主从选择 1为主机，0为从机	(FIX:很久没用了，基本无效)
 u8 is_battery = 1;					// 是否启动电池电压检测
+u8 is_debug = 1;					// 是否启动调试模式
 
 u8 temp_rec[50];
 u8 rec_len=0;
@@ -37,6 +40,10 @@ int main(void)
 	float co2;	//烟雾浓度
 	float battery=0;	//电源电压
 	float co_latest = 0; // 最新的CO浓度
+	float BMP280_P = 100000; // pressure of BMP280
+	float BMP280_T = 25.00;	// temperature of BMP280，用于校正BMP280
+	float SHT2X_T = 25.00; // temperature of SHT2X
+	float SHT2X_H = 40.00; // humidity of SHT2X
 	
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);//设置系统中断优先级分组2
 	delay_init(168);    //初始化延时函数
@@ -53,6 +60,12 @@ int main(void)
 	LED = 1;
 	MQ2 = 1;
 	MQ7 = 1;
+
+	// i2c温湿度传感器初始化
+	IIC_Init(); // I2C initialize
+	SHT2X_Init();
+	bmp280_uint();
+
 	delay_ms(500);
 	
 	
@@ -70,6 +83,25 @@ int main(void)
 			flag_mq2_is_need_measure = 0;
 		}
 		
+		// I2C传感器执行
+		SHT2X_T = SHT2X_TEST_T(); // get temperature of SHT2X.
+		if (is_debug) printf("raw T: %f\r\n", SHT2X_T);
+		SHT2X_T = 1.055 * SHT2X_T - 3.455;
+		SHT2X_T += 0.4;
+
+		BMP280_T = bmp280_get_temperature();
+		if (is_debug) printf("bmp_t:%f\r\n", BMP280_T);
+		BMP280_P = bmp280_get_pressure(); // get pressure of bmp280.
+		BMP280_P = (BMP280_P - 1.19) / 100;
+
+		SHT2X_H = SHT2X_TEST_RH(); // get humidity of SHT2X.
+		if (is_debug) printf("raw H: %f\r\n", SHT2X_H);
+		SHT2X_H = 0.976 * SHT2X_H + 6.551;
+
+		if (is_debug) printf("pressure: %f\r\n", BMP280_P);
+		if (is_debug) printf("temperature: %f\r\n", SHT2X_T);
+		if (is_debug) printf("humidity: %f\r\n", SHT2X_H);
+
 		if(is_battery)	// 电池电压检测
 		{
 			battery = BATTERY_Scan();
@@ -158,6 +190,7 @@ int main(void)
 		
 		delay_ms(1000);
 		DebugLed();	//LED闪烁说明程序正常运行
+		printf("\r\n");
 	}
 }
 
