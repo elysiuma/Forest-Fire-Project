@@ -5,6 +5,7 @@
 #define CAL_PPM_CO 10  // 校准环境中CO PPM值
 #define MQ7_RL 2		// RL阻值(M欧)
 static float R0 = 0; // 元件在洁净空气中的阻值
+static u8 is_force_cal = 0; // 是否强制校准
 
 uint8_t flag_mq7 = 1;   //初始为启动
 // u8 mq7_state_count = 0;
@@ -87,11 +88,11 @@ float MQ7_Scan(void)
     if(!MQ7_is_R0_valid(R0)) // 若未校准则自动校准(初始电阻小于10欧)
     {
         R0_temp = MQ7_Get_R0_from_flash();
-        if (MQ7_is_R0_valid(R0_temp))   
+        if (!is_force_cal&MQ7_is_R0_valid(R0_temp))   
         {
             // 从flash中获取R0，并替换
             R0 = R0_temp;
-            printf("Get MQ2 R0 from flash=%f\r\n", R0);
+            printf("Get MQ7 R0 from flash=%f\r\n", R0);
         }
         else
         {

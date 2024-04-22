@@ -92,7 +92,7 @@ float MQ7_Scan(void)
         {
             // 从flash中获取R0，并替换
             R0 = R0_temp;
-            printf("Get MQ2 R0 from flash=%f\r\n", R0);
+            printf("Get MQ7 R0 from flash=%f\r\n", R0);
         }
         else
         {
