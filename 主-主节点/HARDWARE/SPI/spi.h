@@ -2,7 +2,7 @@
 // #define __SPI_H__
 // #include "sys.h" 
 
-// //LORAÄ£¿éSPI¿Ú¶¨Òå
+// //LORAæ¨¡å—SPIå£å®šä¹‰
 // #define 	MISO	GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_2)
 // #define 	M0SI0	GPIO_ResetBits(GPIOC , GPIO_Pin_3)
 // #define 	M0SI1	GPIO_SetBits(GPIOC, GPIO_Pin_3)

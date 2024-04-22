@@ -2,22 +2,22 @@
 #define __MQ2_H
 #include "sys.h"
 
-//MQ2¶şÑõ»¯Ì¼£¨ÑÌÎí£©´«¸ĞÆ÷
+//MQ2äºŒæ°§åŒ–ç¢³ï¼ˆçƒŸé›¾ï¼‰ä¼ æ„Ÿå™¨
 
-extern uint8_t flag_mq2;    // MQ2´«¸ĞÆ÷¿ª¹Ø±êÊ¶
-extern u8 mq2_state_count;  // MQ2´«¸ĞÆ÷×´Ì¬¼ÆÊı ¿ªÆô(0:Õı³£ 1:Ô¤ÈÈ 2+:²âÁ¿¼ÆÊı)¹Ø±Õ(0:Õı³£ 1+:¹Ø±Õ¼ÆÊı)
-extern u8 flag_mq2_is_need_measure; // MQ2´«¸ĞÆ÷ÊÇ·ñĞèÒª²âÁ¿±êÊ¶
+extern uint8_t flag_mq2;    // MQ2ä¼ æ„Ÿå™¨å¼€å…³æ ‡è¯†
+extern u8 mq2_state_count;  // MQ2ä¼ æ„Ÿå™¨çŠ¶æ€è®¡æ•° å¼€å¯(0:æ­£å¸¸ 1:é¢„çƒ­ 2+:æµ‹é‡è®¡æ•°)å…³é—­(0:æ­£å¸¸ 1+:å…³é—­è®¡æ•°)
+extern u8 flag_mq2_is_need_measure; // MQ2ä¼ æ„Ÿå™¨æ˜¯å¦éœ€è¦æµ‹é‡æ ‡è¯†
 
-#define MQ2 PAout(6)        // MQ2¿ª¹ØÒı½Å¶¨Òå
-#define MQ2_ON_MAX 11       // MQ2´«¸ĞÆ÷¿ªÆô×î´ó¼ÆÊı(Ô¤ÈÈ1+²âÁ¿´ÎÊı)
-#define MQ2_OFF_MAX 10      // MQ2´«¸ĞÆ÷¹Ø±Õ×î´ó¼ÆÊı(¹Ø±ÕÖÜÆÚ´ÎÊı)
+#define MQ2 PAout(6)        // MQ2å¼€å…³å¼•è„šå®šä¹‰
+#define MQ2_ON_MAX 11       // MQ2ä¼ æ„Ÿå™¨å¼€å¯æœ€å¤§è®¡æ•°(é¢„çƒ­1+æµ‹é‡æ¬¡æ•°)
+#define MQ2_OFF_MAX 10      // MQ2ä¼ æ„Ÿå™¨å…³é—­æœ€å¤§è®¡æ•°(å…³é—­å‘¨æœŸæ¬¡æ•°)
 
 
-void MQ2_Init(void); //³õÊ¼»¯
-void MQ2_Switch(u8 flag); //´«¸ĞÆ÷¿ª¹Ø
-float MQ2_Scan(void);   //¶ÁÈ¡Êı¾İ
-void MQ2_PPM_Calibration(float RS); //Ğ£×¼
-float MQ2_Get_R0(void); //·µ»ØR0
-float MQ2_Get_R0_from_flash(void); //´ÓflashÖĞ»ñÈ¡R0
-u8 MQ2_is_R0_valid(float _R0); //ÅĞ¶Ï_R0ÊÇ·ñÓĞĞ§
+void MQ2_Init(void); //åˆå§‹åŒ–
+void MQ2_Switch(u8 flag); //ä¼ æ„Ÿå™¨å¼€å…³
+float MQ2_Scan(void);   //è¯»å–æ•°æ®
+void MQ2_PPM_Calibration(float RS); //æ ¡å‡†
+float MQ2_Get_R0(void); //è¿”å›R0
+float MQ2_Get_R0_from_flash(void); //ä»flashä¸­è·å–R0
+u8 MQ2_is_R0_valid(float _R0); //åˆ¤æ–­_R0æ˜¯å¦æœ‰æ•ˆ
 #endif

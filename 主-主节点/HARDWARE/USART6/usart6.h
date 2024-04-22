@@ -4,15 +4,15 @@
 #include "stm32f4xx_conf.h"
 #include "sys.h" 
 
-#define USART6_REC_LEN  300  	    //¶¨Òå×î´ó½ÓÊÕ×Ö½ÚÊı 100
-#define EN_USART6_RX 	1			//Ê¹ÄÜ£¨1£©/½ûÖ¹£¨0£©´®¿Ú1½ÓÊÕ
+#define USART6_REC_LEN  300  	    //å®šä¹‰æœ€å¤§æ¥æ”¶å­—èŠ‚æ•° 100
+#define EN_USART6_RX 	1			//ä½¿èƒ½ï¼ˆ1ï¼‰/ç¦æ­¢ï¼ˆ0ï¼‰ä¸²å£1æ¥æ”¶
 
-extern u8 USART6_RX_BUF[USART6_REC_LEN];    //½ÓÊÕ»º³å,×î´óUSART_REC_LEN¸ö×Ö½Ú.Ä©×Ö½ÚÎª»»ĞĞ·û 
-extern u8 USART6_TX_BUF[USART6_REC_LEN];    //·¢ËÍ»º³å,×î´óUSART_REC_LEN¸ö×Ö½Ú 
-extern u16 USART6_RX_STA;                    //½ÓÊÕ»º³åµÄ³¤¶È
+extern u8 USART6_RX_BUF[USART6_REC_LEN];    //æ¥æ”¶ç¼“å†²,æœ€å¤§USART_REC_LENä¸ªå­—èŠ‚.æœ«å­—èŠ‚ä¸ºæ¢è¡Œç¬¦ 
+extern u8 USART6_TX_BUF[USART6_REC_LEN];    //å‘é€ç¼“å†²,æœ€å¤§USART_REC_LENä¸ªå­—èŠ‚ 
+extern u16 USART6_RX_STA;                    //æ¥æ”¶ç¼“å†²çš„é•¿åº¦
 void uart6_init(u32 bound);
-void USART6_DATA(u8 *buf,u8 len);           //·¢ËÍÊı¾İ
-void USART6_CMD(unsigned char *lb);         //·¢ËÍÖ¸Áî
-void USART6_Receive_Data(u8 *buf,u8 *len);  //½ÓÊÜ»º´æ
+void USART6_DATA(u8 *buf,u8 len);           //å‘é€æ•°æ®
+void USART6_CMD(unsigned char *lb);         //å‘é€æŒ‡ä»¤
+void USART6_Receive_Data(u8 *buf,u8 *len);  //æ¥å—ç¼“å­˜
 void Usart6CommandAnalysis(void);
 #endif

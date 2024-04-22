@@ -2,8 +2,8 @@
 #define __BATTERY_H
 #include "sys.h"
 
-//µçÔ´µçÑ¹¹ÜÀíÄ£¿é
+//ç”µæºç”µå‹ç®¡ç†æ¨¡å—
 
-void BATTERY_Init(void);    //³õÊ¼»¯
-float BATTERY_Scan(void);   //¶ÁÈ¡µçÔ´Êı¾İ
+void BATTERY_Init(void);    //åˆå§‹åŒ–
+float BATTERY_Scan(void);   //è¯»å–ç”µæºæ•°æ®
 #endif

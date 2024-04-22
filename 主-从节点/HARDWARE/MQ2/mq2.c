@@ -7,16 +7,16 @@ uint8_t flag_mq2 = 1;
 void MQ2_Init(void)
 {    	 
 	GPIO_InitTypeDef  GPIO_InitStructure;
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);//Ê¹ÄÜGPIOAÊ±ÖÓ
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);//ä½¿èƒ½GPIOAæ—¶é’Ÿ
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//ÆÕÍ¨Êä³öÄ£Ê½
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//ÍÆÍìÊä³ö
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//æ™®é€šè¾“å‡ºæ¨¡å¼
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//æ¨æŒ½è¾“å‡º
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//ÉÏÀ­
-	GPIO_Init(GPIOA, &GPIO_InitStructure);//³õÊ¼»¯
-	GPIO_SetBits(GPIOA,GPIO_Pin_6);//PA6ÉèÖÃ¸ß£¬Æô¶¯Ä£¿é
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//ä¸Šæ‹‰
+	GPIO_Init(GPIOA, &GPIO_InitStructure);//åˆå§‹åŒ–
+	GPIO_SetBits(GPIOA,GPIO_Pin_6);//PA6è®¾ç½®é«˜ï¼Œå¯åŠ¨æ¨¡å—
 
-    Adc_Init_MQ2();         //³õÊ¼»¯ADC,¶ÔÓ¦MQ2µÄÄ£ÄâÁ¿Êı¾İ¶Ë¿ÚPC4
+    Adc_Init_MQ2();         //åˆå§‹åŒ–ADC,å¯¹åº”MQ2çš„æ¨¡æ‹Ÿé‡æ•°æ®ç«¯å£PC4
 
 }
 
@@ -40,15 +40,15 @@ float MQ2_Scan(void)
     u16 adcx;
     u16 co2_ppm;
     float co2;
-    // ÈôÎ´¿ªÆôMQ2Ôò×Ô¶¯Æô¶¯
+    // è‹¥æœªå¼€å¯MQ2åˆ™è‡ªåŠ¨å¯åŠ¨
     if (!flag_mq2){
         MQ2_Switch(1);
     }
 
-    adcx=Get_Adc_Average(ADC_Channel_14,20);//»ñÈ¡Í¨µÀ14µÄ×ª»»Öµ£¬20´ÎÈ¡Æ½¾ù
-    co2=(float)(adcx*(2.5/4096.0));          	//»ñÈ¡¼ÆËãºóµÄ´øĞ¡ÊıµÄÊµ¼ÊµçÑ¹Öµ£¬±ÈÈç3.1111	ADCÊäÈëµçÑ¹·¶Î§0~2.5V£¬ 12Î»ADC£¬ 2^12=4096£¬2.5vÊÇÓÃ¶îÍâµÄÎÈÑ¹Æ÷Ä£¿éÊäÈë
-    co2 = co2 * 2;                          //¸ù¾İµçÂ·Í¼µÃµ½AO¶ËµçÑ¹Öµ
-    // ½«co2µçÑ¹Ó³ÉäÎªppm£¬0.4V¶ÔÓ¦200ppm£¬4.0V¶ÔÓ¦10000ppm
+    adcx=Get_Adc_Average(ADC_Channel_14,20);//è·å–é€šé“14çš„è½¬æ¢å€¼ï¼Œ20æ¬¡å–å¹³å‡
+    co2=(float)(adcx*(2.5/4096.0));          	//è·å–è®¡ç®—åçš„å¸¦å°æ•°çš„å®é™…ç”µå‹å€¼ï¼Œæ¯”å¦‚3.1111	ADCè¾“å…¥ç”µå‹èŒƒå›´0~2.5Vï¼Œ 12ä½ADCï¼Œ 2^12=4096ï¼Œ2.5væ˜¯ç”¨é¢å¤–çš„ç¨³å‹å™¨æ¨¡å—è¾“å…¥
+    co2 = co2 * 2;                          //æ ¹æ®ç”µè·¯å›¾å¾—åˆ°AOç«¯ç”µå‹å€¼
+    // å°†co2ç”µå‹æ˜ å°„ä¸ºppmï¼Œ0.4Vå¯¹åº”200ppmï¼Œ4.0Vå¯¹åº”10000ppm
     co2_ppm = (9800.0/3.6) * co2 -(9800.0/9) + 200;
     if(co2_ppm<0)
         co2_ppm=0;

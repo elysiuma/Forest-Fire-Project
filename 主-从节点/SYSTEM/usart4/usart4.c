@@ -2,143 +2,143 @@
 #include "usart4.h"	
 #include "led.h"
 ////////////////////////////////////////////////////////////////////////////////// 	 
-//Èç¹ûÊ¹ÓÃucos,Ôò°üÀ¨ÏÂÃæµÄÍ·ÎÄ¼þ¼´¿É.
+//å¦‚æžœä½¿ç”¨ucos,åˆ™åŒ…æ‹¬ä¸‹é¢çš„å¤´æ–‡ä»¶å³å¯.
 #if SYSTEM_SUPPORT_OS
-#include "includes.h"					//ucos Ê¹ÓÃ	  
+#include "includes.h"					//ucos ä½¿ç”¨	  
 #endif
 //////////////////////////////////////////////////////////////////////////////////	 
-//±¾³ÌÐòÖ»¹©Ñ§Ï°Ê¹ÓÃ£¬Î´¾­×÷ÕßÐí¿É£¬²»µÃÓÃÓÚÆäËüÈÎºÎÓÃÍ¾
-//ALIENTEK STM32F4Ì½Ë÷Õß¿ª·¢°å
-//´®¿Ú1³õÊ¼»¯		   
-//ÕýµãÔ­×Ó@ALIENTEK
-//¼¼ÊõÂÛÌ³:www.openedv.com
-//ÐÞ¸ÄÈÕÆÚ:2014/6/10
-//°æ±¾£ºV1.5
-//°æÈ¨ËùÓÐ£¬µÁ°æ±Ø¾¿¡£
-//Copyright(C) ¹ãÖÝÊÐÐÇÒíµç×Ó¿Æ¼¼ÓÐÏÞ¹«Ë¾ 2009-2019
+//æœ¬ç¨‹åºåªä¾›å­¦ä¹ ä½¿ç”¨ï¼Œæœªç»ä½œè€…è®¸å¯ï¼Œä¸å¾—ç”¨äºŽå…¶å®ƒä»»ä½•ç”¨é€”
+//ALIENTEK STM32F4æŽ¢ç´¢è€…å¼€å‘æ¿
+//ä¸²å£1åˆå§‹åŒ–		   
+//æ­£ç‚¹åŽŸå­@ALIENTEK
+//æŠ€æœ¯è®ºå›:www.openedv.com
+//ä¿®æ”¹æ—¥æœŸ:2014/6/10
+//ç‰ˆæœ¬ï¼šV1.5
+//ç‰ˆæƒæ‰€æœ‰ï¼Œç›—ç‰ˆå¿…ç©¶ã€‚
+//Copyright(C) å¹¿å·žå¸‚æ˜Ÿç¿¼ç”µå­ç§‘æŠ€æœ‰é™å…¬å¸ 2009-2019
 //All rights reserved
 //********************************************************************************
-//V1.3ÐÞ¸ÄËµÃ÷ 
-//Ö§³ÖÊÊÓ¦²»Í¬ÆµÂÊÏÂµÄ´®¿Ú²¨ÌØÂÊÉèÖÃ.
-//¼ÓÈëÁË¶ÔprintfµÄÖ§³Ö
-//Ôö¼ÓÁË´®¿Ú½ÓÊÕÃüÁî¹¦ÄÜ.
-//ÐÞÕýÁËprintfµÚÒ»¸ö×Ö·û¶ªÊ§µÄbug
-//V1.4ÐÞ¸ÄËµÃ÷
-//1,ÐÞ¸Ä´®¿Ú³õÊ¼»¯IOµÄbug
-//2,ÐÞ¸ÄÁËUSART_RX_STA,Ê¹µÃ´®¿Ú×î´ó½ÓÊÕ×Ö½ÚÊýÎª2µÄ14´Î·½
-//3,Ôö¼ÓÁËUSART_REC_LEN,ÓÃÓÚ¶¨Òå´®¿Ú×î´óÔÊÐí½ÓÊÕµÄ×Ö½ÚÊý(²»´óÓÚ2µÄ14´Î·½)
-//4,ÐÞ¸ÄÁËEN_USART1_RXµÄÊ¹ÄÜ·½Ê½
-//V1.5ÐÞ¸ÄËµÃ÷
-//1,Ôö¼ÓÁË¶ÔUCOSIIµÄÖ§³Ö
+//V1.3ä¿®æ”¹è¯´æ˜Ž 
+//æ”¯æŒé€‚åº”ä¸åŒé¢‘çŽ‡ä¸‹çš„ä¸²å£æ³¢ç‰¹çŽ‡è®¾ç½®.
+//åŠ å…¥äº†å¯¹printfçš„æ”¯æŒ
+//å¢žåŠ äº†ä¸²å£æŽ¥æ”¶å‘½ä»¤åŠŸèƒ½.
+//ä¿®æ­£äº†printfç¬¬ä¸€ä¸ªå­—ç¬¦ä¸¢å¤±çš„bug
+//V1.4ä¿®æ”¹è¯´æ˜Ž
+//1,ä¿®æ”¹ä¸²å£åˆå§‹åŒ–IOçš„bug
+//2,ä¿®æ”¹äº†USART_RX_STA,ä½¿å¾—ä¸²å£æœ€å¤§æŽ¥æ”¶å­—èŠ‚æ•°ä¸º2çš„14æ¬¡æ–¹
+//3,å¢žåŠ äº†USART_REC_LEN,ç”¨äºŽå®šä¹‰ä¸²å£æœ€å¤§å…è®¸æŽ¥æ”¶çš„å­—èŠ‚æ•°(ä¸å¤§äºŽ2çš„14æ¬¡æ–¹)
+//4,ä¿®æ”¹äº†EN_USART1_RXçš„ä½¿èƒ½æ–¹å¼
+//V1.5ä¿®æ”¹è¯´æ˜Ž
+//1,å¢žåŠ äº†å¯¹UCOSIIçš„æ”¯æŒ
 ////////////////////////////////////////////////////////////////////////////////// 	  
  
 
 //////////////////////////////////////////////////////////////////
-//¼ÓÈëÒÔÏÂ´úÂë,Ö§³Öprintfº¯Êý,¶ø²»ÐèÒªÑ¡Ôñuse MicroLIB	  
+//åŠ å…¥ä»¥ä¸‹ä»£ç ,æ”¯æŒprintfå‡½æ•°,è€Œä¸éœ€è¦é€‰æ‹©use MicroLIB	  
 #if 1
 //#pragma import(__use_no_semihosting)             
-//±ê×¼¿âÐèÒªµÄÖ§³Öº¯Êý                 
+//æ ‡å‡†åº“éœ€è¦çš„æ”¯æŒå‡½æ•°                 
 struct __FILE 
 { 
 	int handle; 
 }; 
 
 FILE __stdout;       
-//¶¨Òå_sys_exit()ÒÔ±ÜÃâÊ¹ÓÃ°ëÖ÷»úÄ£Ê½    
+//å®šä¹‰_sys_exit()ä»¥é¿å…ä½¿ç”¨åŠä¸»æœºæ¨¡å¼    
 void _sys_exit(int8_t x) 
 { 
 	x = x; 
 } 
-//ÖØ¶¨Òåfputcº¯Êý 
+//é‡å®šä¹‰fputcå‡½æ•° 
 int fputc(int ch, FILE *f)
 { 	
-	while((UART4->SR&0X40)==0);//Ñ­»··¢ËÍ,Ö±µ½·¢ËÍÍê±Ï   
+	while((UART4->SR&0X40)==0);//å¾ªçŽ¯å‘é€,ç›´åˆ°å‘é€å®Œæ¯•   
 	UART4->DR = (u8) ch;      
 	return ch;
 }
 #endif
  
-#if EN_UART4_RX   //Èç¹ûÊ¹ÄÜÁË½ÓÊÕ
-//´®¿Ú4ÖÐ¶Ï·þÎñ³ÌÐò
-//×¢Òâ,¶ÁÈ¡USARTx->SRÄÜ±ÜÃâÄªÃûÆäÃîµÄ´íÎó   	
-u8 UART4_RX_BUF[USART4_REC_LEN];     //½ÓÊÕ»º³å,×î´óUSART_REC_LEN¸ö×Ö½Ú.
-//½ÓÊÕ×´Ì¬
-//bit15£¬	½ÓÊÕÍê³É±êÖ¾
-//bit14£¬	½ÓÊÕµ½0x0d
-//bit13~0£¬	½ÓÊÕµ½µÄÓÐÐ§×Ö½ÚÊýÄ¿
-u16 UART4_RX_STA=0;       //½ÓÊÕ×´Ì¬±ê¼Ç	
+#if EN_UART4_RX   //å¦‚æžœä½¿èƒ½äº†æŽ¥æ”¶
+//ä¸²å£4ä¸­æ–­æœåŠ¡ç¨‹åº
+//æ³¨æ„,è¯»å–USARTx->SRèƒ½é¿å…èŽ«åå…¶å¦™çš„é”™è¯¯   	
+u8 UART4_RX_BUF[USART4_REC_LEN];     //æŽ¥æ”¶ç¼“å†²,æœ€å¤§USART_REC_LENä¸ªå­—èŠ‚.
+//æŽ¥æ”¶çŠ¶æ€
+//bit15ï¼Œ	æŽ¥æ”¶å®Œæˆæ ‡å¿—
+//bit14ï¼Œ	æŽ¥æ”¶åˆ°0x0d
+//bit13~0ï¼Œ	æŽ¥æ”¶åˆ°çš„æœ‰æ•ˆå­—èŠ‚æ•°ç›®
+u16 UART4_RX_STA=0;       //æŽ¥æ”¶çŠ¶æ€æ ‡è®°	
 
-//³õÊ¼»¯IO ´®¿Ú4
-//bound:²¨ÌØÂÊ
+//åˆå§‹åŒ–IO ä¸²å£4
+//bound:æ³¢ç‰¹çŽ‡
 void uart4_init(u32 bound){
-   //GPIO¶Ë¿ÚÉèÖÃ
+   //GPIOç«¯å£è®¾ç½®
   GPIO_InitTypeDef GPIO_InitStructure;
 	USART_InitTypeDef USART_InitStructure;
 	NVIC_InitTypeDef NVIC_InitStructure;
 	
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC,ENABLE); //Ê¹ÄÜGPIOCÊ±ÖÓ
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART4,ENABLE);//Ê¹ÄÜUSART4Ê±ÖÓ
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC,ENABLE); //ä½¿èƒ½GPIOCæ—¶é’Ÿ
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART4,ENABLE);//ä½¿èƒ½USART4æ—¶é’Ÿ
  
-	//´®¿Ú4¶ÔÓ¦Òý½Å¸´ÓÃÓ³Éä
-	GPIO_PinAFConfig(GPIOC,GPIO_PinSource10,GPIO_AF_UART4); //GPIOC10¸´ÓÃÎªUSART4
-	GPIO_PinAFConfig(GPIOC,GPIO_PinSource11,GPIO_AF_UART4); //GPIOC11¸´ÓÃÎªUSART4
+	//ä¸²å£4å¯¹åº”å¼•è„šå¤ç”¨æ˜ å°„
+	GPIO_PinAFConfig(GPIOC,GPIO_PinSource10,GPIO_AF_UART4); //GPIOC10å¤ç”¨ä¸ºUSART4
+	GPIO_PinAFConfig(GPIOC,GPIO_PinSource11,GPIO_AF_UART4); //GPIOC11å¤ç”¨ä¸ºUSART4
 	
-	//USART4¶Ë¿ÚÅäÖÃ
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11 | GPIO_Pin_10; //GPIOC11ÓëGPIOC10
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;//¸´ÓÃ¹¦ÄÜ
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;	//ËÙ¶È50MHz
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP; //ÍÆÍì¸´ÓÃÊä³ö
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP; //ÉÏÀ­
-	GPIO_Init(GPIOC,&GPIO_InitStructure); //³õÊ¼»¯PC11£¬PC10
+	//USART4ç«¯å£é…ç½®
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11 | GPIO_Pin_10; //GPIOC11ä¸ŽGPIOC10
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;//å¤ç”¨åŠŸèƒ½
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;	//é€Ÿåº¦50MHz
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP; //æŽ¨æŒ½å¤ç”¨è¾“å‡º
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP; //ä¸Šæ‹‰
+	GPIO_Init(GPIOC,&GPIO_InitStructure); //åˆå§‹åŒ–PC11ï¼ŒPC10
 
-   //USART4 ³õÊ¼»¯ÉèÖÃ
-	USART_InitStructure.USART_BaudRate = bound;//²¨ÌØÂÊÉèÖÃ
-	USART_InitStructure.USART_WordLength = USART_WordLength_9b;//×Ö³¤Îª8Î»Êý¾Ý¸ñÊ½
-	// USART_InitStructure.USART_WordLength = USART_WordLength_9b;//×Ö³¤Îª8Î»Êý¾Ý¸ñÊ½
-	USART_InitStructure.USART_StopBits = USART_StopBits_1;//Ò»¸öÍ£Ö¹Î»
-	// USART_InitStructure.USART_Parity = USART_Parity_No;//ÎÞÆæÅ¼Ð£ÑéÎ»
-	USART_InitStructure.USART_Parity = USART_Parity_Even;//Å¼Ð£ÑéÎ»
-	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;//ÎÞÓ²¼þÊý¾ÝÁ÷¿ØÖÆ
-	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;	//ÊÕ·¢Ä£Ê½
-	USART_Init(UART4, &USART_InitStructure); //³õÊ¼»¯´®¿Ú4
+   //USART4 åˆå§‹åŒ–è®¾ç½®
+	USART_InitStructure.USART_BaudRate = bound;//æ³¢ç‰¹çŽ‡è®¾ç½®
+	USART_InitStructure.USART_WordLength = USART_WordLength_9b;//å­—é•¿ä¸º8ä½æ•°æ®æ ¼å¼
+	// USART_InitStructure.USART_WordLength = USART_WordLength_9b;//å­—é•¿ä¸º8ä½æ•°æ®æ ¼å¼
+	USART_InitStructure.USART_StopBits = USART_StopBits_1;//ä¸€ä¸ªåœæ­¢ä½
+	// USART_InitStructure.USART_Parity = USART_Parity_No;//æ— å¥‡å¶æ ¡éªŒä½
+	USART_InitStructure.USART_Parity = USART_Parity_Even;//å¶æ ¡éªŒä½
+	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;//æ— ç¡¬ä»¶æ•°æ®æµæŽ§åˆ¶
+	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;	//æ”¶å‘æ¨¡å¼
+	USART_Init(UART4, &USART_InitStructure); //åˆå§‹åŒ–ä¸²å£4
 		
-	USART_Cmd(UART4, ENABLE);  //Ê¹ÄÜ´®¿Ú4
+	USART_Cmd(UART4, ENABLE);  //ä½¿èƒ½ä¸²å£4
 	
 	//USART_ClearFlag(UART4, USART_FLAG_TC);
 	
 #if EN_UART4_RX	
-	USART_ITConfig(UART4, USART_IT_RXNE, ENABLE);//¿ªÆôÏà¹ØÖÐ¶Ï
+	USART_ITConfig(UART4, USART_IT_RXNE, ENABLE);//å¼€å¯ç›¸å…³ä¸­æ–­
 
-	//Usart4 NVIC ÅäÖÃ
-  	NVIC_InitStructure.NVIC_IRQChannel = UART4_IRQn;//´®¿Ú4ÖÐ¶ÏÍ¨µÀ
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=3;//ÇÀÕ¼ÓÅÏÈ¼¶3
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority =3;		//×ÓÓÅÏÈ¼¶3
-	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;			//IRQÍ¨µÀÊ¹ÄÜ
-	NVIC_Init(&NVIC_InitStructure);	//¸ù¾ÝÖ¸¶¨µÄ²ÎÊý³õÊ¼»¯VIC¼Ä´æÆ÷¡¢
+	//Usart4 NVIC é…ç½®
+  	NVIC_InitStructure.NVIC_IRQChannel = UART4_IRQn;//ä¸²å£4ä¸­æ–­é€šé“
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=3;//æŠ¢å ä¼˜å…ˆçº§3
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority =3;		//å­ä¼˜å…ˆçº§3
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;			//IRQé€šé“ä½¿èƒ½
+	NVIC_Init(&NVIC_InitStructure);	//æ ¹æ®æŒ‡å®šçš„å‚æ•°åˆå§‹åŒ–VICå¯„å­˜å™¨ã€
 
 #endif
 	
 }
 
 
-void UART4_IRQHandler(void)                	//´®¿Ú4ÖÐ¶Ï·þÎñ³ÌÐò
+void UART4_IRQHandler(void)                	//ä¸²å£4ä¸­æ–­æœåŠ¡ç¨‹åº
 {
 	u8 Res;
 	u8 Data_len;
 	//LED=0;
-#if SYSTEM_SUPPORT_OS 		//Èç¹ûSYSTEM_SUPPORT_OSÎªÕæ£¬ÔòÐèÒªÖ§³ÖOS.
+#if SYSTEM_SUPPORT_OS 		//å¦‚æžœSYSTEM_SUPPORT_OSä¸ºçœŸï¼Œåˆ™éœ€è¦æ”¯æŒOS.
 	OSIntEnter();    
 #endif
-	if(USART_GetITStatus(UART4, USART_IT_RXNE) != RESET)  //½ÓÊÕÖÐ¶Ï(½ÓÊÕµ½µÄÊý¾Ý±ØÐëÊÇ0x0d 0x0a½áÎ²)
+	if(USART_GetITStatus(UART4, USART_IT_RXNE) != RESET)  //æŽ¥æ”¶ä¸­æ–­(æŽ¥æ”¶åˆ°çš„æ•°æ®å¿…é¡»æ˜¯0x0d 0x0aç»“å°¾)
 	{
 		//USART_ClearITPendingBit(UART4, USART_IT_RXNE);
-		Res =USART_ReceiveData(UART4);//(UART4->DR);	//¶ÁÈ¡½ÓÊÕµ½µÄÊý¾Ý
+		Res =USART_ReceiveData(UART4);//(UART4->DR);	//è¯»å–æŽ¥æ”¶åˆ°çš„æ•°æ®
 		//DebugLed();
-		if((UART4_RX_STA&0x8000)==0)//½ÓÊÕÎ´Íê³É
+		if((UART4_RX_STA&0x8000)==0)//æŽ¥æ”¶æœªå®Œæˆ
 		{
 			
 			// printf("UART4_RX_STA: %i, RES: %i", UART4_RX_STA, Res);
-			// Ö¸ÁîÒÔ6C¿ªÍ·ÔòÎªLORAÄ£¿éÖ¸Áî
+			// æŒ‡ä»¤ä»¥6Cå¼€å¤´åˆ™ä¸ºLORAæ¨¡å—æŒ‡ä»¤
 			if((UART4_RX_STA==0&&Res==0x6c)||UART4_RX_BUF[0]==0X6C)
 			{
 				UART4_RX_BUF[UART4_RX_STA&0X3FFF]=Res;
@@ -148,31 +148,31 @@ void UART4_IRQHandler(void)                	//´®¿Ú4ÖÐ¶Ï·þÎñ³ÌÐò
 					Data_len = UART4_RX_BUF[1] + 5; 
 					//printf("USART_RX_BUF[1]: %i\r\n", USART_RX_BUF[1]); //Data_len = Res + 5;
 					//printf("UART4_RX_STA: %i, Data len: %i", UART4_RX_STA, Data_len);
-					if(UART4_RX_STA>(USART4_REC_LEN-1)) UART4_RX_STA=0;//½ÓÊÕÊý¾Ý´íÎó(³¬¹ý×î´ó½ÓÊÜ×Ö½ÚÊý),ÖØÐÂ¿ªÊ¼½ÓÊÕ
-					if((UART4_RX_STA&0X3FFF) == Data_len) UART4_RX_STA|=0x8000;	//½ÓÊÕÍê³ÉÁË(0x16ÎªloraÍ¨ÐÅ¹æÔ¼½áÊø·û)
+					if(UART4_RX_STA>(USART4_REC_LEN-1)) UART4_RX_STA=0;//æŽ¥æ”¶æ•°æ®é”™è¯¯(è¶…è¿‡æœ€å¤§æŽ¥å—å­—èŠ‚æ•°),é‡æ–°å¼€å§‹æŽ¥æ”¶
+					if((UART4_RX_STA&0X3FFF) == Data_len) UART4_RX_STA|=0x8000;	//æŽ¥æ”¶å®Œæˆäº†(0x16ä¸ºloraé€šä¿¡è§„çº¦ç»“æŸç¬¦)
 				}
 			}
 			else{
-				// ·ñÔòÎªÆÕÍ¨Ö¸Áî
-				if(UART4_RX_STA&0x4000)//½ÓÊÕµ½ÁË0x0d
+				// å¦åˆ™ä¸ºæ™®é€šæŒ‡ä»¤
+				if(UART4_RX_STA&0x4000)//æŽ¥æ”¶åˆ°äº†0x0d
 				{
-					if(Res!=0x0a)UART4_RX_STA=0;//½ÓÊÕ´íÎó,ÖØÐÂ¿ªÊ¼
-					else UART4_RX_STA|=0x8000;	//½ÓÊÕÍê³ÉÁË 
+					if(Res!=0x0a)UART4_RX_STA=0;//æŽ¥æ”¶é”™è¯¯,é‡æ–°å¼€å§‹
+					else UART4_RX_STA|=0x8000;	//æŽ¥æ”¶å®Œæˆäº† 
 				}
-				else //»¹Ã»ÊÕµ½0X0D
+				else //è¿˜æ²¡æ”¶åˆ°0X0D
 				{	
 					if(Res==0x0d)UART4_RX_STA|=0x4000;
 					else
 					{
 						UART4_RX_BUF[UART4_RX_STA&0X3FFF]=Res ;
 						UART4_RX_STA++;
-						if(UART4_RX_STA>(USART4_REC_LEN-1))UART4_RX_STA=0;//½ÓÊÕÊý¾Ý´íÎó,ÖØÐÂ¿ªÊ¼½ÓÊÕ	  
+						if(UART4_RX_STA>(USART4_REC_LEN-1))UART4_RX_STA=0;//æŽ¥æ”¶æ•°æ®é”™è¯¯,é‡æ–°å¼€å§‹æŽ¥æ”¶	  
 					}		 
 				}
 			}
 		}   		 
   } 
-#if SYSTEM_SUPPORT_OS 	//Èç¹ûSYSTEM_SUPPORT_OSÎªÕæ£¬ÔòÐèÒªÖ§³ÖOS.
+#if SYSTEM_SUPPORT_OS 	//å¦‚æžœSYSTEM_SUPPORT_OSä¸ºçœŸï¼Œåˆ™éœ€è¦æ”¯æŒOS.
 	OSIntExit();  											 
 #endif
 } 

@@ -2,11 +2,11 @@
 #include "adc.h"
 #include <math.h>
 
-#define CAL_PPM_CO 10  // Ğ£×¼»·¾³ÖĞCO PPMÖµ
-#define MQ7_RL 2		// RL×èÖµ(MÅ·)
-static float R0 = 0; // Ôª¼şÔÚ½à¾»¿ÕÆøÖĞµÄ×èÖµ
+#define CAL_PPM_CO 10  // æ ¡å‡†ç¯å¢ƒä¸­CO PPMå€¼
+#define MQ7_RL 2		// RLé˜»å€¼(Mæ¬§)
+static float R0 = 0; // å…ƒä»¶åœ¨æ´å‡€ç©ºæ°”ä¸­çš„é˜»å€¼
 
-uint8_t flag_mq7 = 1;   //³õÊ¼ÎªÆô¶¯
+uint8_t flag_mq7 = 1;   //åˆå§‹ä¸ºå¯åŠ¨
 // u8 mq7_state_count = 0;
 // u8 flag_mq7_is_need_measure = 0;
 
@@ -14,31 +14,31 @@ uint8_t flag_mq7 = 1;   //³õÊ¼ÎªÆô¶¯
 void MQ7_Init(void)
 {    	 
 	GPIO_InitTypeDef  GPIO_InitStructure;
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);//Ê¹ÄÜGPIOCÊ±ÖÓ
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);//ä½¿èƒ½GPIOCæ—¶é’Ÿ
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//ÆÕÍ¨Êä³öÄ£Ê½
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//ÍÆÍìÊä³ö
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//æ™®é€šè¾“å‡ºæ¨¡å¼
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//æ¨æŒ½è¾“å‡º
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//ÉÏÀ­
-	GPIO_Init(GPIOC, &GPIO_InitStructure);//³õÊ¼»¯
-	GPIO_SetBits(GPIOC,GPIO_Pin_1);//PC1ÉèÖÃ¸ß£¬Æô¶¯Ä£¿é
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//ä¸Šæ‹‰
+	GPIO_Init(GPIOC, &GPIO_InitStructure);//åˆå§‹åŒ–
+	GPIO_SetBits(GPIOC,GPIO_Pin_1);//PC1è®¾ç½®é«˜ï¼Œå¯åŠ¨æ¨¡å—
 
-    Adc_Init_MQ7();         //³õÊ¼»¯ADC,¶ÔÓ¦MQ7µÄÄ£ÄâÁ¿Êı¾İ¶Ë¿ÚPC0
+    Adc_Init_MQ7();         //åˆå§‹åŒ–ADC,å¯¹åº”MQ7çš„æ¨¡æ‹Ÿé‡æ•°æ®ç«¯å£PC0
 
 }
 
-// flag=1:¿ªÆôMQ2  flag=0:¹Ø±ÕMQ2
+// flag=1:å¼€å¯MQ2  flag=0:å…³é—­MQ2
 void MQ7_Switch(u8 flag)
 {
     if(flag == 1)
     {
-        if (!MQ7)   // ½öÔÚMQ7¹Ø±ÕÊ±ÔÙ¿ªÆô
+        if (!MQ7)   // ä»…åœ¨MQ7å…³é—­æ—¶å†å¼€å¯
             MQ7 = 1;  
         flag_mq7 = 1;
     }
     else
     {
-        if (MQ7)    // ½öÔÚMQ7¿ªÆôÊ±ÔÙ¹Ø±Õ
+        if (MQ7)    // ä»…åœ¨MQ7å¼€å¯æ—¶å†å…³é—­
             MQ7 = 0; 
         flag_mq7 = 0;
     }
@@ -61,7 +61,7 @@ void MQ7_Switch(u8 flag)
 
 
 
- // ´«¸ĞÆ÷Ğ£×¼º¯Êı
+ // ä¼ æ„Ÿå™¨æ ¡å‡†å‡½æ•°
 void MQ7_PPM_Calibration(float RS)
 {
     R0 = RS / pow(CAL_PPM_CO / 98.322, 1 / -1.458f);
@@ -72,32 +72,32 @@ float MQ7_Scan(void)
 {
     u16 adcx;
     u16 co_ppm;
-    float Vrl;  // µçÂ·Êä³öµçÑ¹
-    float RS;   // ´«¸ĞÆ÷µÈĞ§×èÖµ
-    float R0_temp;  // ´ÓflashÖĞ¶ÁÈ¡µÄR0
-    // ÈôÎ´¿ªÆôMQ7Ôò×Ô¶¯Æô¶¯
+    float Vrl;  // ç”µè·¯è¾“å‡ºç”µå‹
+    float RS;   // ä¼ æ„Ÿå™¨ç­‰æ•ˆé˜»å€¼
+    float R0_temp;  // ä»flashä¸­è¯»å–çš„R0
+    // è‹¥æœªå¼€å¯MQ7åˆ™è‡ªåŠ¨å¯åŠ¨
     if (!flag_mq7){
         MQ7_Switch(1);
     }
 
-    adcx=Get_Adc_Average(ADC_Channel_10,20);//»ñÈ¡Í¨µÀ10µÄ×ª»»Öµ£¬20´ÎÈ¡Æ½¾ù
-    Vrl = 2.5f * adcx / 4095.f;  //»ñÈ¡¼ÆËãºóµÄ´øĞ¡ÊıµÄÊµ¼ÊµçÑ¹Öµ	ADCÊäÈëµçÑ¹·¶Î§0~2.5V£¬ 12Î»ADC£¬ 2^12=4096£¬2.5vÊÇÓÃ¶îÍâµÄÎÈÑ¹Æ÷Ä£¿éÊäÈë
-    Vrl = Vrl * 2;                          //¸ù¾İµçÂ·Í¼µÃµ½AO¶ËµçÑ¹Öµ
-    RS = (5 - Vrl) / Vrl * MQ7_RL;           //¼ÆËã´«¸ĞÆ÷µÈĞ§×èÖµ
-    if(!MQ7_is_R0_valid(R0)) // ÈôÎ´Ğ£×¼Ôò×Ô¶¯Ğ£×¼(³õÊ¼µç×èĞ¡ÓÚ10Å·)
+    adcx=Get_Adc_Average(ADC_Channel_10,20);//è·å–é€šé“10çš„è½¬æ¢å€¼ï¼Œ20æ¬¡å–å¹³å‡
+    Vrl = 2.5f * adcx / 4095.f;  //è·å–è®¡ç®—åçš„å¸¦å°æ•°çš„å®é™…ç”µå‹å€¼	ADCè¾“å…¥ç”µå‹èŒƒå›´0~2.5Vï¼Œ 12ä½ADCï¼Œ 2^12=4096ï¼Œ2.5væ˜¯ç”¨é¢å¤–çš„ç¨³å‹å™¨æ¨¡å—è¾“å…¥
+    Vrl = Vrl * 2;                          //æ ¹æ®ç”µè·¯å›¾å¾—åˆ°AOç«¯ç”µå‹å€¼
+    RS = (5 - Vrl) / Vrl * MQ7_RL;           //è®¡ç®—ä¼ æ„Ÿå™¨ç­‰æ•ˆé˜»å€¼
+    if(!MQ7_is_R0_valid(R0)) // è‹¥æœªæ ¡å‡†åˆ™è‡ªåŠ¨æ ¡å‡†(åˆå§‹ç”µé˜»å°äº10æ¬§)
     {
         R0_temp = MQ7_Get_R0_from_flash();
         if (MQ7_is_R0_valid(R0_temp))   
         {
-            // ´ÓflashÖĞ»ñÈ¡R0£¬²¢Ìæ»»
+            // ä»flashä¸­è·å–R0ï¼Œå¹¶æ›¿æ¢
             R0 = R0_temp;
             printf("Get MQ2 R0 from flash=%f\r\n", R0);
         }
         else
         {
-            // flashÀïÃæµÄR0ÎŞĞ§£¬ÖØĞÂĞ£×¼
+            // flashé‡Œé¢çš„R0æ— æ•ˆï¼Œé‡æ–°æ ¡å‡†
             MQ7_PPM_Calibration(RS);
-            write_to_flash();   // Ğ´Èëflash
+            write_to_flash();   // å†™å…¥flash
             printf("write to flash %f\r\n", R0);
         }
     }
@@ -114,7 +114,7 @@ float MQ7_Get_R0(void)
 
 float MQ7_Get_R0_from_flash(void)
 {
-    //´ÓflashÖĞ»ñÈ¡R0
+    //ä»flashä¸­è·å–R0
     float read_buf[2]={0};
     int len = 0;
     read_from_flash(read_buf, &len);
@@ -123,8 +123,8 @@ float MQ7_Get_R0_from_flash(void)
 
 u8 MQ7_is_R0_valid(float _R0)
 {
-    //ÅĞ¶Ï_R0ÊÇ·ñÓĞĞ§(µ¥Î»ÎªMÅ·)
-    if (_R0 > 0.00001)  // ÅĞ¶Ï·Ç0ÎªÓĞĞ§
+    //åˆ¤æ–­_R0æ˜¯å¦æœ‰æ•ˆ(å•ä½ä¸ºMæ¬§)
+    if (_R0 > 0.00001)  // åˆ¤æ–­é0ä¸ºæœ‰æ•ˆ
     {
         return 1;
     }

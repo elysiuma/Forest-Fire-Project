@@ -19,59 +19,59 @@
 #include "SHT2X.h"
 #include <string.h>
 #include <stdlib.h>
-#define MQ2PreheatInterval 10 // MQ2Ô¤ÈÈÊ±¼ä¼ä¸ô£¬µ¥Î»ÎªÃë  ÖÁÉÙÎª20Ãë
-#define GPSTimeInterval 120	// GPSÊ±¼äĞ£Ê±¼ä¸ô£¬µ¥Î»ÎªÃë  ²âÊÔÊ±2·ÖÖÓÒ»´Î£¬ÕıÊ½Îª5·ÖÖÓÒ»´Î
+#define MQ2PreheatInterval 10 // MQ2é¢„çƒ­æ—¶é—´é—´éš”ï¼Œå•ä½ä¸ºç§’  è‡³å°‘ä¸º20ç§’
+#define GPSTimeInterval 120	// GPSæ—¶é—´æ ¡æ—¶é—´éš”ï¼Œå•ä½ä¸ºç§’  æµ‹è¯•æ—¶2åˆ†é’Ÿä¸€æ¬¡ï¼Œæ­£å¼ä¸º5åˆ†é’Ÿä¸€æ¬¡
 
-uint8_t EnableMaster = 1;		  	// Ö÷´ÓÑ¡Ôñ 1ÎªÖ÷»ú£¬0Îª´Ó»ú
-u8 is_debug = 1;				  	// ÊÇ·ñµ÷ÊÔÄ£Ê½£¬1Îªµ÷ÊÔÄ£Ê½£¬0ÎªÕı³£Ä£Ê½
-u8 query_node_data_max_times = 5; 	// ²éÑ¯½ÚµãÊı¾İ×î´ó´ÎÊı
-u8 is_lora = 0;					  	// ÊÇ·ñÆô¶¯loraÄ£¿é
-u8 is_gps = 0;					  	// ÊÇ·ñÆô¶¯GPSÄ£¿é
-u8 is_4g = 0;					  	// ÊÇ·ñÆô¶¯4GÄ£¿é,ĞèÒªÏÈÆô¶¯loraºÍgps
-u8 is_wind_sensor = 0;				// ÊÇ·ñÆô¶¯·çËÙ·çÏò´«¸ĞÆ÷
-u8 is_battery = 0;					// ÊÇ·ñÆô¶¯µç³ØµçÑ¹¼ì²â
-u8 query_windsensor[11] = {0x24, 0x41, 0x44, 0x2C, 0x30, 0x34, 0x2A, 0x36, 0x33, 0x0D, 0x0A};	// Ïò·çËÙ´«¸ĞÆ÷ÇëÇóÊı¾İ
-u8 cab_windsensor[11] = {0x24, 0x41, 0x5A, 0x2C, 0x30, 0x34, 0x2A, 0x37, 0x39, 0x0D, 0x0A};		// ·çËÙ·çÏòĞ£×¼
+uint8_t EnableMaster = 1;		  	// ä¸»ä»é€‰æ‹© 1ä¸ºä¸»æœºï¼Œ0ä¸ºä»æœº
+u8 is_debug = 1;				  	// æ˜¯å¦è°ƒè¯•æ¨¡å¼ï¼Œ1ä¸ºè°ƒè¯•æ¨¡å¼ï¼Œ0ä¸ºæ­£å¸¸æ¨¡å¼
+u8 query_node_data_max_times = 5; 	// æŸ¥è¯¢èŠ‚ç‚¹æ•°æ®æœ€å¤§æ¬¡æ•°
+u8 is_lora = 0;					  	// æ˜¯å¦å¯åŠ¨loraæ¨¡å—
+u8 is_gps = 0;					  	// æ˜¯å¦å¯åŠ¨GPSæ¨¡å—
+u8 is_4g = 0;					  	// æ˜¯å¦å¯åŠ¨4Gæ¨¡å—,éœ€è¦å…ˆå¯åŠ¨loraå’Œgps
+u8 is_wind_sensor = 0;				// æ˜¯å¦å¯åŠ¨é£é€Ÿé£å‘ä¼ æ„Ÿå™¨
+u8 is_battery = 0;					// æ˜¯å¦å¯åŠ¨ç”µæ± ç”µå‹æ£€æµ‹
+u8 query_windsensor[11] = {0x24, 0x41, 0x44, 0x2C, 0x30, 0x34, 0x2A, 0x36, 0x33, 0x0D, 0x0A};	// å‘é£é€Ÿä¼ æ„Ÿå™¨è¯·æ±‚æ•°æ®
+u8 cab_windsensor[11] = {0x24, 0x41, 0x5A, 0x2C, 0x30, 0x34, 0x2A, 0x37, 0x39, 0x0D, 0x0A};		// é£é€Ÿé£å‘æ ¡å‡†
 
 union data{
 	float f;
 	u8 ch[4];
-} data_1;							// ÓÃÓÚ×ª»»Êı¾İ¸ñÊ½£º char -> float
+} data_1;							// ç”¨äºè½¬æ¢æ•°æ®æ ¼å¼ï¼š char -> float
 
-// º¯ÊıÉêÃ÷
-void UART4_Handler(void); 	// ´¦Àí´®¿Ú4PCÍ¨ĞÅµÄÄÚÈİ
-void LORA_Handler(void);  	// ´¦ÀíLORAÍ¨ĞÅµÄÄÚÈİ
-void GPS_Handler(void);	  	// ´¦ÀíGPSÍ¨ĞÅµÄÄÚÈİ
-// ÓÃÓÚ½âÎöÊı¾İ
+// å‡½æ•°ç”³æ˜
+void UART4_Handler(void); 	// å¤„ç†ä¸²å£4PCé€šä¿¡çš„å†…å®¹
+void LORA_Handler(void);  	// å¤„ç†LORAé€šä¿¡çš„å†…å®¹
+void GPS_Handler(void);	  	// å¤„ç†GPSé€šä¿¡çš„å†…å®¹
+// ç”¨äºè§£ææ•°æ®
 void DATA_Handler(float *temp, float *pres, float *humi, float *wind_sp, float *wind_dir, float *smoke, float *batt);																																	
-void get_data(char*, u8*);		// ÓÃÓÚ½âÎöÊı¾İ
+void get_data(char*, u8*);		// ç”¨äºè§£ææ•°æ®
 int main(void)
 {
-	float co2 = 0; // ÑÌÎíÅ¨¶È
+	float co2 = 0; // çƒŸé›¾æµ“åº¦
 	float BMP280_P = 100000;
 	float BMP280_T = 25.00;
 	float SHT2X_T = 25.00; // temperature of SHT2X
 	float SHT2X_H = 40.00; // humidity of SHT2X
-	float battery = 0;	   // µçÔ´µçÑ¹
+	float battery = 0;	   // ç”µæºç”µå‹
 	float wind_speed = 0;
 	float wind_direction = 0;
-	float co_latest = 0; // ×îĞÂµÄCOÅ¨¶È
+	float co_latest = 0; // æœ€æ–°çš„COæµ“åº¦
 
-	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2); // ÉèÖÃÏµÍ³ÖĞ¶ÏÓÅÏÈ¼¶·Ö×é2
-	delay_init(168);								// ³õÊ¼»¯ÑÓÊ±º¯Êı
-	uart4_init(9600);								// ³õÊ¼»¯´®¿Ú²¨ÌØÂÊÎª9600
-	uart5_init(9600);								// ³õÊ¼»¯´®¿Ú²¨ÌØÂÊÎª9600£¬´ó¹¦ÂÊLora
-	uart6_init(9600);								// ³õÊ¼»¯´®¿Ú²¨ÌØÂÊÎª9600£¬´«¸ĞÆ÷
-	LED_Init();										// ³õÊ¼»¯LED
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2); // è®¾ç½®ç³»ç»Ÿä¸­æ–­ä¼˜å…ˆçº§åˆ†ç»„2
+	delay_init(168);								// åˆå§‹åŒ–å»¶æ—¶å‡½æ•°
+	uart4_init(9600);								// åˆå§‹åŒ–ä¸²å£æ³¢ç‰¹ç‡ä¸º9600
+	uart5_init(9600);								// åˆå§‹åŒ–ä¸²å£æ³¢ç‰¹ç‡ä¸º9600ï¼Œå¤§åŠŸç‡Lora
+	uart6_init(9600);								// åˆå§‹åŒ–ä¸²å£æ³¢ç‰¹ç‡ä¸º9600ï¼Œä¼ æ„Ÿå™¨
+	LED_Init();										// åˆå§‹åŒ–LED
 
 	MQ2_Init();
 	MQ7_Init();
-	Timer_mq2_Init(MQ2PreheatInterval); 	// ³õÊ¼»¯MQ2¶¨Ê±Æ÷£¬Ã¿MQ2PreheatIntervalÃë×´Ì¬Î»µİÔö£¬ÓÃÓÚMQ2µÄÔ¤ÈÈ£¨20Ãë£©ºÍ²âÁ¿
+	Timer_mq2_Init(MQ2PreheatInterval); 	// åˆå§‹åŒ–MQ2å®šæ—¶å™¨ï¼Œæ¯MQ2PreheatIntervalç§’çŠ¶æ€ä½é€’å¢ï¼Œç”¨äºMQ2çš„é¢„çƒ­ï¼ˆ20ç§’ï¼‰å’Œæµ‹é‡
 	if (is_battery)	BATTERY_Init();
 	if (is_4g)	mqtt4g_init();
 	customRTC_Init();
 	if (is_gps)	GPS_Init();
-	Timer_Init(GPSTimeInterval); // ³õÊ¼»¯¶¨Ê±Æ÷£¬TIM2ÓÃÓÚ¶ÁÈ¡gpsÊ±¼ä¸øRTCĞ£Ê±, ¼ä¸ôµ¥Î»ÎªÃë£¬GPSTimeInterval*12ÎªĞ£Ê±×ÜÖÜÆÚ
+	Timer_Init(GPSTimeInterval); // åˆå§‹åŒ–å®šæ—¶å™¨ï¼ŒTIM2ç”¨äºè¯»å–gpsæ—¶é—´ç»™RTCæ ¡æ—¶, é—´éš”å•ä½ä¸ºç§’ï¼ŒGPSTimeInterval*12ä¸ºæ ¡æ—¶æ€»å‘¨æœŸ
 	
 	if (is_lora)
 	{
@@ -83,7 +83,7 @@ int main(void)
 	MQ2 = 1;
 	MQ7 = 1;
 
-	// TODO: ÁÙÊ±½ûÓÃI2C´«¸ĞÆ÷
+	// TODO: ä¸´æ—¶ç¦ç”¨I2Cä¼ æ„Ÿå™¨
 	// IIC_Init(); // I2C initialize
 	// SHT2X_Init();
 	// bmp280_uint();
@@ -101,12 +101,12 @@ int main(void)
 		u8 time[3];
 		u8 i, j;
 		u8 current_addr[6] = {0};
-		u8 query[3] = {0x11, 0x22, 0x33}; // ÓÃÓÚÏò×Ó½Úµã·¢ËÍ£¬²éÑ¯Êı¾İ
-		u8 is_query_node_success = 0;	  // ÊÇ·ñ³É¹¦²éÑ¯µ½½ÚµãÊı¾İ
-		u8 data_str[300];				  // ÓÃÓÚ´æ´¢·¢ËÍ¸ø·şÎñÆ÷µÄÊı¾İ
+		u8 query[3] = {0x11, 0x22, 0x33}; // ç”¨äºå‘å­èŠ‚ç‚¹å‘é€ï¼ŒæŸ¥è¯¢æ•°æ®
+		u8 is_query_node_success = 0;	  // æ˜¯å¦æˆåŠŸæŸ¥è¯¢åˆ°èŠ‚ç‚¹æ•°æ®
+		u8 data_str[300];				  // ç”¨äºå­˜å‚¨å‘é€ç»™æœåŠ¡å™¨çš„æ•°æ®
 
-		// ¶ÁÈ¡ÑÌÎíÅ¨¶È×î½ü10´ÎÆ½¾ùÊı¾İ
-		if (flag_mq2_is_need_measure) // ĞèÒª²âÁ¿Ê±²É¼¯MQ2Êı¾İ
+		// è¯»å–çƒŸé›¾æµ“åº¦æœ€è¿‘10æ¬¡å¹³å‡æ•°æ®
+		if (flag_mq2_is_need_measure) // éœ€è¦æµ‹é‡æ—¶é‡‡é›†MQ2æ•°æ®
 		{
 			printf("MQ2_Scan state=%d\r\n", mq2_state_count);
 			co2 = MQ2_Scan();
@@ -116,7 +116,7 @@ int main(void)
 		}
 		// if (is_debug) printf("bmp T: %f\r\n", bmp280_get_temperature());
 
-		// I2C´«¸ĞÆ÷Ö´ĞĞ
+		// I2Cä¼ æ„Ÿå™¨æ‰§è¡Œ
 		// SHT2X_T = SHT2X_TEST_T(); // get temperature of SHT2X.
 		// // if (is_debug) printf("raw T: %f\r\n", SHT2X_T);
 		// SHT2X_T = 1.055 * SHT2X_T - 3.455;
@@ -136,7 +136,7 @@ int main(void)
 		// if (is_debug) printf("temperature: %f\r\n", SHT2X_T);
 		// if (is_debug) printf("humidity: %f\r\n", SHT2X_H);
 
-		// ¶ÁÈ¡µç³ØµçÑ¹
+		// è¯»å–ç”µæ± ç”µå‹
 		if (is_battery)
 		{
 			battery = BATTERY_Scan();
@@ -144,30 +144,30 @@ int main(void)
 			if (is_debug) printf("\r\n");
 		}
 
-		//	Èç¹ûloraÄ£¿éÎ´³õÊ¼»¯³É¹¦£¬³¢ÊÔÖØĞÂ³õÊ¼»¯
+		//	å¦‚æœloraæ¨¡å—æœªåˆå§‹åŒ–æˆåŠŸï¼Œå°è¯•é‡æ–°åˆå§‹åŒ–
 		if (is_lora && !is_lora_init)
 			is_lora_init = LORA_Network_Init();
 
-		// ÊÇ·ñĞèÒª¸üĞÂÊ±¼ä
-		// is_need_update_time =1;	// µ÷ÊÔÓÃ£¬Ã¿´Î¶¼¸üĞÂÊ±¼ä
+		// æ˜¯å¦éœ€è¦æ›´æ–°æ—¶é—´
+		// is_need_update_time =1;	// è°ƒè¯•ç”¨ï¼Œæ¯æ¬¡éƒ½æ›´æ–°æ—¶é—´
 		if (is_gps && is_need_update_time)
 		{
-			// ¸üĞÂRTCÊ±¼äĞèÒªGPS£¬ÔÚGPSÎ´Æô¶¯µÄÊ±ºò²»½øĞĞÊ±¼ä¸üĞÂ
+			// æ›´æ–°RTCæ—¶é—´éœ€è¦GPSï¼Œåœ¨GPSæœªå¯åŠ¨çš„æ—¶å€™ä¸è¿›è¡Œæ—¶é—´æ›´æ–°
 			RTC_update_device_time();
 			is_need_update_time = 0;
 		}
 
 		// if (UART4_RX_STA & 0x8000)
-			// UART4_Handler(); // ´¦Àí´®¿Ú4PCÍ¨ĞÅµÄÄÚÈİ
+			// UART4_Handler(); // å¤„ç†ä¸²å£4PCé€šä¿¡çš„å†…å®¹
 
 		if (is_lora && check_LORA_Receive())
-			LORA_Handler(); // ´¦ÀíLORAÍ¨ĞÅµÄÄÚÈİ
+			LORA_Handler(); // å¤„ç†LORAé€šä¿¡çš„å†…å®¹
 
-		// TODO: ÕâÒ»²½²Ù×÷Êµ¼ÊÃ»ÓĞĞ§¹û£¬Ğ£Ê±Îª°´ĞèĞ£Ê±
+		// TODO: è¿™ä¸€æ­¥æ“ä½œå®é™…æ²¡æœ‰æ•ˆæœï¼Œæ ¡æ—¶ä¸ºæŒ‰éœ€æ ¡æ—¶
 		if (is_gps && check_GPS_Receive())
-			GPS_Handler(); // ´¦ÀíGPSÍ¨ĞÅµÄÄÚÈİ
+			GPS_Handler(); // å¤„ç†GPSé€šä¿¡çš„å†…å®¹
 
-		// Ïò·çËÙ·çÏò´«¸ĞÆ÷´®¿ÚÒªÊı¾İ
+		// å‘é£é€Ÿé£å‘ä¼ æ„Ÿå™¨ä¸²å£è¦æ•°æ®
 		if (is_wind_sensor)
 		{
 			printf("query windsensor...\r\n");
@@ -182,7 +182,7 @@ int main(void)
 
 		if (is_lora)
 		{
-			// Ïò´Ó½ÚµãÒªÊı¾İ
+			// å‘ä»èŠ‚ç‚¹è¦æ•°æ®
 			if (is_debug) printf("query data...\r\n");
 			for (i = 0; i < nNode; i++)
 			{
@@ -196,7 +196,7 @@ int main(void)
 					if (check_LORA_Receive())
 					{
 						if (is_debug) printf("data received!\r\n");
-						LORA_Handler(); // ´¦ÀíLORAÍ¨ĞÅµÄÄÚÈİ
+						LORA_Handler(); // å¤„ç†LORAé€šä¿¡çš„å†…å®¹
 						is_query_node_success = 1;
 						break;
 					}
@@ -217,7 +217,7 @@ int main(void)
 						if (check_LORA_Receive())
 						{
 							if (is_debug) printf("data received!\r\n");
-							LORA_Handler(); // ´¦ÀíLORAÍ¨ĞÅµÄÄÚÈİ
+							LORA_Handler(); // å¤„ç†LORAé€šä¿¡çš„å†…å®¹
 							is_query_node_success = 1;
 							break;
 						}
@@ -232,8 +232,8 @@ int main(void)
 
 		if (is_4g)
 		{
-			// Ö÷½Úµã·¢ËÍ×ÔÉíÊı¾İ
-			// ´òÓ¡Ê±¼äºÍ´«¸ĞÆ÷Êı¾İ
+			// ä¸»èŠ‚ç‚¹å‘é€è‡ªèº«æ•°æ®
+			// æ‰“å°æ—¶é—´å’Œä¼ æ„Ÿå™¨æ•°æ®
 			RTC_Get_Time(time);
 			sprintf(data_str, "address: 999999990505\r\ntime: %02d:%02d:%02d\r\ntemperature: %.2f\r\npressure: %.2f\r\nhumidity: %.2f\r\nwind_speed: %.2f\r\nwind_direction: %.2f\r\nsmoke: %.2f\r\nbattery: %.2f%%\r\nisTimeTrue: %d\r\n",
 					time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H, wind_speed, wind_direction, co2, battery, RTC_check_device_time());
@@ -244,36 +244,36 @@ int main(void)
 		}
 
 		delay_ms(1000);
-		DebugLed(); // LEDÉÁË¸ËµÃ÷³ÌĞòÕı³£ÔËĞĞ
+		DebugLed(); // LEDé—ªçƒè¯´æ˜ç¨‹åºæ­£å¸¸è¿è¡Œ
 	}
 }
 
-// ´¦Àí´®¿Ú4PCÍ¨ĞÅµÄÄÚÈİ
+// å¤„ç†ä¸²å£4PCé€šä¿¡çš„å†…å®¹
 void UART4_Handler(void)
 {
-	// Ö§³Öµ÷ÊÔÖ¸Áî£¨½áÎ²ĞèÒª\r\n£©
-	// 00,00 ÉèÖÃLORAÄ£¿éÊ±¼ä
-	// 00,01 Ò»¼ü³õÊ¼»¯LORAÄ£¿é
-	// 00,02 ²éÑ¯ÍøÂç×´Ì¬
-	// 00,03 Æô¶¯Êı¾İÍ¸´«£¬Ïò´Ó½Úµã·¢ËÍ´«¸ĞÆ÷Êı¾İÇëÇó
-	// 00,04 ²éÑ¯´Ó½Úµã×´Ì¬
-	// 00,05 ÍøÂçÊı¾İÇå³ı
-	// 00,06 È«ÍøµãÃû
-	// 00,07 Æô¶¯×éÍø
-	// 01,00 ²éÑ¯GPSÊ±¼ä
-	// 01,01 ¶ÁÈ¡rtcÊ±¼ä
-	// 01,02 ÉèÖÃrtcÊ±¼ä
+	// æ”¯æŒè°ƒè¯•æŒ‡ä»¤ï¼ˆç»“å°¾éœ€è¦\r\nï¼‰
+	// 00,00 è®¾ç½®LORAæ¨¡å—æ—¶é—´
+	// 00,01 ä¸€é”®åˆå§‹åŒ–LORAæ¨¡å—
+	// 00,02 æŸ¥è¯¢ç½‘ç»œçŠ¶æ€
+	// 00,03 å¯åŠ¨æ•°æ®é€ä¼ ï¼Œå‘ä»èŠ‚ç‚¹å‘é€ä¼ æ„Ÿå™¨æ•°æ®è¯·æ±‚
+	// 00,04 æŸ¥è¯¢ä»èŠ‚ç‚¹çŠ¶æ€
+	// 00,05 ç½‘ç»œæ•°æ®æ¸…é™¤
+	// 00,06 å…¨ç½‘ç‚¹å
+	// 00,07 å¯åŠ¨ç»„ç½‘
+	// 01,00 æŸ¥è¯¢GPSæ—¶é—´
+	// 01,01 è¯»å–rtcæ—¶é—´
+	// 01,02 è®¾ç½®rtcæ—¶é—´
 
 	u8 t, len;
-	// ½ÓÊÕÊı¾İ
-	len = UART4_RX_STA & 0x3fff; // µÃµ½´Ë´Î½ÓÊÕµ½µÄÊı¾İ³¤¶È
-	// ½ÓÊÕÊı¾İ³¤¶ÈÎª0Ê±£¬Ö±½ÓÇå¿Õ²¢·µ»Ø
+	// æ¥æ”¶æ•°æ®
+	len = UART4_RX_STA & 0x3fff; // å¾—åˆ°æ­¤æ¬¡æ¥æ”¶åˆ°çš„æ•°æ®é•¿åº¦
+	// æ¥æ”¶æ•°æ®é•¿åº¦ä¸º0æ—¶ï¼Œç›´æ¥æ¸…ç©ºå¹¶è¿”å›
 	if (len == 0)
 	{
 		UART4_RX_STA = 0;
 		return;
 	}
-	// ¼ì²âÊÇ·ñÊÇLORAµÄÖ¸Áî£¬Èç¹ûÊÇÔÙ·¢¸øloraÄ£¿é
+	// æ£€æµ‹æ˜¯å¦æ˜¯LORAçš„æŒ‡ä»¤ï¼Œå¦‚æœæ˜¯å†å‘ç»™loraæ¨¡å—
 	if (UART4_RX_BUF[0] == 0x6C && UART4_RX_BUF[len - 1] == 0x16)
 	{
 		if (is_debug) printf("LORA CMD\r\n");
@@ -282,29 +282,29 @@ void UART4_Handler(void)
 
 	else
 	{
-		// ²âÊÔ·¢ËÍ
+		// æµ‹è¯•å‘é€
 		if (is_debug) printf("UART4 CMD: ");
 		for (t = 0; t < len; t++)
 		{
-			// USART_SendData(USART1, USART_RX_BUF[t]);         //Ïò´®¿Ú1·¢ËÍÊı¾İ
-			// while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);//µÈ´ı·¢ËÍ½áÊø
+			// USART_SendData(USART1, USART_RX_BUF[t]);         //å‘ä¸²å£1å‘é€æ•°æ®
+			// while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);//ç­‰å¾…å‘é€ç»“æŸ
 			if (is_debug) printf("%02x ", UART4_RX_BUF[t]);
 		}
 		if (is_debug) printf("\r\nlen=%d", len);
-		if (is_debug) printf("\r\n"); // ²åÈë»»ĞĞ
+		if (is_debug) printf("\r\n"); // æ’å…¥æ¢è¡Œ
 
-		// µ±ÊäÈëÎª00,00Ê±£¬ÉèÖÃLORAÄ£¿éÊ±¼ä
+		// å½“è¾“å…¥ä¸º00,00æ—¶ï¼Œè®¾ç½®LORAæ¨¡å—æ—¶é—´
 		if (UART4_RX_BUF[0] == 0x00 && UART4_RX_BUF[1] == 0x00)
 		{
 			u8 time[3] = {17, 33, 11};
 			LORA_Init_Time(time);
 		}
-		// µ±ÊäÈëÎª00,01Ê±£¬Ò»¼ü³õÊ¼»¯LORAÄ£¿é
+		// å½“è¾“å…¥ä¸º00,01æ—¶ï¼Œä¸€é”®åˆå§‹åŒ–LORAæ¨¡å—
 		else if (UART4_RX_BUF[0] == 0x00 && UART4_RX_BUF[1] == 0x01)
 		{
 			LORA_Network_Init();
 		}
-		// µ±ÊäÈëÎª00,02Ê±£¬²éÑ¯ÍøÂç×´Ì¬
+		// å½“è¾“å…¥ä¸º00,02æ—¶ï¼ŒæŸ¥è¯¢ç½‘ç»œçŠ¶æ€
 		else if (UART4_RX_BUF[0] == 0x00 && UART4_RX_BUF[1] == 0x02)
 		{
 			u8 time[3] = {0};
@@ -319,7 +319,7 @@ void UART4_Handler(void)
 				if (is_debug) printf("LORA Network Status: ERROR\r\n");
 			}
 		}
-		// µ±ÊäÈë00,03Ê±£¬Æô¶¯Êı¾İÍ¸´«£¬Ïò´Ó½Úµã·¢ËÍ´«¸ĞÆ÷Êı¾İÇëÇó
+		// å½“è¾“å…¥00,03æ—¶ï¼Œå¯åŠ¨æ•°æ®é€ä¼ ï¼Œå‘ä»èŠ‚ç‚¹å‘é€ä¼ æ„Ÿå™¨æ•°æ®è¯·æ±‚
 		else if (UART4_RX_BUF[0] == 0x00 && UART4_RX_BUF[1] == 0x03)
 		{
 			u8 transfer_buf[6] = {0x00, 0x03, 0x01, 0x02, 0x03, 0x04};
@@ -330,15 +330,15 @@ void UART4_Handler(void)
 				transfer_buf,
 				6,
 				tmp_addr);
-			// ´òÓ¡½ÓÊÕµ½µÄÊı¾İ
+			// æ‰“å°æ¥æ”¶åˆ°çš„æ•°æ®
 			for (t = 0; t < receive_len; t++)
 			{
-				USART_SendData(UART4, receive_buf[t]); // Ïò´®¿Ú4·¢ËÍÊı¾İ
+				USART_SendData(UART4, receive_buf[t]); // å‘ä¸²å£4å‘é€æ•°æ®
 				while (USART_GetFlagStatus(UART4, USART_FLAG_TC) != SET)
-					; // µÈ´ı·¢ËÍ½áÊø
+					; // ç­‰å¾…å‘é€ç»“æŸ
 			}
 		}
-		// µ±ÊäÈë00,04Ê±£¬²éÑ¯´Ó½Úµã×´Ì¬
+		// å½“è¾“å…¥00,04æ—¶ï¼ŒæŸ¥è¯¢ä»èŠ‚ç‚¹çŠ¶æ€
 		else if (UART4_RX_BUF[0] == 0x00 && UART4_RX_BUF[1] == 0x04)
 		{
 			u8 flag = 0;
@@ -352,7 +352,7 @@ void UART4_Handler(void)
 				if (is_debug) printf("Slave Node Offline\r\n");
 			}
 		}
-		// µ±ÊäÈë00,05Ê±£¬ÍøÂçÊı¾İÇå³ı
+		// å½“è¾“å…¥00,05æ—¶ï¼Œç½‘ç»œæ•°æ®æ¸…é™¤
 		else if (UART4_RX_BUF[0] == 0x00 && UART4_RX_BUF[1] == 0x05)
 		{
 			u8 flag = 0;
@@ -366,7 +366,7 @@ void UART4_Handler(void)
 				if (is_debug) printf("Network Data Clear Fail\r\n");
 			}
 		}
-		// µ±ÊäÈë00, 06Ê±£¬È«ÍøµãÃû
+		// å½“è¾“å…¥00, 06æ—¶ï¼Œå…¨ç½‘ç‚¹å
 		else if (UART4_RX_BUF[0] == 0x00 && UART4_RX_BUF[1] == 0x06)
 		{
 			u8 flag = 0;
@@ -380,7 +380,7 @@ void UART4_Handler(void)
 				if (is_debug) printf("Network Naming Fail\r\n");
 			}
 		}
-		// µ±ÊäÈë00,07Ê±£¬Æô¶¯×éÍø
+		// å½“è¾“å…¥00,07æ—¶ï¼Œå¯åŠ¨ç»„ç½‘
 		else if (UART4_RX_BUF[0] == 0x00 && UART4_RX_BUF[1] == 0x07)
 		{
 			u8 flag = 0;
@@ -395,7 +395,7 @@ void UART4_Handler(void)
 				if (is_debug) printf("Network Start Fail\r\n");
 			}
 		}
-		// µ±ÊäÈë01,00Ê±£¬¶ÁÈ¡gpsÊ±¼ä
+		// å½“è¾“å…¥01,00æ—¶ï¼Œè¯»å–gpsæ—¶é—´
 		else if (UART4_RX_BUF[0] == 0x01 && UART4_RX_BUF[1] == 0x00)
 		{
 			u8 time[3] = {0};
@@ -410,14 +410,14 @@ void UART4_Handler(void)
 				if (is_debug) printf("GPS Time Read Fail\r\n");
 			}
 		}
-		// µ±ÊäÈë01,01Ê±£¬¶ÁÈ¡RTCÊ±ÖÓ
+		// å½“è¾“å…¥01,01æ—¶ï¼Œè¯»å–RTCæ—¶é’Ÿ
 		else if (UART4_RX_BUF[0] == 0x01 && UART4_RX_BUF[1] == 0x01)
 		{
 			u8 time[3] = {0};
 			RTC_Get_Time(time);
 			if (is_debug) printf("RTC Time: %d:%d:%d\r\n", time[0], time[1], time[2]);
 		}
-		// µ±ÊäÈë01,02Ê±£¬ÉèÖÃRTCÊ±ÖÓ
+		// å½“è¾“å…¥01,02æ—¶ï¼Œè®¾ç½®RTCæ—¶é’Ÿ
 		else if (UART4_RX_BUF[0] == 0x01 && UART4_RX_BUF[1] == 0x02)
 		{
 			u8 time[3] = {0};
@@ -428,33 +428,33 @@ void UART4_Handler(void)
 			if (is_debug) printf("RTC Time Set Success\r\n");
 		}
 	}
-	UART4_RX_STA = 0; // Çå¿Õ½ÓÊÕ»º´æ³¤¶È
+	UART4_RX_STA = 0; // æ¸…ç©ºæ¥æ”¶ç¼“å­˜é•¿åº¦
 }
 
-// LORAÄ£¿éÍ¨ĞÅ´¦Àí
+// LORAæ¨¡å—é€šä¿¡å¤„ç†
 void LORA_Handler(void)
 {
 	u8 t;
 	u8 temp_rec[200];
 	u8 rec_len = 0;
-	// ½ÓÊÕÊı¾İ
+	// æ¥æ”¶æ•°æ®
 	LORA_Receive(temp_rec, &rec_len);
 	if (rec_len == 0)
 	{
 		return;
 	}
-	// ²âÊÔ´òÓ¡Êı¾İ
+	// æµ‹è¯•æ‰“å°æ•°æ®
 	for (t = 0; t < rec_len; t++)
 	{
 		if (is_debug) printf("%02X ", temp_rec[t]);
-		// USART_SendData(UART4, temp_rec[t]); // Ïò´®¿Ú4·¢ËÍÊı¾İ
-		// while (USART_GetFlagStatus(UART4, USART_FLAG_TC) != SET); // µÈ´ı·¢ËÍ½áÊø
+		// USART_SendData(UART4, temp_rec[t]); // å‘ä¸²å£4å‘é€æ•°æ®
+		// while (USART_GetFlagStatus(UART4, USART_FLAG_TC) != SET); // ç­‰å¾…å‘é€ç»“æŸ
 	}
 	if (is_debug) printf("\r\n");
-	// ¼ì²âÊÇ·ñÊÇÍêÕûµÄLORAÊı¾İ°ü
+	// æ£€æµ‹æ˜¯å¦æ˜¯å®Œæ•´çš„LORAæ•°æ®åŒ…
 	if (temp_rec[0] == 0x6C && temp_rec[2] == 0x09 && temp_rec[rec_len - 1] == 0x16)
 	{
-		// ¼ì²â½ÓÊÕÊı¾İÊÇ·ñÊÇÀ´×Ô´Ó½ÚµãµÄÊı¾İÍ¸´«
+		// æ£€æµ‹æ¥æ”¶æ•°æ®æ˜¯å¦æ˜¯æ¥è‡ªä»èŠ‚ç‚¹çš„æ•°æ®é€ä¼ 
 		if (temp_rec[3] == 0x03 && temp_rec[4] == 0x05)
 		{
 			u8 flag;
@@ -472,44 +472,44 @@ void LORA_Handler(void)
 	}
 }
 
-// GPSÄ£¿éÍ¨ĞÅ´¦Àí
+// GPSæ¨¡å—é€šä¿¡å¤„ç†
 void GPS_Handler(void)
 {
 	u8 t;
 	u8 temp_rec[300];
 	u8 rec_len = 0;
 	u8 time[3] = {0};
-	// ½ÓÊÕÊı¾İ
+	// æ¥æ”¶æ•°æ®
 	GPS_Receive(temp_rec, &rec_len);
 	if (rec_len == 0)
 	{
 		return;
 	}
-	// ²âÊÔ´òÓ¡Êı¾İ
+	// æµ‹è¯•æ‰“å°æ•°æ®
 	
 	// for (t = 0; t < rec_len; t++)
 	// {
-	// 	USART_SendData(UART4, temp_rec[t]); // Ïò´®¿Ú4·¢ËÍÊı¾İ
-	// 	while (USART_GetFlagStatus(UART4, USART_FLAG_TC) != SET); // µÈ´ı·¢ËÍ½áÊø
+	// 	USART_SendData(UART4, temp_rec[t]); // å‘ä¸²å£4å‘é€æ•°æ®
+	// 	while (USART_GetFlagStatus(UART4, USART_FLAG_TC) != SET); // ç­‰å¾…å‘é€ç»“æŸ
 	// }
 	
-	// ¼ì²âÊÇ·ñÊÇÍêÕûµÄGPSÊı¾İ°ü
+	// æ£€æµ‹æ˜¯å¦æ˜¯å®Œæ•´çš„GPSæ•°æ®åŒ…
 	if (temp_rec[3] == 0x47 && temp_rec[4] == 0x47 && temp_rec[5] == 0x41)
 	{
-		// Ê±
-		time[0] = 10 * (temp_rec[7] - 48) + (temp_rec[8] - 48); // UTCÊ±¼ä
-		time[0] += 8;											// ±±¾©Ê±¼ä
+		// æ—¶
+		time[0] = 10 * (temp_rec[7] - 48) + (temp_rec[8] - 48); // UTCæ—¶é—´
+		time[0] += 8;											// åŒ—äº¬æ—¶é—´
 		if (time[0] >= 24)
 			time[0] -= 24;
-		time[0] = (time[0] / 10) * 16 + time[0] % 10; // ×ª»»Îª16½øÖÆ
+		time[0] = (time[0] / 10) * 16 + time[0] % 10; // è½¬æ¢ä¸º16è¿›åˆ¶
 		// set_lora_clk[8] = time[0];
-		// ·Ö
+		// åˆ†
 		time[1] = 16 * (temp_rec[9] - 48) + (temp_rec[10] - 48);
 		// set_lora_clk[9] = time[1];
-		// Ãë
+		// ç§’
 		time[2] = 16 * (temp_rec[11] - 48) + (temp_rec[12] - 48);
 
-		// ´òÓ¡Ê±¼ä
+		// æ‰“å°æ—¶é—´
 		// if (is_debug) printf("GPS Time: %d:%d:%d\r\n", time[0], time[1], time[2]);
 		//  u8 flag;
 		//  if (is_debug) printf("\r\n");
@@ -523,11 +523,11 @@ void GPS_Handler(void)
 		//  	if (is_debug) printf("GPS Receive Data Analysis Fail\r\n");
 		//  }
 	}
-	// if (is_debug) printf("\r\n");//²åÈë»»ĞĞ
+	// if (is_debug) printf("\r\n");//æ’å…¥æ¢è¡Œ
 	//  if (is_debug) printf("Receive %d,%d, len=%d", temp_rec[0],temp_rec[1],rec_len);
 }
 
-//	Êı¾İÄ£¿é´¦Àí
+//	æ•°æ®æ¨¡å—å¤„ç†
 void DATA_Handler(float *temp, float *pres, float *humi, float *wind_sp, float *wind_dir, float *smoke, float *batt)
 {
 	u8 i;
@@ -540,7 +540,7 @@ void DATA_Handler(float *temp, float *pres, float *humi, float *wind_sp, float *
     u8 humidity[4] = {0};
     u8 _smoke[4] = {0};
 	u8 battery[4] = {0};
-	u8 data_u8[28] = {0};				// ÓÃÓÚ´æ´¢Êı¾İ
+	u8 data_u8[28] = {0};				// ç”¨äºå­˜å‚¨æ•°æ®
 
 	if (is_debug) printf("get windsensor data!\r\n");
 	USART6_Receive_Data(temp_rec, &rec_len);
@@ -558,7 +558,7 @@ void DATA_Handler(float *temp, float *pres, float *humi, float *wind_sp, float *
 	}
 
 	for (i = 0; i < 4; i = i + 1)
-    {	//ÎÂ Ñ¹ Êª ·çËÙ·çÏò
+    {	//æ¸© å‹ æ¹¿ é£é€Ÿé£å‘
         temperature[i] = data_u8[i];
         pressure[i] = data_u8[4 + i];
         humidity[i] = data_u8[8 + i];

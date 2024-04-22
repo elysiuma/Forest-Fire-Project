@@ -6,7 +6,7 @@
 #include "string.h"
 #include "mqtt4g.h"
 
-// ¶¨ÒåÈ«¾Ö±äÁ¿
+// å®šä¹‰å…¨å±€å˜é‡
 SubNodeSetStruct SubNodeSet;
 // u16 last_time_gps = 999; 
 u8 is_lora_init = 0;
@@ -18,7 +18,7 @@ u8 SubNodeAddress[120] = {
         0x26, 0x49, 0x01, 0x00, 0x00, 0x00,
         // 0x27, 0x49, 0x01, 0x00, 0x00, 0x00,
         // 0x29, 0x49, 0x01, 0x00, 0x00, 0x00,
-        };
+                              };
 
 u8 LORA_Init(void)
 {
@@ -42,7 +42,7 @@ u8 LORA_Init(void)
     is_lora_init = 0;
     last_time_gps = 999;
 
-    // loraµÄµÚÒ»¸öÖ¸Áî²»»áÏìÓ¦£¬Òª·¢Á½´Î
+    // loraçš„ç¬¬ä¸€ä¸ªæŒ‡ä»¤ä¸ä¼šå“åº”ï¼Œè¦å‘ä¸¤æ¬¡
     flag = LORA_Network_Clear();
     if (flag == 1)
     {
@@ -80,7 +80,7 @@ void LORA_Receive(u8 *buf, u8 *len)
 u8 check_LORA_Receive(void)
 {
     // printf("USART2_RX_CNT: %i", USART2_RX_CNT);
-    // Èô½ÓÊÜÍê±ÏÊı¾İÔò·µ»Ø1
+    // è‹¥æ¥å—å®Œæ¯•æ•°æ®åˆ™è¿”å›1
     if (USART2_RX_CNT & 0x8000)
     {
         return 1;
@@ -91,13 +91,13 @@ u8 check_LORA_Receive(void)
     }
 }
 
-// »ñÈ¡LORAÄ£¿éÍ¨ÓÃ·¢ËÍÄÚÈİ
+// è·å–LORAæ¨¡å—é€šç”¨å‘é€å†…å®¹
 void LORA_Get_Common_Send_Msg(
-    u8 *send_msg,    // ´ı·¢ËÍµÄ±¨ÎÄ
-    u8 *sen_msg_len, // ±¨ÎÄ³¤¶È
-    u8 *command,     // ÃüÁî£¬Á½Î»
-    u8 *content_buf, // ÄÚÈİ
-    u8 content_len   // ÄÚÈİ³¤¶È
+    u8 *send_msg,    // å¾…å‘é€çš„æŠ¥æ–‡
+    u8 *sen_msg_len, // æŠ¥æ–‡é•¿åº¦
+    u8 *command,     // å‘½ä»¤ï¼Œä¸¤ä½
+    u8 *content_buf, // å†…å®¹
+    u8 content_len   // å†…å®¹é•¿åº¦
 )
 {
     u8 p = 0, i;
@@ -133,30 +133,30 @@ void LORA_Get_Common_Send_Msg(
     send_msg[p] = 0x16;
 }
 
-// LORAÄ£¿é³õÊ¼»¯Ê±¼ä
+// LORAæ¨¡å—åˆå§‹åŒ–æ—¶é—´
 u8 LORA_Init_Time(u8 *time)
 {
-    // ±¨ÎÄ³¤¶È:13
-    // time:Ê±¡¢·Ö¡¢Ãë
+    // æŠ¥æ–‡é•¿åº¦:13
+    // time:æ—¶ã€åˆ†ã€ç§’
     u8 i;
     u8 sen_msg_len = 13;
     u8 msg[13];
     u8 content[3];
     u8 command[2] = {0x02, 0x04};
-    u8 fail_count = 0; // Ê§°Ü´ÎÊı
+    u8 fail_count = 0; // å¤±è´¥æ¬¡æ•°
 
     u8 receive_buf[30];
     u8 receive_len = 0;
-    u8 set_time_flag = 0; // 0:ÉèÖÃÊ±¼äÊ§°Ü 1:ÉèÖÃÊ±¼ä³É¹¦
+    u8 set_time_flag = 0; // 0:è®¾ç½®æ—¶é—´å¤±è´¥ 1:è®¾ç½®æ—¶é—´æˆåŠŸ
 
     for (i = 0; i < 3; i++)
     {
-        // 10½øÖÆ×ª16½øÖÆ£¬16½øÖÆÏÂÓë10½øÖÆÊı×ÖÏàÍ¬
+        // 10è¿›åˆ¶è½¬16è¿›åˆ¶ï¼Œ16è¿›åˆ¶ä¸‹ä¸10è¿›åˆ¶æ•°å­—ç›¸åŒ
         content[i] = time[i] / 10 * 16 + time[i] % 10;
     }
     LORA_Get_Common_Send_Msg(msg, &sen_msg_len, command, content, 3);
 
-    // ´òÓ¡Ò»ÏÂmsg
+    // æ‰“å°ä¸€ä¸‹msg
     printf("msg: ");
     for (i = 0; i < sen_msg_len; i++)
     {
@@ -164,14 +164,14 @@ u8 LORA_Init_Time(u8 *time)
     }
     printf("\r\n");
     LORA_Send(msg, sen_msg_len);
-    // µÈ´ı½ÓÊÜÖ¸Áî×´Ì¬
+    // ç­‰å¾…æ¥å—æŒ‡ä»¤çŠ¶æ€
     while (1)
     {
         delay_ms(1000);
         if (check_LORA_Receive())
         {
             LORA_Receive(receive_buf, &receive_len);
-            // 3,4Î»ÎªÈ·ÈÏÎ»£¬00,01È·ÈÏ£¬00,02·ñÈÏ
+            // 3,4ä½ä¸ºç¡®è®¤ä½ï¼Œ00,01ç¡®è®¤ï¼Œ00,02å¦è®¤
             if (receive_buf[3] == 0x00 && receive_buf[4] == 0x01) // Confirm command
             {
                 set_time_flag = 1;
@@ -194,24 +194,24 @@ u8 LORA_Init_Time(u8 *time)
     return set_time_flag;
 }
 
-// LORAÄ£Ì¬Ìí¼Ó´Ó½ÚµãµØÖ·µµ°¸
+// LORAæ¨¡æ€æ·»åŠ ä»èŠ‚ç‚¹åœ°å€æ¡£æ¡ˆ
 u8 LORA_Add_Slave_Node(u8 nNode, u8 *SubNodeAddress)
 {
-    // ±¨ÎÄ³¤¶È	msg_len = 8 + 1 + nNode*6 + 2
-    // nNode:½ÚµãÊıÁ¿
-    // SubNodeAddress:Ã¿¸ö½ÚµãµÄµØÖ· ¶şÎ¬Êı×é
+    // æŠ¥æ–‡é•¿åº¦	msg_len = 8 + 1 + nNode*6 + 2
+    // nNode:èŠ‚ç‚¹æ•°é‡
+    // SubNodeAddress:æ¯ä¸ªèŠ‚ç‚¹çš„åœ°å€ äºŒç»´æ•°ç»„
     u8 n, m;
     u8 sen_msg_len = 8 + 1 + nNode * 6 + 2;
     u8 msg[150];
     u8 content[150];
     u8 command[2] = {0x02, 0x08};
-    u8 fail_count = 0; // Ê§°Ü´ÎÊı
+    u8 fail_count = 0; // å¤±è´¥æ¬¡æ•°
 
     u8 receive_buf[30];
     u8 receive_len = 0;
     u8 add_slave_node_flag = 0;
 
-    // Ò»Ö¡×î¶àÏÂÔØ30¸ö´Ó½ÚµãµØÖ·
+    // ä¸€å¸§æœ€å¤šä¸‹è½½30ä¸ªä»èŠ‚ç‚¹åœ°å€
     if (nNode > 30)
     {
         return 0;
@@ -235,11 +235,11 @@ u8 LORA_Add_Slave_Node(u8 nNode, u8 *SubNodeAddress)
         {
             delay_ms(1000);
             LORA_Receive(receive_buf, &receive_len);
-            // 3,4Î»ÎªÈ·ÈÏÎ»£¬00,01È·ÈÏ£¬00,02·ñÈÏ
+            // 3,4ä½ä¸ºç¡®è®¤ä½ï¼Œ00,01ç¡®è®¤ï¼Œ00,02å¦è®¤
             if (receive_buf[3] == 0x00 && receive_buf[4] == 0x01) // Confirm command
             {
                 add_slave_node_flag = 1;
-                // ³õÊ¼»¯´Ó½Úµãµµ°¸
+                // åˆå§‹åŒ–ä»èŠ‚ç‚¹æ¡£æ¡ˆ
                 for (m = 0; m < nNode; m++)
                 {
                     u8 new_address[6];
@@ -249,7 +249,7 @@ u8 LORA_Add_Slave_Node(u8 nNode, u8 *SubNodeAddress)
                         new_address[n] = SubNodeAddress[m * 6 + n];
                     }
                     node_location = LORA_Find_SubNode(new_address);
-                    // µ±Ç°´Ó½Úµã²»´æÔÚÔÙ½øĞĞÌí¼Ó
+                    // å½“å‰ä»èŠ‚ç‚¹ä¸å­˜åœ¨å†è¿›è¡Œæ·»åŠ 
                     if (node_location == 255)
                     {
                         SubNode new_node;
@@ -291,14 +291,14 @@ u8 LORA_Add_Slave_Node(u8 nNode, u8 *SubNodeAddress)
     return add_slave_node_flag;
 }
 
-// LORAÄ£¿éÍøÂçÊı¾İÇå³ı
+// LORAæ¨¡å—ç½‘ç»œæ•°æ®æ¸…é™¤
 u8 LORA_Network_Clear(void)
 {
-    // ±¨ÎÄ³¤¶È:10
+    // æŠ¥æ–‡é•¿åº¦:10
     u8 sen_msg_len;
     u8 msg[10];
     u8 command[2] = {0x02, 0x02};
-    u8 fail_count = 0; // Ê§°Ü´ÎÊı
+    u8 fail_count = 0; // å¤±è´¥æ¬¡æ•°
 
     u8 receive_buf[30];
     u8 receive_len = 0;
@@ -314,7 +314,7 @@ u8 LORA_Network_Clear(void)
         if (check_LORA_Receive())
         {
             LORA_Receive(receive_buf, &receive_len);
-            // 3,4Î»ÎªÈ·ÈÏÎ»£¬00,01È·ÈÏ£¬00,02·ñÈÏ
+            // 3,4ä½ä¸ºç¡®è®¤ä½ï¼Œ00,01ç¡®è®¤ï¼Œ00,02å¦è®¤
             if (receive_buf[3] == 0x00 && receive_buf[4] == 0x01) // Confirm command
             {
                 network_clear_flag = 1;
@@ -337,16 +337,16 @@ u8 LORA_Network_Clear(void)
     return network_clear_flag;
 }
 
-// LORAÄ£¿éÒ»¼ü³õÊ¼»¯
+// LORAæ¨¡å—ä¸€é”®åˆå§‹åŒ–
 u8 LORA_Network_Init(void)
 {
     u8 time[3];
-    u8 flag_set_time = 0;       // 0:ÉèÖÃÊ±¼äÊ§°Ü 1:ÉèÖÃÊ±¼ä³É¹¦
-    u8 flag_add_slave_node = 0; // 0:Ìí¼Ó´Ó½ÚµãÊ§°Ü 1:Ìí¼Ó´Ó½Úµã³É¹¦
-    u8 flag_network_start = 0;  // 0:ÍøÂçÆô¶¯Ê§°Ü 1:ÍøÂçÆô¶¯³É¹¦
+    u8 flag_set_time = 0;       // 0:è®¾ç½®æ—¶é—´å¤±è´¥ 1:è®¾ç½®æ—¶é—´æˆåŠŸ
+    u8 flag_add_slave_node = 0; // 0:æ·»åŠ ä»èŠ‚ç‚¹å¤±è´¥ 1:æ·»åŠ ä»èŠ‚ç‚¹æˆåŠŸ
+    u8 flag_network_start = 0;  // 0:ç½‘ç»œå¯åŠ¨å¤±è´¥ 1:ç½‘ç»œå¯åŠ¨æˆåŠŸ
 
     printf("LORA network init start!\r\n");
-    // 1.²»ÔÙÍ¬²½Ê±¼ä£¬Ö±½ÓÉèÖÃÊ±¼ä
+    // 1.ä¸å†åŒæ­¥æ—¶é—´ï¼Œç›´æ¥è®¾ç½®æ—¶é—´
     time[0]=0x00;
     time[1]=0x00;
     time[2]=0x00;
@@ -355,8 +355,8 @@ u8 LORA_Network_Init(void)
     //if (flag_set_time != 1)
        // return 0;
 
-    // 2.Ìí¼Ó´Ó½ÚµãµØÖ·µµ°¸
-    SubNodeSet.nNode = 0; // ´Ó½ÚµãÊıÁ¿ÇåÁã
+    // 2.æ·»åŠ ä»èŠ‚ç‚¹åœ°å€æ¡£æ¡ˆ
+    SubNodeSet.nNode = 0; // ä»èŠ‚ç‚¹æ•°é‡æ¸…é›¶
     flag_add_slave_node = LORA_Add_Slave_Node(nNode, SubNodeAddress);
     if (flag_add_slave_node == 1)
     {
@@ -368,7 +368,7 @@ u8 LORA_Network_Init(void)
         return 0;
     }
 
-    // 3.Æô¶¯×éÍø
+    // 3.å¯åŠ¨ç»„ç½‘
     flag_network_start = LORA_Network_Start();
     if (flag_network_start == 1)
     {
@@ -381,57 +381,57 @@ u8 LORA_Network_Init(void)
     }
 
     printf("LORA network init wait 15 seconds\r\n");
-    // ĞèÒªÑÓ³Ù15Ãë£¬µÈ´ı×éÍøÍê³É
+    // éœ€è¦å»¶è¿Ÿ15ç§’ï¼Œç­‰å¾…ç»„ç½‘å®Œæˆ
     delay_ms(15 * 1000);
     printf("LORA network init success!\r\n");
     return 1;
 }
 
-// ²éÑ¯ÍøÂç×´Ì¬
+// æŸ¥è¯¢ç½‘ç»œçŠ¶æ€
 u8 LORA_Query_Network_Status(u8 *time, u8 is_debug)
 {
-    // time: Ê±·ÖÃë
-    // is_debug: 0:²»´òÓ¡µ÷ÊÔĞÅÏ¢ 1:´òÓ¡µ÷ÊÔĞÅÏ¢
-    // ±¨ÎÄ³¤¶È:8
+    // time: æ—¶åˆ†ç§’
+    // is_debug: 0:ä¸æ‰“å°è°ƒè¯•ä¿¡æ¯ 1:æ‰“å°è°ƒè¯•ä¿¡æ¯
+    // æŠ¥æ–‡é•¿åº¦:8
     u8 i;
-    u8 append_len = 8; // Êµ¼Ê·µ»ØÄÚÈİÇ°µÄ×Ö·ûÊı
+    u8 append_len = 8; // å®é™…è¿”å›å†…å®¹å‰çš„å­—ç¬¦æ•°
     u8 sen_msg_len = 10;
     u8 msg[10];
     u8 command[2] = {0x01, 0x01};
-    u8 fail_count = 0;         // Ê§°Ü´ÎÊı
-    u8 flag_query_network = 0; // 0:²éÑ¯ÍøÂç×´Ì¬Ê§°Ü 1:²éÑ¯ÍøÂç×´Ì¬³É¹¦
+    u8 fail_count = 0;         // å¤±è´¥æ¬¡æ•°
+    u8 flag_query_network = 0; // 0:æŸ¥è¯¢ç½‘ç»œçŠ¶æ€å¤±è´¥ 1:æŸ¥è¯¢ç½‘ç»œçŠ¶æ€æˆåŠŸ
 
     u8 receive_buf[50];
     u8 receive_len = 0;
 
-    // Ä£¿éÄÚ²¿Ê±¼ä
-    // u8 time[3]; // Ê±·ÖÃë Ê¹ÓÃ²ÎÊıÀ´½øĞĞ·µ»Ø
-    // ÍøÂçÔËĞĞ×´Ì¬£º0=¿ÕÏĞ£»1=×éÍø£»2=³­±í
+    // æ¨¡å—å†…éƒ¨æ—¶é—´
+    // u8 time[3]; // æ—¶åˆ†ç§’ ä½¿ç”¨å‚æ•°æ¥è¿›è¡Œè¿”å›
+    // ç½‘ç»œè¿è¡ŒçŠ¶æ€ï¼š0=ç©ºé—²ï¼›1=ç»„ç½‘ï¼›2=æŠ„è¡¨
     u8 network_status = 0;
-    // µµ°¸×ÜÊı£ºÓÃ»§µµ°¸×Ó½ÚµãµÄ×Ü¸öÊı
+    // æ¡£æ¡ˆæ€»æ•°ï¼šç”¨æˆ·æ¡£æ¡ˆå­èŠ‚ç‚¹çš„æ€»ä¸ªæ•°
     u8 total_number = 0;
-    // ÊµÊ±ÔÚÏß×ÜÊı
+    // å®æ—¶åœ¨çº¿æ€»æ•°
     u8 online_number = 0;
 
     LORA_Get_Common_Send_Msg(msg, &sen_msg_len, command, NULL, 0);
 
     LORA_Send(msg, sen_msg_len);
-    // µÈ´ı½ÓÊÜÖ¸Áî×´Ì¬
+    // ç­‰å¾…æ¥å—æŒ‡ä»¤çŠ¶æ€
     while (1)
     {
         delay_ms(1000);
         if (check_LORA_Receive())
         {
             LORA_Receive(receive_buf, &receive_len);
-            // »ñÈ¡Ê±¼ä
+            // è·å–æ—¶é—´
             time[0] = receive_buf[append_len + 2] / 16 * 10 + receive_buf[append_len + 2] % 16;
             time[1] = receive_buf[append_len + 3] / 16 * 10 + receive_buf[append_len + 3] % 16;
             time[2] = receive_buf[append_len + 4] / 16 * 10 + receive_buf[append_len + 4] % 16;
-            // »ñÈ¡ÍøÂçÔËĞĞ×´Ì¬
+            // è·å–ç½‘ç»œè¿è¡ŒçŠ¶æ€
             network_status = receive_buf[append_len + 6];
-            // »ñÈ¡µµ°¸×ÜÊı£¬ÓÉÁ½Î»×é³É£¬ÏÈÖ»È¡ÁËµÍÎ»(ÓÉÓÚ·µ»ØÊı¾İÖĞÊÇµßµ¹µÄ£¬Òò´ËÕâÀïÈ¡ÁË¸ßÎ»£¬ÀıÈç01 00)
+            // è·å–æ¡£æ¡ˆæ€»æ•°ï¼Œç”±ä¸¤ä½ç»„æˆï¼Œå…ˆåªå–äº†ä½ä½(ç”±äºè¿”å›æ•°æ®ä¸­æ˜¯é¢ å€’çš„ï¼Œå› æ­¤è¿™é‡Œå–äº†é«˜ä½ï¼Œä¾‹å¦‚01 00)
             total_number = receive_buf[append_len + 7];
-            // »ñÈ¡ÊµÊ±ÔÚÏß×ÜÊı£¬ÓÉÁ½Î»×é³É£¬ÏÈÖ»È¡ÁËµÍÎ»
+            // è·å–å®æ—¶åœ¨çº¿æ€»æ•°ï¼Œç”±ä¸¤ä½ç»„æˆï¼Œå…ˆåªå–äº†ä½ä½
             online_number = receive_buf[append_len + 15];
 
             if (is_debug)
@@ -467,20 +467,20 @@ u8 LORA_Query_Network_Status(u8 *time, u8 is_debug)
 
 u8 LORA_Query_Slave_Node_Status(u8 is_debug)
 {
-    // ´Ó½Úµã×´Ì¬²éÑ¯
+    // ä»èŠ‚ç‚¹çŠ¶æ€æŸ¥è¯¢
     u8 sen_msg_len, i;
-    u8 append_len = 8; // Êµ¼Ê·µ»ØÄÚÈİÇ°µÄ×Ö·ûÊı
+    u8 append_len = 8; // å®é™…è¿”å›å†…å®¹å‰çš„å­—ç¬¦æ•°
     u8 msg[20];
     u8 command[2] = {0x01, 0x02};
     u8 content_len = 2;
-    u8 content[2];     // ÆğÊ¼ĞòºÅ£¬Á½×Ö½Ú
-    u8 fail_count = 0; // Ê§°Ü´ÎÊı
+    u8 content[2];     // èµ·å§‹åºå·ï¼Œä¸¤å­—èŠ‚
+    u8 fail_count = 0; // å¤±è´¥æ¬¡æ•°
 
     u8 receive_buf[50];
     u8 receive_len = 0;
-    // ÆğÊ¼ĞòºÅ
+    // èµ·å§‹åºå·
     u8 start_num[2];
-    // µ±Ç°Ò³¸öÊı
+    // å½“å‰é¡µä¸ªæ•°
     u8 current_page_num;
 
     content[0] = 0x00;
@@ -489,7 +489,7 @@ u8 LORA_Query_Slave_Node_Status(u8 is_debug)
     LORA_Get_Common_Send_Msg(msg, &sen_msg_len, command, content, content_len);
 
     LORA_Send(msg, sen_msg_len);
-    // µÈ´ı½ÓÊÜÖ¸Áî×´Ì¬
+    // ç­‰å¾…æ¥å—æŒ‡ä»¤çŠ¶æ€
     while (1)
     {
         delay_ms(1000);
@@ -508,15 +508,15 @@ u8 LORA_Query_Slave_Node_Status(u8 is_debug)
                 printf("\r\n");
             }
 
-            // ÆğÊ¼ĞòºÅ
+            // èµ·å§‹åºå·
             start_num[0] = receive_buf[append_len];
             start_num[1] = receive_buf[append_len + 1];
-            // µ±Ç°Ò³¸öÊı
+            // å½“å‰é¡µä¸ªæ•°
             current_page_num = receive_buf[append_len + 2];
             if (is_debug)
             {
                 printf("start_num: %d, current_page_num: %d\r\n", start_num[0] * 256 + start_num[1], current_page_num);
-                // ´òÓ¡Ã¿¸ö´ÓÄ£¿éµØÖ·6Î»£¬×´Ì¬2Î»£¬°æ±¾2Î»
+                // æ‰“å°æ¯ä¸ªä»æ¨¡å—åœ°å€6ä½ï¼ŒçŠ¶æ€2ä½ï¼Œç‰ˆæœ¬2ä½
                 for (i = 0; i < current_page_num; i = i + 1)
                 {
                     printf("address: %02x%02x%02x%02x%02x%02x, status: %02x%02x, version: %02x%02x\r\n",
@@ -539,24 +539,24 @@ u8 LORA_Query_Slave_Node_Status(u8 is_debug)
     }
 }
 
-// Êı¾İÍ¸´«
+// æ•°æ®é€ä¼ 
 void LORA_DATA_Transfer(u8 *buf, u8 buf_len, u8 *address)
 {
-    // ±¨ÎÄ³¤¶È	msg_len = 8 + 6 + 2 + 1 + len + 2(0d0a) + 2
-    // ĞèÒª×Ô¶¯¸ø·¢ËÍÄÚÈİ×îºó²¹ÉÏ0x0d£¬0x0a
-    // address:Êı¾İ´«ÊäÊÕ·½µÄµØÖ·
-    // buf:´ı·¢ËÍÊı¾İ»º´æÆ÷
-    // buf_len:´ı·¢ËÍÊı¾İ³¤¶È
-    // receive_buf:½ÓÊÕÊı¾İ»º´æÆ÷
-    // receive_len:½ÓÊÕÊı¾İ³¤¶È
+    // æŠ¥æ–‡é•¿åº¦	msg_len = 8 + 6 + 2 + 1 + len + 2(0d0a) + 2
+    // éœ€è¦è‡ªåŠ¨ç»™å‘é€å†…å®¹æœ€åè¡¥ä¸Š0x0dï¼Œ0x0a
+    // address:æ•°æ®ä¼ è¾“æ”¶æ–¹çš„åœ°å€
+    // buf:å¾…å‘é€æ•°æ®ç¼“å­˜å™¨
+    // buf_len:å¾…å‘é€æ•°æ®é•¿åº¦
+    // receive_buf:æ¥æ”¶æ•°æ®ç¼“å­˜å™¨
+    // receive_len:æ¥æ”¶æ•°æ®é•¿åº¦
     u8 p = 0, i;
     u8 sen_msg_len = 8 + 6 + 2 + 1 + buf_len + 2 + 2;
     u8 msg[200];
     u8 command[2] = {0x03, 0x05};
-    u8 content_len = 6 + 2 + 1 + buf_len + 2; // address + ¹Ì¶¨ + ³¤¶ÈÎ» + buf_len + 0d0a
+    u8 content_len = 6 + 2 + 1 + buf_len + 2; // address + å›ºå®š + é•¿åº¦ä½ + buf_len + 0d0a
     u8 content[200];
-    u8 fail_count = 0; // Ê§°Ü´ÎÊı
-    //u8 result_state = 99; // 0=Ä£¿éÍ¨ĞÅ³É¹¦¡¢1=´ÓÄ£¿éÍ¨ĞÅÊ§°Ü;2=´ÓÄ£¿é×éÍøÊ§°Ü¡¢3=Ö÷½ÚµãÈÎÎñ·±Ã¦¡¢4=Ö÷½Úµã½âÃÜ´íÎó,99=ÎŞ·µ»Ø
+    u8 fail_count = 0; // å¤±è´¥æ¬¡æ•°
+    //u8 result_state = 99; // 0=æ¨¡å—é€šä¿¡æˆåŠŸã€1=ä»æ¨¡å—é€šä¿¡å¤±è´¥;2=ä»æ¨¡å—ç»„ç½‘å¤±è´¥ã€3=ä¸»èŠ‚ç‚¹ä»»åŠ¡ç¹å¿™ã€4=ä¸»èŠ‚ç‚¹è§£å¯†é”™è¯¯,99=æ— è¿”å›
 
     u8 all_receive_buf[100];
     u8 all_receive_len = 0;
@@ -577,13 +577,13 @@ void LORA_DATA_Transfer(u8 *buf, u8 buf_len, u8 *address)
         content[p] = buf[i]; // 17--17+len-1
         p++;
     }
-    // ÄÚÈİ²¿·ÖµÄ½áÎ²±êÖ¾
+    // å†…å®¹éƒ¨åˆ†çš„ç»“å°¾æ ‡å¿—
     content[p++] = 0x0d;
     content[p++] = 0x0a;
 
     LORA_Get_Common_Send_Msg(msg, &sen_msg_len, command, content, content_len);
 
-    // ´òÓ¡Ò»ÏÂÍ¸´«·¢ËÍµÄmsg
+    // æ‰“å°ä¸€ä¸‹é€ä¼ å‘é€çš„msg
     printf("LORA_DATA_Transfer_send_msg: \r\n");
     for (i = 0; i < sen_msg_len; i = i + 1)
     {
@@ -592,7 +592,7 @@ void LORA_DATA_Transfer(u8 *buf, u8 buf_len, u8 *address)
     printf("\r\n");
     LORA_Send(msg, sen_msg_len);
 	/*
-    // µÈ´ı½ÓÊÜÖ¸Áî×´Ì¬
+    // ç­‰å¾…æ¥å—æŒ‡ä»¤çŠ¶æ€
     while (1)
     {
         delay_ms(1000);
@@ -626,7 +626,7 @@ void LORA_DATA_Transfer(u8 *buf, u8 buf_len, u8 *address)
 	*/
 }
 
-// LORAÖ÷Ä£¿é½ÓÊÕÍ¸´«Êı¾İ½âÎö
+// LORAä¸»æ¨¡å—æ¥æ”¶é€ä¼ æ•°æ®è§£æ
 u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len)
 {
     // eg. 6C 10 09 03 06 80 B3 16 02 49 01 00 00 00 00 00 02 01 01 27 16
@@ -635,11 +635,11 @@ u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len)
     u8 data_len;
     u8 data[100];
     u8 flag = 0;
-    u8 node_location = 255; // ÄÚ´æÖĞ´æ´¢µÄ¶ÔÓ¦¸Ã´Ó½ÚµãµÄÎ»ÖÃ
+    u8 node_location = 255; // å†…å­˜ä¸­å­˜å‚¨çš„å¯¹åº”è¯¥ä»èŠ‚ç‚¹çš„ä½ç½®
 
-    // Ä¿Ç°Ê±¼äÏòLORAÖ÷Ä£¿é²éÑ¯£¬Ô¼ÓĞ0.5~1ÃëµÄÑÓ³Ù
+    // ç›®å‰æ—¶é—´å‘LORAä¸»æ¨¡å—æŸ¥è¯¢ï¼Œçº¦æœ‰0.5~1ç§’çš„å»¶è¿Ÿ
     u8 time[3] = {0};
-    // ·çËÙ·çÏò£¨·çËÙ4×Ö½Ú£¬·çÏò4¸ö×Ö½Ú£©¡¢ÎÂ¶È£¨ËÄ×Ö½Ú£©¡¢ÆøÑ¹£¨ËÄ×Ö½Ú£©Êª¶È£¨ËÄ×Ö½Ú£©¡¢ÑÌÎí£¨ËÄ×Ö½Ú£©
+    // é£é€Ÿé£å‘ï¼ˆé£é€Ÿ4å­—èŠ‚ï¼Œé£å‘4ä¸ªå­—èŠ‚ï¼‰ã€æ¸©åº¦ï¼ˆå››å­—èŠ‚ï¼‰ã€æ°”å‹ï¼ˆå››å­—èŠ‚ï¼‰æ¹¿åº¦ï¼ˆå››å­—èŠ‚ï¼‰ã€çƒŸé›¾ï¼ˆå››å­—èŠ‚ï¼‰
     u8 wind_speed[4] = {0};
     u8 wind_direction[4] = {0};
     u8 temperature[4] = {0};
@@ -675,7 +675,7 @@ u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len)
     }
     printf("\r\n");
 
-    // »ñÈ¡²ÉÑùÊ±¼ä
+    // è·å–é‡‡æ ·æ—¶é—´
     RTC_Get_Time(time);
     printf("time: %02d:%02d:%02d\r\n", time[0], time[1], time[2]);
     // flag = LORA_Query_Network_Status(time, 0);
@@ -683,10 +683,10 @@ u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len)
     // if (flag != 1)
     //     return flag;
 
-    flag = 0; // ÖØÖÃflag
-    // ½âÎö´«¸ĞÆ÷Êı¾İ
+    flag = 0; // é‡ç½®flag
+    // è§£æä¼ æ„Ÿå™¨æ•°æ®
     for (i = 0; i < 4; i = i + 1)
-    {	//ÎÂ Ñ¹ Êª ·çËÙ·çÏò
+    {	//æ¸© å‹ æ¹¿ é£é€Ÿé£å‘
         temperature[i] = data[i];
         pressure[i] = data[4 + i];
         humidity[i] = data[8 + i];
@@ -695,7 +695,7 @@ u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len)
         smoke[i] = data[20 + i];
 		battery[i] = data[24 + i];
     }
-    // ËÄ×Ö½Úu8×ªfloat
+    // å››å­—èŠ‚u8è½¬float
     wind_speed_f = *(float *)wind_speed;
     wind_direction_f = *(float *)wind_direction;
     temperature_f = *(float *)temperature;
@@ -704,7 +704,7 @@ u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len)
     smoke_f = *(float *)smoke;
 	battery_f = *(float *)battery;
 	isTime = RTC_check_device_time();
-    // ´òÓ¡Ê±¼äºÍ´«¸ĞÆ÷Êı¾İ
+    // æ‰“å°æ—¶é—´å’Œä¼ æ„Ÿå™¨æ•°æ®
 	sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %f\r\npressure: %f\r\nhumidity: %f\r\nwind_speed: %f\r\n"
 	"wind_direction: %f\r\nsmoke: %f\r\nbattery: %f\r\nisTimeTrue: %d\r\n",
            address[5], address[4], address[3], address[2], address[1], address[0], time[0], time[1], time[2], temperature_f, pressure_f, humidity_f, wind_speed_f, 
@@ -716,13 +716,13 @@ u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len)
 	printf("data sent...\r\n");
     //printf("time: %02d:%02d:%02d, wind_speed: %f, wind_direction: %f, temperature: %f, pressure: %f, humidity: %f, smoke: %f\r\n",
            //time[0], time[1], time[2], wind_speed_f, wind_direction_f, temperature_f, pressure_f, humidity_f, smoke_f);
-    // ±£´æ´«¸ĞÆ÷Êı¾İ
-    // ´ÓÈ«¾Ö±äÁ¿SubNodeSetÖĞ²éÕÒÊÇ·ñÓĞ¸ÃµØÖ·µÄ´Ó½Úµã
+    // ä¿å­˜ä¼ æ„Ÿå™¨æ•°æ®
+    // ä»å…¨å±€å˜é‡SubNodeSetä¸­æŸ¥æ‰¾æ˜¯å¦æœ‰è¯¥åœ°å€çš„ä»èŠ‚ç‚¹
 
     node_location = LORA_Find_SubNode(address);
     if (node_location == 255)
     {
-        // Î´ÕÒµ½¸Ã´Ó½Úµã£¬Ìí¼Ó¸Ã´Ó½Úµã
+        // æœªæ‰¾åˆ°è¯¥ä»èŠ‚ç‚¹ï¼Œæ·»åŠ è¯¥ä»èŠ‚ç‚¹
         SubNode new_node;
         for (i = 0; i < 6; i++)
         {
@@ -734,7 +734,7 @@ u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len)
                address[5], address[4], address[3], address[2], address[1], address[0], SubNodeSet.nNode);
         node_location = SubNodeSet.nNode - 1;
     }
-    // ÕÒµ½¸Ã´Ó½Úµã£¬¸üĞÂ¸Ã´Ó½ÚµãµÄÊı¾İ
+    // æ‰¾åˆ°è¯¥ä»èŠ‚ç‚¹ï¼Œæ›´æ–°è¯¥ä»èŠ‚ç‚¹çš„æ•°æ®
     SubNodeSet.SubNode_list[node_location].wind_speed = wind_speed_f;
     SubNodeSet.SubNode_list[node_location].wind_direction = wind_direction_f;
     SubNodeSet.SubNode_list[node_location].temperature = temperature_f;
@@ -745,18 +745,18 @@ u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len)
     SubNodeSet.SubNode_list[node_location].sample_time[1] = time[1];
     SubNodeSet.SubNode_list[node_location].sample_time[2] = time[2];
     SubNodeSet.SubNode_list[node_location].last_gps = last_time_gps;
-    flag = 1; // ¸üĞÂ³É¹¦
+    flag = 1; // æ›´æ–°æˆåŠŸ
     return flag;
 }
 
-// È«ÍøµãÃû 03 01
+// å…¨ç½‘ç‚¹å 03 01
 u8 LORA_Network_Naming(void)
 {
-    // ±¨ÎÄ³¤¶È:10
+    // æŠ¥æ–‡é•¿åº¦:10
     u8 sen_msg_len;
     u8 msg[10];
     u8 command[2] = {0x03, 0x01};
-    u8 fail_count = 0; // Ê§°Ü´ÎÊı
+    u8 fail_count = 0; // å¤±è´¥æ¬¡æ•°
 
     u8 receive_buf[30];
     u8 receive_len = 0;
@@ -772,7 +772,7 @@ u8 LORA_Network_Naming(void)
         if (check_LORA_Receive())
         {
             LORA_Receive(receive_buf, &receive_len);
-            // 3,4Î»ÎªÈ·ÈÏÎ»£¬00,01È·ÈÏ£¬00,02·ñÈÏ
+            // 3,4ä½ä¸ºç¡®è®¤ä½ï¼Œ00,01ç¡®è®¤ï¼Œ00,02å¦è®¤
             if (receive_buf[3] == 0x00 && receive_buf[4] == 0x01) // Confirm command
             {
                 network_naming_flag = 1;
@@ -795,14 +795,14 @@ u8 LORA_Network_Naming(void)
     return network_naming_flag;
 }
 
-// Æô¶¯×éÍø 03 03
+// å¯åŠ¨ç»„ç½‘ 03 03
 u8 LORA_Network_Start(void)
 {
-    // ±¨ÎÄ³¤¶È:10
+    // æŠ¥æ–‡é•¿åº¦:10
     u8 sen_msg_len;
     u8 msg[10];
     u8 command[2] = {0x03, 0x03};
-    u8 fail_count = 0; // Ê§°Ü´ÎÊı
+    u8 fail_count = 0; // å¤±è´¥æ¬¡æ•°
     u8 i;
 
     u8 receive_buf[30];
@@ -812,7 +812,7 @@ u8 LORA_Network_Start(void)
     LORA_Get_Common_Send_Msg(msg, &sen_msg_len, command, NULL, 0);
 
     LORA_Send(msg, sen_msg_len);
-    // Æô¶¯×éÍøÖ¸Áî¾­³£Ã»ÓĞ·µ»Ø£¬Ö±½Ó²»½øĞĞ·µ»ØÖ¡¼ì²âÁË
+    // å¯åŠ¨ç»„ç½‘æŒ‡ä»¤ç»å¸¸æ²¡æœ‰è¿”å›ï¼Œç›´æ¥ä¸è¿›è¡Œè¿”å›å¸§æ£€æµ‹äº†
     delay_ms(1000);
     network_start_flag = 1;
     // while (1)
@@ -821,13 +821,13 @@ u8 LORA_Network_Start(void)
     //     if (check_LORA_Receive())
     //     {
     //         LORA_Receive(receive_buf, &receive_len);
-    //         // ´òÓ¡Ò»ÏÂreceive_buf
+    //         // æ‰“å°ä¸€ä¸‹receive_buf
     //         for (i = 0; i < receive_len; i++)
     //         {
     //             printf("%02x ", receive_buf[i]);
     //         }
             
-    //         // 3,4Î»ÎªÈ·ÈÏÎ»£¬00,01È·ÈÏ£¬00,02·ñÈÏ
+    //         // 3,4ä½ä¸ºç¡®è®¤ä½ï¼Œ00,01ç¡®è®¤ï¼Œ00,02å¦è®¤
     //         if (receive_buf[3] == 0x00 && receive_buf[4] == 0x01) // Confirm command
     //         {
     //             network_start_flag = 1;
@@ -850,11 +850,11 @@ u8 LORA_Network_Start(void)
     return network_start_flag;
 }
 
-// ¼ì²âµ±Ç°µØÖ·µÄ´Ó½ÚµãÊÇ·ñ´æÔÚ£¬ÒÔ¼°Î»ÖÃ
+// æ£€æµ‹å½“å‰åœ°å€çš„ä»èŠ‚ç‚¹æ˜¯å¦å­˜åœ¨ï¼Œä»¥åŠä½ç½®
 u8 LORA_Find_SubNode(u8 *address)
 {
     u8 i;
-    u8 flag = 255; // 255²»´æÔÚ£¬ÆäËûÎª¶ÔÓ¦µÄ´æ´¢Î»ÖÃ
+    u8 flag = 255; // 255ä¸å­˜åœ¨ï¼Œå…¶ä»–ä¸ºå¯¹åº”çš„å­˜å‚¨ä½ç½®
     for (i = 0; i < SubNodeSet.nNode; i = i + 1)
     {
         if (SubNodeSet.SubNode_list[i].address[0] == address[0] && SubNodeSet.SubNode_list[i].address[1] == address[1] &&
@@ -868,39 +868,39 @@ u8 LORA_Find_SubNode(u8 *address)
     return flag;
 }
 
-// // ×Ô¶¯Í¬²½gpsÊ±¼ä²¢Ğ£Ê±
-// // ÔÚÖĞ¶ÏÖĞ½øĞĞĞ£Ê±Ò»Ö±Ê§°Ü£¬ÏÖÔÚÆúÓÃ¸Ãº¯Êı£¬¸ÄÎªÀûÓÃRTCÊ±ÖÓÀ´½øĞĞĞ£Ê±
+// // è‡ªåŠ¨åŒæ­¥gpsæ—¶é—´å¹¶æ ¡æ—¶
+// // åœ¨ä¸­æ–­ä¸­è¿›è¡Œæ ¡æ—¶ä¸€ç›´å¤±è´¥ï¼Œç°åœ¨å¼ƒç”¨è¯¥å‡½æ•°ï¼Œæ”¹ä¸ºåˆ©ç”¨RTCæ—¶é’Ÿæ¥è¿›è¡Œæ ¡æ—¶
 // u8 LORA_update_device_time()
 // {
-//     u8 flag_get_time = 0;   // 0:»ñÈ¡Ê±¼äÊ§°Ü 1:»ñÈ¡Ê±¼ä³É¹¦ 2:Î´ÕÒµ½ÎÀĞÇÊ±¼ä²»×¼
+//     u8 flag_get_time = 0;   // 0:è·å–æ—¶é—´å¤±è´¥ 1:è·å–æ—¶é—´æˆåŠŸ 2:æœªæ‰¾åˆ°å«æ˜Ÿæ—¶é—´ä¸å‡†
 //     u8 flag_set_time = 0;
 //     u8 time[3];
-//     u8 set_time_fail_count = 0; // ÉèÖÃÊ±¼äÊ§°Ü´ÎÊı
-//     u8 try_set_time_num;    // ³¢ÊÔÉèÖÃÊ±¼äµÄ´ÎÊı
+//     u8 set_time_fail_count = 0; // è®¾ç½®æ—¶é—´å¤±è´¥æ¬¡æ•°
+//     u8 try_set_time_num;    // å°è¯•è®¾ç½®æ—¶é—´çš„æ¬¡æ•°
 //     printf("last_time_gps=%d\r\n",last_time_gps);
 //     last_time_gps++;
 //     if(last_time_gps > 999)
-//         // ·ÀÖ¹last_time_gpsÒç³ö,999¼´Îª´ÓÎ´Íê³É¹ıĞ£Ê±
+//         // é˜²æ­¢last_time_gpsæº¢å‡º,999å³ä¸ºä»æœªå®Œæˆè¿‡æ ¡æ—¶
 //         last_time_gps = 999;
-//     // Èç¹û¾àÀëÉÏ´ÎgpsÍ¬²½Ê±¼ä³¬¹ıÁË12¸öÖÜÆÚ£¬¾ÍÖØĞÂÍ¬²½Ò»´ÎÊ±¼ä
+//     // å¦‚æœè·ç¦»ä¸Šæ¬¡gpsåŒæ­¥æ—¶é—´è¶…è¿‡äº†12ä¸ªå‘¨æœŸï¼Œå°±é‡æ–°åŒæ­¥ä¸€æ¬¡æ—¶é—´
 //     if(last_time_gps >= 12)
 //     {
 //         printf("Try to get time from GPS!\r\n");
-//         // 0.»ñÈ¡Ê±¼ä
+//         // 0.è·å–æ—¶é—´
 //         flag_get_time = GPS_get_time(time);
 //         printf("flag_get_time=%d\r\n",flag_get_time);
 //         if (flag_get_time == 1)
 //         {
 //             printf("Get time success!\r\n");
-//             try_set_time_num = 3;   // Èç¹û»ñÈ¡Ê±¼ä³É¹¦£¬¾Í³¢ÊÔÉèÖÃÊ±¼ä3´Î
+//             try_set_time_num = 3;   // å¦‚æœè·å–æ—¶é—´æˆåŠŸï¼Œå°±å°è¯•è®¾ç½®æ—¶é—´3æ¬¡
 //         }
 //         else if (flag_get_time == 2)
 //         {
 //             printf("Get time fail, no satellite!\r\n");
             
-//             try_set_time_num = 2;   // Èç¹û»ñÈ¡Ê±¼äÊ§°Ü£¬¾Í³¢ÊÔÉèÖÃÊ±¼ä1´Î
+//             try_set_time_num = 2;   // å¦‚æœè·å–æ—¶é—´å¤±è´¥ï¼Œå°±å°è¯•è®¾ç½®æ—¶é—´1æ¬¡
 //             if(last_time_gps<999)
-//                 // Èç¹ûÃ»ÓĞÎÀĞÇ£¬ÇÒÔÚÉè±¸ÔËĞĞ¹ı³ÌÖĞÓĞ¹ıÒ»´Î³É¹¦µÄÊ±¼äÍ¬²½£¬¾Í²»ÔÙÍ¬²½Ê±¼ä
+//                 // å¦‚æœæ²¡æœ‰å«æ˜Ÿï¼Œä¸”åœ¨è®¾å¤‡è¿è¡Œè¿‡ç¨‹ä¸­æœ‰è¿‡ä¸€æ¬¡æˆåŠŸçš„æ—¶é—´åŒæ­¥ï¼Œå°±ä¸å†åŒæ­¥æ—¶é—´
 //                 return 0;
 //         }
 //         else
@@ -908,7 +908,7 @@ u8 LORA_Find_SubNode(u8 *address)
 //             printf("Get time fail!\r\n");
 //             return 0;
 //         }
-//         // 1.ÉèÖÃÊ±¼ä
+//         // 1.è®¾ç½®æ—¶é—´
 //         while (set_time_fail_count<try_set_time_num)
 //         {
 //             flag_set_time = LORA_Init_Time(time);

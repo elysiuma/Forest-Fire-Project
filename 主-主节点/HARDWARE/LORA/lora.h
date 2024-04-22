@@ -2,35 +2,35 @@
 #define __LORA_H
 #include "sys.h"
 
-//RS066/067 LoraÄ£¿é£¬Ğ¾Æ¬RX1278
+//RS066/067 Loraæ¨¡å—ï¼ŒèŠ¯ç‰‡RX1278
 
-#define LORA PDout(4);  //loraÄ£¿é¿ª¹Ø
+#define LORA PDout(4);  //loraæ¨¡å—å¼€å…³
 
-// ¶¨Òå´Ó½ÚµãÊı¾İ½á¹¹£¬°üº¬´Ó½ÚµãµØÖ·ºÍ´Ó½Úµã×´Ì¬£¬ÒÔ¼°Êı¾İ£¬ºÍ»ñÈ¡Ê±¼ä
+// å®šä¹‰ä»èŠ‚ç‚¹æ•°æ®ç»“æ„ï¼ŒåŒ…å«ä»èŠ‚ç‚¹åœ°å€å’Œä»èŠ‚ç‚¹çŠ¶æ€ï¼Œä»¥åŠæ•°æ®ï¼Œå’Œè·å–æ—¶é—´
 typedef struct
 {
-    u8 address[6];   //´Ó½ÚµãµØÖ·
-    u8 SubNodeStatus;   //´Ó½Úµã×´Ì¬
-    float wind_speed; //·çËÙ
-    float wind_direction; //·çÏò
-    float temperature;    //ÎÂ¶È
-    float pressure;       //ÆøÑ¹
-    float humidity;       //Êª¶È
-    float smoke;          //ÑÌÎí
-    u8 sample_time[3];  //²ÉÑùÊ±¼ä
-    u16 last_gps;   //¾àÀëÉÏÒ»´ÎÍ¬²½gpsÊ±¼ä¶àÉÙÊ±¼äÖÜÆÚ£¬5·ÖÖÓÒ»¸öÖÜÆÚ£¬12´ÎÎª1Ğ¡Ê±£¬ 999ÎªÎ´Í¬²½
+    u8 address[6];   //ä»èŠ‚ç‚¹åœ°å€
+    u8 SubNodeStatus;   //ä»èŠ‚ç‚¹çŠ¶æ€
+    float wind_speed; //é£é€Ÿ
+    float wind_direction; //é£å‘
+    float temperature;    //æ¸©åº¦
+    float pressure;       //æ°”å‹
+    float humidity;       //æ¹¿åº¦
+    float smoke;          //çƒŸé›¾
+    u8 sample_time[3];  //é‡‡æ ·æ—¶é—´
+    u16 last_gps;   //è·ç¦»ä¸Šä¸€æ¬¡åŒæ­¥gpsæ—¶é—´å¤šå°‘æ—¶é—´å‘¨æœŸï¼Œ5åˆ†é’Ÿä¸€ä¸ªå‘¨æœŸï¼Œ12æ¬¡ä¸º1å°æ—¶ï¼Œ 999ä¸ºæœªåŒæ­¥
 } SubNode;
-// ´Ó½Úµã¼¯ºÏ
+// ä»èŠ‚ç‚¹é›†åˆ
 typedef struct
 {
-    u8 nNode;   //´Ó½ÚµãÊıÁ¿
-    SubNode SubNode_list[30];    //´Ó½Úµã¼¯ºÏ
+    u8 nNode;   //ä»èŠ‚ç‚¹æ•°é‡
+    SubNode SubNode_list[30];    //ä»èŠ‚ç‚¹é›†åˆ
 } SubNodeSetStruct;
 
-// ³õÊ¼»¯´Ó½Úµã¼¯ºÏ¶ÔÏó
+// åˆå§‹åŒ–ä»èŠ‚ç‚¹é›†åˆå¯¹è±¡
 extern SubNodeSetStruct SubNodeSet;
-// extern u16 last_time_gps;     // ¾àÀëÉÏÒ»´ÎÍ¬²½gpsÊ±¼ä¶àÉÙÊ±¼äÖÜÆÚ£¬5·ÖÖÓÒ»¸öÖÜÆÚ£¬12´ÎÎª1Ğ¡Ê±£¬ 999ÎªÎ´Í¬²½
-extern u8 is_lora_init;     // ÊÇ·ñÒÑ¾­³õÊ¼»¯ÍøÂç
+// extern u16 last_time_gps;     // è·ç¦»ä¸Šä¸€æ¬¡åŒæ­¥gpsæ—¶é—´å¤šå°‘æ—¶é—´å‘¨æœŸï¼Œ5åˆ†é’Ÿä¸€ä¸ªå‘¨æœŸï¼Œ12æ¬¡ä¸º1å°æ—¶ï¼Œ 999ä¸ºæœªåŒæ­¥
+extern u8 is_lora_init;     // æ˜¯å¦å·²ç»åˆå§‹åŒ–ç½‘ç»œ
 extern u8 get_data_flag;
 extern u8 nNode;
 extern u8 SubNodeAddress[120];
@@ -40,18 +40,18 @@ void LORA_Send(u8 *buf,u8 len);
 void LORA_Receive(u8 *buf,u8 *len);
 void LORA_Get_Common_Send_Msg(u8 *msg, u8 *msg_len, u8 *command, u8 *content, u8 content_len);
 u8 check_LORA_Receive(void);
-u8 LORA_Network_Init(void); //Ò»¼ü³õÊ¼»¯ÍøÂç
+u8 LORA_Network_Init(void); //ä¸€é”®åˆå§‹åŒ–ç½‘ç»œ
 u8 LORA_Init_Time(u8 *time);
 u8 LORA_Add_Slave_Node(u8 nNode, u8 *SubNodeAddress);
-u8 LORA_Query_Network_Status(u8 *time, u8 is_debug);     // ²éÑ¯ÍøÂç×´Ì¬
-u8 LORA_Query_Slave_Node_Status(u8 is_debug); //²éÑ¯´Ó½Úµã×´Ì¬
-void LORA_DATA_Transfer(u8 *buf, u8 buf_len, u8 *address); //Êı¾İ´«Êä
-u8 LORA_Network_Clear(void);    //Çå³ıÍøÂç
-u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len);  //½ÓÊÕÊı¾İ½âÎö
-u8 LORA_Network_Naming(void);   // È«ÍøµãÃû
-u8 LORA_Network_Start(void);    // Æô¶¯×éÍø
-u8 LORA_Find_SubNode(u8 *address);  // ²éÕÒ´Ó½Úµã
-u8 LORA_update_device_time(void);   // ¸üĞÂÉè±¸Ê±¼ä
+u8 LORA_Query_Network_Status(u8 *time, u8 is_debug);     // æŸ¥è¯¢ç½‘ç»œçŠ¶æ€
+u8 LORA_Query_Slave_Node_Status(u8 is_debug); //æŸ¥è¯¢ä»èŠ‚ç‚¹çŠ¶æ€
+void LORA_DATA_Transfer(u8 *buf, u8 buf_len, u8 *address); //æ•°æ®ä¼ è¾“
+u8 LORA_Network_Clear(void);    //æ¸…é™¤ç½‘ç»œ
+u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len);  //æ¥æ”¶æ•°æ®è§£æ
+u8 LORA_Network_Naming(void);   // å…¨ç½‘ç‚¹å
+u8 LORA_Network_Start(void);    // å¯åŠ¨ç»„ç½‘
+u8 LORA_Find_SubNode(u8 *address);  // æŸ¥æ‰¾ä»èŠ‚ç‚¹
+u8 LORA_update_device_time(void);   // æ›´æ–°è®¾å¤‡æ—¶é—´
 
 #endif
 

@@ -2,14 +2,14 @@
 #define __MQ2_H
 #include "sys.h"
 
-//MQ2¶şÑõ»¯Ì¼£¨ÑÌÎí£©´«¸ĞÆ÷
+//MQ2äºŒæ°§åŒ–ç¢³ï¼ˆçƒŸé›¾ï¼‰ä¼ æ„Ÿå™¨
 
 extern uint8_t flag_mq2;
 
-//MQ2¿ª¹ØÒı½Å¶¨Òå
+//MQ2å¼€å…³å¼•è„šå®šä¹‰
 #define MQ2 PAout(6)
 
-void MQ2_Init(void); //³õÊ¼»¯
-void MQ2_Switch(u8 flag); //´«¸ĞÆ÷¿ª¹Ø
-float MQ2_Scan(void);   //¶ÁÈ¡Êı¾İ
+void MQ2_Init(void); //åˆå§‹åŒ–
+void MQ2_Switch(u8 flag); //ä¼ æ„Ÿå™¨å¼€å…³
+float MQ2_Scan(void);   //è¯»å–æ•°æ®
 #endif

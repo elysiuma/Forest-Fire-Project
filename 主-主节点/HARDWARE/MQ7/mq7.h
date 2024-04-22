@@ -2,24 +2,24 @@
 #define __MQ7_H
 #include "sys.h"
 
-//MQ7Ò»Ñõ»¯Ì¼´«¸ĞÆ÷
+//MQ7ä¸€æ°§åŒ–ç¢³ä¼ æ„Ÿå™¨
 
-extern uint8_t flag_mq7;   // MQ7´«¸ĞÆ÷¿ª¹Ø±êÊ¶
-// MQ7¿ª¹Ø¸úMQ2±£³ÖÍ¬²½£¬ÔÚMQ2.hÖĞÊµÏÖ
-// extern u8 mq7_state_count;  // MQ7´«¸ĞÆ÷×´Ì¬¼ÆÊı ¿ªÆô(0:Õı³£ 1:Ô¤ÈÈ 2+:²âÁ¿¼ÆÊı)¹Ø±Õ(0:Õı³£ 1+:¹Ø±Õ¼ÆÊı)
-// extern u8 flag_mq7_is_need_measure; // MQ7´«¸ĞÆ÷ÊÇ·ñĞèÒª²âÁ¿±êÊ¶
+extern uint8_t flag_mq7;   // MQ7ä¼ æ„Ÿå™¨å¼€å…³æ ‡è¯†
+// MQ7å¼€å…³è·ŸMQ2ä¿æŒåŒæ­¥ï¼Œåœ¨MQ2.hä¸­å®ç°
+// extern u8 mq7_state_count;  // MQ7ä¼ æ„Ÿå™¨çŠ¶æ€è®¡æ•° å¼€å¯(0:æ­£å¸¸ 1:é¢„çƒ­ 2+:æµ‹é‡è®¡æ•°)å…³é—­(0:æ­£å¸¸ 1+:å…³é—­è®¡æ•°)
+// extern u8 flag_mq7_is_need_measure; // MQ7ä¼ æ„Ÿå™¨æ˜¯å¦éœ€è¦æµ‹é‡æ ‡è¯†
 
-#define MQ7 PCout(1)        // MQ7¿ª¹ØÒı½Å¶¨ÒåPC1
-// Í¬MQ2.hÖĞµÄ¶¨Òå
-// #define MQ7_ON_MAX 11       // MQ7´«¸ĞÆ÷¿ªÆô×î´ó¼ÆÊı(Ô¤ÈÈ1+²âÁ¿´ÎÊı)
-// #define MQ7_OFF_MAX 10      // MQ7´«¸ĞÆ÷¹Ø±Õ×î´ó¼ÆÊı(¹Ø±ÕÖÜÆÚ´ÎÊı)
+#define MQ7 PCout(1)        // MQ7å¼€å…³å¼•è„šå®šä¹‰PC1
+// åŒMQ2.hä¸­çš„å®šä¹‰
+// #define MQ7_ON_MAX 11       // MQ7ä¼ æ„Ÿå™¨å¼€å¯æœ€å¤§è®¡æ•°(é¢„çƒ­1+æµ‹é‡æ¬¡æ•°)
+// #define MQ7_OFF_MAX 10      // MQ7ä¼ æ„Ÿå™¨å…³é—­æœ€å¤§è®¡æ•°(å…³é—­å‘¨æœŸæ¬¡æ•°)
 
 
-void MQ7_Init(void); //³õÊ¼»¯
-void MQ7_Switch(u8 flag); //´«¸ĞÆ÷¿ª¹Ø
-float MQ7_Scan(void);   //¶ÁÈ¡Êı¾İ
-void MQ7_PPM_Calibration(float RS); //Ğ£×¼
-float MQ7_Get_R0(void); //»ñÈ¡R0
-float MQ7_Get_R0_from_flash(void); //´ÓflashÖĞ»ñÈ¡R0
-u8 MQ7_is_R0_valid(float _R0); //ÅĞ¶Ï_R0ÊÇ·ñÓĞĞ§
+void MQ7_Init(void); //åˆå§‹åŒ–
+void MQ7_Switch(u8 flag); //ä¼ æ„Ÿå™¨å¼€å…³
+float MQ7_Scan(void);   //è¯»å–æ•°æ®
+void MQ7_PPM_Calibration(float RS); //æ ¡å‡†
+float MQ7_Get_R0(void); //è·å–R0
+float MQ7_Get_R0_from_flash(void); //ä»flashä¸­è·å–R0
+u8 MQ7_is_R0_valid(float _R0); //åˆ¤æ–­_R0æ˜¯å¦æœ‰æ•ˆ
 #endif

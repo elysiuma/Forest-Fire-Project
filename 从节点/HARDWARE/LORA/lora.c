@@ -2,23 +2,23 @@
 #include "usart2.h"
 #include "delay.h"
 
-u8 is_need_send_lora_data = 0; //ÊÇ·ñĞèÒª·¢ËÍLORAÊı¾İ
+u8 is_need_send_lora_data = 0; //æ˜¯å¦éœ€è¦å‘é€LORAæ•°æ®
 
 void LORA_Init(void)
 {
     GPIO_InitTypeDef  GPIO_InitStructure;
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);//Ê¹ÄÜGPIODÊ±ÖÓ
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);//ä½¿èƒ½GPIODæ—¶é’Ÿ
 
-    //ENÊ¹ÄÜÒı½Å£¬¸ßµçÆ½Æô¶¯
+    //ENä½¿èƒ½å¼•è„šï¼Œé«˜ç”µå¹³å¯åŠ¨
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//ÆÕÍ¨Êä³öÄ£Ê½
-    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//ÍÆÍìÊä³ö
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//æ™®é€šè¾“å‡ºæ¨¡å¼
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//æ¨æŒ½è¾“å‡º
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//ÉÏÀ­
-    GPIO_Init(GPIOD, &GPIO_InitStructure);//³õÊ¼»¯
-    GPIO_SetBits(GPIOD,GPIO_Pin_4);//PD4ÉèÖÃ¸ß£¬Æô¶¯Ä£¿é
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//ä¸Šæ‹‰
+    GPIO_Init(GPIOD, &GPIO_InitStructure);//åˆå§‹åŒ–
+    GPIO_SetBits(GPIOD,GPIO_Pin_4);//PD4è®¾ç½®é«˜ï¼Œå¯åŠ¨æ¨¡å—
 
-    //´®¿ÚÍ¨ĞÅ¿Ú
+    //ä¸²å£é€šä¿¡å£
     uart2_init(9600);
 
     is_need_send_lora_data = 0;
@@ -37,7 +37,7 @@ void LORA_Receive(u8 *buf,u8 *len)
 
 int check_LORA_Receive(void)
 {   
-    // ÓÃÓÚÅĞ¶ÏÊÇ·ñ½ÓÊÕÊı¾İÍê±Ï£¬·µ»Ø1±íÊ¾½ÓÊÕÍê±Ï£¬·µ»Ø0±íÊ¾Î´½ÓÊÕÍê±Ï
+    // ç”¨äºåˆ¤æ–­æ˜¯å¦æ¥æ”¶æ•°æ®å®Œæ¯•ï¼Œè¿”å›1è¡¨ç¤ºæ¥æ”¶å®Œæ¯•ï¼Œè¿”å›0è¡¨ç¤ºæœªæ¥æ”¶å®Œæ¯•
     if (USART2_RX_CNT&0x8000)
     {
         return 1;
@@ -48,14 +48,14 @@ int check_LORA_Receive(void)
     }
 }
 
-// »ñÈ¡LORAÄ£¿éÍ¨ÓÃ·¢ËÍÄÚÈİ
+// è·å–LORAæ¨¡å—é€šç”¨å‘é€å†…å®¹
 void LORA_Get_Common_Send_Msg(
-    u8 *send_msg,   // ´ı·¢ËÍµÄ±¨ÎÄ
-    u8 *sen_msg_len,    // ±¨ÎÄ³¤¶È
-    u8 *command,    // ÃüÁî£¬Á½Î»
-    u8 *content_buf,    // ÄÚÈİ
-    u8 content_len,  // ÄÚÈİ³¤¶È
-    u8 is_send_main // ÊÇ·ñÊÇÏñÖ÷½Úµã·¢ËÍÊı¾İ
+    u8 *send_msg,   // å¾…å‘é€çš„æŠ¥æ–‡
+    u8 *sen_msg_len,    // æŠ¥æ–‡é•¿åº¦
+    u8 *command,    // å‘½ä»¤ï¼Œä¸¤ä½
+    u8 *content_buf,    // å†…å®¹
+    u8 content_len,  // å†…å®¹é•¿åº¦
+    u8 is_send_main // æ˜¯å¦æ˜¯åƒä¸»èŠ‚ç‚¹å‘é€æ•°æ®
     )
 {
     u8 p = 0, i;
@@ -92,11 +92,11 @@ void LORA_Get_Common_Send_Msg(
     send_msg[p] = 0x16;
 }
 
-// »ñÈ¡´Ó½ÚµãÍøÂçĞÅÏ¢
+// è·å–ä»èŠ‚ç‚¹ç½‘ç»œä¿¡æ¯
 u8 LORA_Query_Slave_Node_Status(void)
 {
     
-    //±¨ÎÄ³¤¶È:10
+    //æŠ¥æ–‡é•¿åº¦:10
     u8 p = 0;
     u8 sen_msg_len = 10;
     u8 msg[10];
@@ -106,17 +106,17 @@ u8 LORA_Query_Slave_Node_Status(void)
     u8 receive_buf[50];
     u8 receive_len=0;
 
-    // ´Ó½ÚµãµØÖ·
+    // ä»èŠ‚ç‚¹åœ°å€
     u8 address[6] = {0x00};
-    // ¹éÊôÖ÷½ÚµãµØÖ·
+    // å½’å±ä¸»èŠ‚ç‚¹åœ°å€
     u8 main_address[2] = {0x00};
-    // ´Ó½Úµã²ã´Î
+    // ä»èŠ‚ç‚¹å±‚æ¬¡
     u8 level = 0;
-    // ´Ó½ÚµãĞÅºÅÇ¿¶È
+    // ä»èŠ‚ç‚¹ä¿¡å·å¼ºåº¦
     u8 signal_strength = 0;
     
     LORA_Get_Common_Send_Msg(msg, &sen_msg_len, command, NULL, 0, 0);
-    // ´òÓ¡Ò»ÏÂmsg
+    // æ‰“å°ä¸€ä¸‹msg
     printf("msg: ");
     for(p = 0; p < sen_msg_len; p++)
     {
@@ -124,13 +124,13 @@ u8 LORA_Query_Slave_Node_Status(void)
     }
     printf("\r\n");
     LORA_Send(msg, sen_msg_len);
-    // µÈ´ı½ÓÊÜÖ¸Áî×´Ì¬
+    // ç­‰å¾…æ¥å—æŒ‡ä»¤çŠ¶æ€
     while (1)
     {
         delay_ms(500);
         if (check_LORA_Receive())
         {
-            printf("received£¡\r\n");
+            printf("receivedï¼\r\n");
             LORA_Receive(receive_buf, &receive_len);
             address[0] = receive_buf[8];
             address[1] = receive_buf[9];
@@ -159,20 +159,20 @@ u8 LORA_Query_Slave_Node_Status(void)
     }
 }
 
-// Êı¾İÍ¸´«
+// æ•°æ®é€ä¼ 
 void LORA_DATA_Transfer(u8 *buf, u8 buf_len, u8 *address, u8 *receive_buf, u8 *receive_len)
 {
-    //±¨ÎÄ³¤¶È	msg_len = 8 + 6 + 2 + 1 + len + 2
-	//address:Êı¾İ´«ÊäÊÕ·½µÄµØÖ·
-	//buf:´ı·¢ËÍÊı¾İ»º´æÆ÷
-	//buf_len:´ı·¢ËÍÊı¾İ³¤¶È
-    //receive_buf:½ÓÊÕÊı¾İ»º´æÆ÷
-    //receive_len:½ÓÊÕÊı¾İ³¤¶È
+    //æŠ¥æ–‡é•¿åº¦	msg_len = 8 + 6 + 2 + 1 + len + 2
+	//address:æ•°æ®ä¼ è¾“æ”¶æ–¹çš„åœ°å€
+	//buf:å¾…å‘é€æ•°æ®ç¼“å­˜å™¨
+	//buf_len:å¾…å‘é€æ•°æ®é•¿åº¦
+    //receive_buf:æ¥æ”¶æ•°æ®ç¼“å­˜å™¨
+    //receive_len:æ¥æ”¶æ•°æ®é•¿åº¦
 	u8 p = 0, i;
     u8 sen_msg_len = 8 + 6 + 2 + 1 + buf_len + 2;
     u8 msg[200];
     u8 command[2] = {0x03, 0x05};
-    u8 content_len = 6 + 2 + 1 + buf_len;	//address + ¹Ì¶¨ + ³¤¶ÈÎ» + buf_len
+    u8 content_len = 6 + 2 + 1 + buf_len;	//address + å›ºå®š + é•¿åº¦ä½ + buf_len
     u8 content[200];
 
     u8 all_receive_buf[100];
@@ -195,7 +195,7 @@ void LORA_DATA_Transfer(u8 *buf, u8 buf_len, u8 *address, u8 *receive_buf, u8 *r
     LORA_Get_Common_Send_Msg(msg, &sen_msg_len, command, content, content_len,1);
 
     LORA_Send(msg, sen_msg_len);
-    // µÈ´ı½ÓÊÜÖ¸Áî×´Ì¬
+    // ç­‰å¾…æ¥å—æŒ‡ä»¤çŠ¶æ€
     while (1)
     {
         if (check_LORA_Receive())

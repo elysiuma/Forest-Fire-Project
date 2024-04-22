@@ -12,35 +12,35 @@
 #include <string.h>
 #include <stdlib.h>
 
-uint8_t EnableMaster=0;//Ö÷´ÓÑ¡Ôñ 1ÎªÖ÷»ú£¬0Îª´Ó»ú
+uint8_t EnableMaster=0;//ä¸»ä»é€‰æ‹© 1ä¸ºä¸»æœºï¼Œ0ä¸ºä»æœº
 
-float co2;	//ÑÌÎíÅ¨¶È
-float battery;	//µçÔ´µçÑ¹
+float co2;	//çƒŸé›¾æµ“åº¦
+float battery;	//ç”µæºç”µå‹
 u8 temp_rec[50];
 u8 rec_len=0;
 u8 query_rec[50];
 u8 query_rec_len=0;
-float co2_queue[10] = {0}; //×î½ü10´ÎµÄÑÌÎíÅ¨¶È
+float co2_queue[10] = {0}; //æœ€è¿‘10æ¬¡çš„çƒŸé›¾æµ“åº¦
 u8 co2_idx = 0;
-//float data[6]={0};	//·çËÙdata[0] ·çÏò1 ÎÂ¶È2 ÆøÑ¹3 Êª¶È4 ÑÌÎí5 µçÁ¿6
+//float data[6]={0};	//é£é€Ÿdata[0] é£å‘1 æ¸©åº¦2 æ°”å‹3 æ¹¿åº¦4 çƒŸé›¾5 ç”µé‡6
 u8 data_u8[28] = {0};
 union data{
 	float f;
 	u8 ch[4];
 } data_1;
-u8 query_windsensor[11] = {0x24, 0x41, 0x44, 0x2C, 0x30, 0x34, 0x2A, 0x36, 0x33, 0x0D, 0x0A};	// ·çËÙ·çÏòÇëÇó
-u8 cab_windsensor[11] = {0x24, 0x41, 0x5A, 0x2C, 0x30, 0x34, 0x2A, 0x37, 0x39, 0x0D, 0x0A};		// ·çËÙ·çÏòĞ£×¼
+u8 query_windsensor[11] = {0x24, 0x41, 0x44, 0x2C, 0x30, 0x34, 0x2A, 0x36, 0x33, 0x0D, 0x0A};	// é£é€Ÿé£å‘è¯·æ±‚
+u8 cab_windsensor[11] = {0x24, 0x41, 0x5A, 0x2C, 0x30, 0x34, 0x2A, 0x37, 0x39, 0x0D, 0x0A};		// é£é€Ÿé£å‘æ ¡å‡†
 void get_data(char*);
 
 int main(void)
 { 
 	
-	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);//ÉèÖÃÏµÍ³ÖĞ¶ÏÓÅÏÈ¼¶·Ö×é2
-	delay_init(168);    //³õÊ¼»¯ÑÓÊ±º¯Êı
-	uart_init(9600);	//³õÊ¼»¯´®¿Ú²¨ÌØÂÊÎª115200
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);//è®¾ç½®ç³»ç»Ÿä¸­æ–­ä¼˜å…ˆçº§åˆ†ç»„2
+	delay_init(168);    //åˆå§‹åŒ–å»¶æ—¶å‡½æ•°
+	uart_init(9600);	//åˆå§‹åŒ–ä¸²å£æ³¢ç‰¹ç‡ä¸º115200
 	uart3_init(9600);
-	LED_Init();					//³õÊ¼»¯LED 
-	//Adc_Init();				//³õÊ¼»¯ADC
+	LED_Init();					//åˆå§‹åŒ–LED 
+	//Adc_Init();				//åˆå§‹åŒ–ADC
 
 	MQ2_Init();
 	BATTERY_Init();
@@ -57,7 +57,7 @@ int main(void)
 		float data_f;
 		float co2_sum=0, co2;
 		
-		if(MQ2)	//¹¤×÷Ê±²Å²ÉÊı¾İ
+		if(MQ2)	//å·¥ä½œæ—¶æ‰é‡‡æ•°æ®
 		{
 			co2 = MQ2_Scan();
 			//printf("co2: %f\r\n", co2);
@@ -76,7 +76,7 @@ int main(void)
 			//data_1.f = 123.53;
 			for(i = 0; i < 4; i++)
 			{
-				data_u8[20+i] = data_1.ch[i]; //¹²ÓÃÌåÖĞchÓëÕæÊµµÄ16½øÖÆÊÇµ¹¹ıÀ´µÄ
+				data_u8[20+i] = data_1.ch[i]; //å…±ç”¨ä½“ä¸­chä¸çœŸå®çš„16è¿›åˆ¶æ˜¯å€’è¿‡æ¥çš„
 			}
 		}
 		
@@ -116,7 +116,7 @@ int main(void)
 		
 		if(USART_RX_STA&0x8000) 
 		{         
-			len=USART_RX_STA&0x3fff;//µÃµ½´Ë´Î½ÓÊÕµ½µÄÊı¾İ³¤¶È		
+			len=USART_RX_STA&0x3fff;//å¾—åˆ°æ­¤æ¬¡æ¥æ”¶åˆ°çš„æ•°æ®é•¿åº¦		
 			if (USART_RX_BUF[0]==0x6C && USART_RX_BUF[len-1]==0x16)
 			{
 				printf("LORA CMD, len=%d\r\n", len);
@@ -124,19 +124,19 @@ int main(void)
 			}
 			else
 			{
-				// ²âÊÔ·¢ËÍ
+				// æµ‹è¯•å‘é€
 				printf("USART CMD: ");
 				for(t=0;t<len;t++)
 				{
-					// USART_SendData(USART1, USART_RX_BUF[t]);         //Ïò´®¿Ú1·¢ËÍÊı¾İ
-					// while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);//µÈ´ı·¢ËÍ½áÊø
+					// USART_SendData(USART1, USART_RX_BUF[t]);         //å‘ä¸²å£1å‘é€æ•°æ®
+					// while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);//ç­‰å¾…å‘é€ç»“æŸ
 					printf("%02x ", USART_RX_BUF[t]);
 				}
 				printf("\r\nlen=%d\r\n",len);
 				
-				printf("\r\n");//²åÈë»»ĞĞ 
+				printf("\r\n");//æ’å…¥æ¢è¡Œ 
 
-				// µ±ÊäÈëÎª00,01Ê±£¬Ò»¼ü³õÊ¼»¯LORAÄ£¿é
+				// å½“è¾“å…¥ä¸º00,01æ—¶ï¼Œä¸€é”®åˆå§‹åŒ–LORAæ¨¡å—
 				if (USART_RX_BUF[0]==0x00 && USART_RX_BUF[1]==0x01)
 				{
 					LORA_Query_Slave_Node_Status();
@@ -145,7 +145,7 @@ int main(void)
 			USART_RX_STA=0; 
 		}
 		
-		//¼ì²éÊÇ·ñÊÕµ½Ö÷Ä£¿éµÄÊı¾İÇëÇó11 22 33
+		//æ£€æŸ¥æ˜¯å¦æ”¶åˆ°ä¸»æ¨¡å—çš„æ•°æ®è¯·æ±‚11 22 33
 		if (check_LORA_Receive())
 		{
 			LORA_Receive(query_rec, &query_rec_len);
@@ -163,7 +163,7 @@ int main(void)
 		}
 		
 		delay_ms(1000);
-		DebugLed();	//LEDÉÁË¸ËµÃ÷³ÌĞòÕı³£ÔËĞĞ
+		DebugLed();	//LEDé—ªçƒè¯´æ˜ç¨‹åºæ­£å¸¸è¿è¡Œ
 	}
 }
 

@@ -3,15 +3,15 @@
 #include "delay.h"
 #include "stdlib.h"
 
-float node_position[4] = {0,0,0,0}; // ½ÚµãÎ»ÖÃ,Î³¶È¡¢·ÖºÍ¾­¶È¡¢·Ö
-char node_lati_longi_str[2] = {'\0','\0'}; // ½ÚµãÎ³¶È¡¢¾­¶È±êÊ¶£¨N/S,E/W£©
+float node_position[4] = {0,0,0,0}; // èŠ‚ç‚¹ä½ç½®,çº¬åº¦ã€åˆ†å’Œç»åº¦ã€åˆ†
+char node_lati_longi_str[2] = {'\0','\0'}; // èŠ‚ç‚¹çº¬åº¦ã€ç»åº¦æ ‡è¯†ï¼ˆN/S,E/Wï¼‰
 
 void GPS_Init(void)
 {
-    // ÉèÖÃGGAĞ­Òé´«Êä¼ä¸ôÎ»1Ãë
+    // è®¾ç½®GGAåè®®ä¼ è¾“é—´éš”ä½1ç§’
     u8 GPS_GGA_MODE[16] = {0xA0, 0xA1, 0x00, 0x09, 0x08, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x08, 0x0D, 0x0A};
     uart3_init(38400);
-    GPS_Send(GPS_GGA_MODE, 16); // ½«GPS´«»ØĞ­ÒéÉèÖÃÎªGGA
+    GPS_Send(GPS_GGA_MODE, 16); // å°†GPSä¼ å›åè®®è®¾ç½®ä¸ºGGA
 }
 /*
 u8 * GPS_gettime(void)
@@ -33,7 +33,7 @@ void GPS_Receive(u8 *buf, u8 *len)
 u8 check_GPS_Receive(void)
 {
     // printf("USART2_RX_CNT: %i", USART2_RX_CNT);
-    // Èô½ÓÊÜÍê±ÏÊı¾İÔò·µ»Ø1
+    // è‹¥æ¥å—å®Œæ¯•æ•°æ®åˆ™è¿”å›1
     if (USART3_RX_STA & 0x8000)
     {
         return 1;
@@ -44,34 +44,34 @@ u8 check_GPS_Receive(void)
     }
 }
 
-// GPS»ñÈ¡Êı¾İ£¬·µ»ØµÄÊÇÕıÈ·µÄÊ±¼ä
+// GPSè·å–æ•°æ®ï¼Œè¿”å›çš„æ˜¯æ­£ç¡®çš„æ—¶é—´
 u8 GPS_get_time(u8 *time)
 {
     u8 t;
     u8 temp_rec[300];
     u8 rec_len = 0;
     u8 fail_count = 0;
-    u8 start_idx=0;     // ¿ªÊ¼Î»ÖÃ£¬ÓĞÊ±ºò»áÊÕµ½Á½¸ö$£¬ĞèÒªÉèÖÃÒ»ÏÂ¿ªÊ¼Î»ÖÃ
+    u8 start_idx=0;     // å¼€å§‹ä½ç½®ï¼Œæœ‰æ—¶å€™ä¼šæ”¶åˆ°ä¸¤ä¸ª$ï¼Œéœ€è¦è®¾ç½®ä¸€ä¸‹å¼€å§‹ä½ç½®
 
-    // GPSÖÊÁ¿
-    u8 GPS_Quality = 0; // 0:ÎŞĞ§ 1:GPSµ¥µã¶¨Î» 2:DGPS²î·Ö¶¨Î» 43Î»
-    // ÎÀĞÇÊıÁ¿
-    u8 GPS_Satellite_Num = 0;   // 45,46Î»
+    // GPSè´¨é‡
+    u8 GPS_Quality = 0; // 0:æ— æ•ˆ 1:GPSå•ç‚¹å®šä½ 2:DGPSå·®åˆ†å®šä½ 43ä½
+    // å«æ˜Ÿæ•°é‡
+    u8 GPS_Satellite_Num = 0;   // 45,46ä½
 
     while (1)
     {
         printf("GPS_get_time\r\n");
-        // ½ÓÊÕÊı¾İ
+        // æ¥æ”¶æ•°æ®
         if(check_GPS_Receive())
         {
             printf("check_GPS_Receive\r\n");
             GPS_Receive(temp_rec, &rec_len);
         }
         printf("rec_len: %i\r\n", rec_len);
-        // ´òÓ¡temp_rec
+        // æ‰“å°temp_rec
         for (t = 0; t < rec_len; t++)
         {
-            printf("%c", temp_rec[t]); // Ïò´®¿Ú4·¢ËÍÊı¾İ
+            printf("%c", temp_rec[t]); // å‘ä¸²å£4å‘é€æ•°æ®
         }
         printf("\r\n");
         if (rec_len == 0)
@@ -84,39 +84,39 @@ u8 GPS_get_time(u8 *time)
             delay_ms(1500);
             continue;
         }
-        // // ²âÊÔ´òÓ¡Êı¾İ
+        // // æµ‹è¯•æ‰“å°æ•°æ®
         // printf("GPS Receive: ");
         // for (t = 0; t < rec_len; t++)
         // {
-        //     printf("%c", temp_rec[t]); // Ïò´®¿Ú4·¢ËÍÊı¾İ
+        //     printf("%c", temp_rec[t]); // å‘ä¸²å£4å‘é€æ•°æ®
         // }
         // printf("\r\n");
-        // ¼ì²âÊÇ·ñÊÇÍêÕûµÄGPSÊı¾İ°ü
-        // $GNGGA»ò$$GNGGA
+        // æ£€æµ‹æ˜¯å¦æ˜¯å®Œæ•´çš„GPSæ•°æ®åŒ…
+        // $GNGGAæˆ–$$GNGGA
         if ((temp_rec[3] == 0x47 && temp_rec[4] == 0x47 && temp_rec[5] == 0x41) ||
             (temp_rec[0] == '$' && temp_rec[4] == 0x48 && temp_rec[5] == 0x47 && temp_rec[6] == 0x41))
         {
-            // ÕÒµ½¿ªÊ¼Î»ÖÃ
+            // æ‰¾åˆ°å¼€å§‹ä½ç½®
             if(temp_rec[3] == 0x47 && temp_rec[4] == 0x47 && temp_rec[5] == 0x41)
                 start_idx = 0;
             else
                 start_idx = 1;
-            // Ê±
-            time[0] = 10 * (temp_rec[7+start_idx] - '0') + (temp_rec[8+start_idx] - '0'); // UTCÊ±¼ä
-            time[0] += 8;                                           // ±±¾©Ê±¼ä
+            // æ—¶
+            time[0] = 10 * (temp_rec[7+start_idx] - '0') + (temp_rec[8+start_idx] - '0'); // UTCæ—¶é—´
+            time[0] += 8;                                           // åŒ—äº¬æ—¶é—´
             if (time[0] >= 24)
                 time[0] -= 24;
-            // time[0] = (time[0] / 10) * 16 + time[0] % 10; // ×ª»»Îª16½øÖÆ
-            // ·Ö
+            // time[0] = (time[0] / 10) * 16 + time[0] % 10; // è½¬æ¢ä¸º16è¿›åˆ¶
+            // åˆ†
             time[1] = 10 * (temp_rec[9+start_idx] - '0') + (temp_rec[10+start_idx] - '0');
-            // Ãë
+            // ç§’
             time[2] = 10 * (temp_rec[11+start_idx] - '0') + (temp_rec[12+start_idx] - '0');
-            // GPSÖÊÁ¿
+            // GPSè´¨é‡
             GPS_Quality = temp_rec[43+start_idx]-'0';
-            // ÎÀĞÇÊıÁ¿
+            // å«æ˜Ÿæ•°é‡
             GPS_Satellite_Num = 10 * (temp_rec[45+start_idx] - '0') + (temp_rec[46]+start_idx - '0');
 
-            // ´òÓ¡Ê±¼ä
+            // æ‰“å°æ—¶é—´
             //printf("GPS Time: %d:%d:%d quality:%d, gps_num:%d\r\n", time[0], time[1], time[2],GPS_Quality,GPS_Satellite_Num);
            
             if (GPS_Quality == 0)
@@ -137,7 +137,7 @@ u8 GPS_get_time(u8 *time)
             // 	printf("GPS Receive Data Analysis Fail\r\n");
             // }
         }
-        // printf("\r\n");//²åÈë»»ĞĞ
+        // printf("\r\n");//æ’å…¥æ¢è¡Œ
         //  printf("Receive %d,%d, len=%d", temp_rec[0],temp_rec[1],rec_len);
         rec_len = 0;
         fail_count++;
@@ -149,35 +149,35 @@ u8 GPS_get_time(u8 *time)
     }
 }
 
-// GPS»ñÈ¡Êı¾İ£¬·µ»ØµÄÊÇÕıÈ·µÄÊ±¼ä,Î»ÖÃĞÅÏ¢
+// GPSè·å–æ•°æ®ï¼Œè¿”å›çš„æ˜¯æ­£ç¡®çš„æ—¶é—´,ä½ç½®ä¿¡æ¯
 u8 GPS_get_time_and_pos(u8 *time, float *_position, char *_lati_longi_str)
 {
     u8 t;
     u8 temp_rec[300];
-    char temp_pos_char[9] = {'\0'}; // ÁÙÊ±Î»ÖÃĞÅÏ¢»º´æ
+    char temp_pos_char[9] = {'\0'}; // ä¸´æ—¶ä½ç½®ä¿¡æ¯ç¼“å­˜
     u8 rec_len = 0;
     u8 fail_count = 0;
-    u8 start_idx=0;     // ¿ªÊ¼Î»ÖÃ£¬ÓĞÊ±ºò»áÊÕµ½Á½¸ö$£¬ĞèÒªÉèÖÃÒ»ÏÂ¿ªÊ¼Î»ÖÃ
+    u8 start_idx=0;     // å¼€å§‹ä½ç½®ï¼Œæœ‰æ—¶å€™ä¼šæ”¶åˆ°ä¸¤ä¸ª$ï¼Œéœ€è¦è®¾ç½®ä¸€ä¸‹å¼€å§‹ä½ç½®
 
-    // GPSÖÊÁ¿
-    u8 GPS_Quality = 0; // 0:ÎŞĞ§ 1:GPSµ¥µã¶¨Î» 2:DGPS²î·Ö¶¨Î» 43Î»
-    // ÎÀĞÇÊıÁ¿
-    u8 GPS_Satellite_Num = 0;   // 45,46Î»
+    // GPSè´¨é‡
+    u8 GPS_Quality = 0; // 0:æ— æ•ˆ 1:GPSå•ç‚¹å®šä½ 2:DGPSå·®åˆ†å®šä½ 43ä½
+    // å«æ˜Ÿæ•°é‡
+    u8 GPS_Satellite_Num = 0;   // 45,46ä½
 
     while (1)
     {
         printf("GPS_get_time\r\n");
-        // ½ÓÊÕÊı¾İ
+        // æ¥æ”¶æ•°æ®
         if(check_GPS_Receive())
         {
             printf("check_GPS_Receive\r\n");
             GPS_Receive(temp_rec, &rec_len);
         }
         printf("rec_len: %i\r\n", rec_len);
-        // ´òÓ¡temp_rec
+        // æ‰“å°temp_rec
         for (t = 0; t < rec_len; t++)
         {
-            printf("%c", temp_rec[t]); // Ïò´®¿Ú4·¢ËÍÊı¾İ
+            printf("%c", temp_rec[t]); // å‘ä¸²å£4å‘é€æ•°æ®
         }
         printf("\r\n");
         if (rec_len == 0)
@@ -190,49 +190,49 @@ u8 GPS_get_time_and_pos(u8 *time, float *_position, char *_lati_longi_str)
             delay_ms(1500);
             continue;
         }
-        // // ²âÊÔ´òÓ¡Êı¾İ
+        // // æµ‹è¯•æ‰“å°æ•°æ®
         // printf("GPS Receive: ");
         // for (t = 0; t < rec_len; t++)
         // {
-        //     printf("%c", temp_rec[t]); // Ïò´®¿Ú4·¢ËÍÊı¾İ
+        //     printf("%c", temp_rec[t]); // å‘ä¸²å£4å‘é€æ•°æ®
         // }
         // printf("\r\n");
-        // ¼ì²âÊÇ·ñÊÇÍêÕûµÄGPSÊı¾İ°ü
-        // $GNGGA»ò$$GNGGA
+        // æ£€æµ‹æ˜¯å¦æ˜¯å®Œæ•´çš„GPSæ•°æ®åŒ…
+        // $GNGGAæˆ–$$GNGGA
         if ((temp_rec[3] == 0x47 && temp_rec[4] == 0x47 && temp_rec[5] == 0x41) ||
             (temp_rec[0] == '$' && temp_rec[4] == 0x48 && temp_rec[5] == 0x47 && temp_rec[6] == 0x41))
         {
-            // ÕÒµ½¿ªÊ¼Î»ÖÃ
+            // æ‰¾åˆ°å¼€å§‹ä½ç½®
             if(temp_rec[3] == 0x47 && temp_rec[4] == 0x47 && temp_rec[5] == 0x41)
                 start_idx = 0;
             else
                 start_idx = 1;
-            // Ê±
-            time[0] = 10 * (temp_rec[7+start_idx] - '0') + (temp_rec[8+start_idx] - '0'); // UTCÊ±¼ä
-            time[0] += 8;                                           // ±±¾©Ê±¼ä
+            // æ—¶
+            time[0] = 10 * (temp_rec[7+start_idx] - '0') + (temp_rec[8+start_idx] - '0'); // UTCæ—¶é—´
+            time[0] += 8;                                           // åŒ—äº¬æ—¶é—´
             if (time[0] >= 24)
                 time[0] -= 24;
-            // time[0] = (time[0] / 10) * 16 + time[0] % 10; // ×ª»»Îª16½øÖÆ
-            // ·Ö
+            // time[0] = (time[0] / 10) * 16 + time[0] % 10; // è½¬æ¢ä¸º16è¿›åˆ¶
+            // åˆ†
             time[1] = 10 * (temp_rec[9+start_idx] - '0') + (temp_rec[10+start_idx] - '0');
-            // Ãë
+            // ç§’
             time[2] = 10 * (temp_rec[11+start_idx] - '0') + (temp_rec[12+start_idx] - '0');
-            // GPSÖÊÁ¿
+            // GPSè´¨é‡
             GPS_Quality = temp_rec[45+start_idx]-'0';
-            // ÎÀĞÇÊıÁ¿
+            // å«æ˜Ÿæ•°é‡
             GPS_Satellite_Num = 10 * (temp_rec[47+start_idx] - '0') + (temp_rec[48+start_idx] - '0');
 
-            // ´òÓ¡Ê±¼ä
+            // æ‰“å°æ—¶é—´
             //printf("GPS Time: %d:%d:%d quality:%d, gps_num:%d\r\n", time[0], time[1], time[2],GPS_Quality,GPS_Satellite_Num);
-            // ¾­Î³¶È
-            _position[0] = 10 * (temp_rec[18+start_idx] - '0') + (temp_rec[19+start_idx] - '0'); // Î³¶È
-            strncpy(temp_pos_char, temp_rec + 20+start_idx, 8); // Î³·Ö8Î»£¬¸ñÊ½Îªmm.mmmmm
-            _position[1] = atof(temp_pos_char); // Î³¶È
-            _lati_longi_str[0] = temp_rec[29+start_idx]; // Î³¶È±êÊ¶
-            _position[2] = 100 * (temp_rec[31+start_idx] - '0') + 10*(temp_rec[32+start_idx] - '0') + (temp_rec[33+start_idx] - '0'); // ¾­¶È
-            strncpy(temp_pos_char, temp_rec + 34+start_idx, 8); // ¾­·Ö8Î»£¬¸ñÊ½Îªmm.mmmmm
-            _position[3] = atof(temp_pos_char); // ¾­¶È
-            _lati_longi_str[1] = temp_rec[43+start_idx]; // ¾­¶È±êÊ¶
+            // ç»çº¬åº¦
+            _position[0] = 10 * (temp_rec[18+start_idx] - '0') + (temp_rec[19+start_idx] - '0'); // çº¬åº¦
+            strncpy(temp_pos_char, temp_rec + 20+start_idx, 8); // çº¬åˆ†8ä½ï¼Œæ ¼å¼ä¸ºmm.mmmmm
+            _position[1] = atof(temp_pos_char); // çº¬åº¦
+            _lati_longi_str[0] = temp_rec[29+start_idx]; // çº¬åº¦æ ‡è¯†
+            _position[2] = 100 * (temp_rec[31+start_idx] - '0') + 10*(temp_rec[32+start_idx] - '0') + (temp_rec[33+start_idx] - '0'); // ç»åº¦
+            strncpy(temp_pos_char, temp_rec + 34+start_idx, 8); // ç»åˆ†8ä½ï¼Œæ ¼å¼ä¸ºmm.mmmmm
+            _position[3] = atof(temp_pos_char); // ç»åº¦
+            _lati_longi_str[1] = temp_rec[43+start_idx]; // ç»åº¦æ ‡è¯†
 
             
             if (GPS_Quality == 0)
@@ -253,7 +253,7 @@ u8 GPS_get_time_and_pos(u8 *time, float *_position, char *_lati_longi_str)
             // 	printf("GPS Receive Data Analysis Fail\r\n");
             // }
         }
-        // printf("\r\n");//²åÈë»»ĞĞ
+        // printf("\r\n");//æ’å…¥æ¢è¡Œ
         //  printf("Receive %d,%d, len=%d", temp_rec[0],temp_rec[1],rec_len);
         rec_len = 0;
         fail_count++;

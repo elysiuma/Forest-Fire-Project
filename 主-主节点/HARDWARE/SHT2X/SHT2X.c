@@ -1,9 +1,9 @@
 /******************** IECAS********************************
  * file:SHT2X.c
  * description: itialization sht2X and use read temperature and humidity.
- * writer    £ºzhaorongjian
+ * writer    Â£Âºzhaorongjian
  * Version update date: 2017-7-20
- * hardware connection:PB6-I2C1_SCL¡¢PB7-I2C1_SDA
+ * hardware connection:PB6-I2C1_SCLÂ¡Â¢PB7-I2C1_SDA
  * Debug :STLink
  **********************************************************************************/
 /* Includes ------------------------------------------------------------------*/
@@ -130,7 +130,7 @@ u8 SHT2x_ReadUserRegister(void)
 /**
  * @file   SHT2x_WriteUserRegister
  * @brief  writes the SHT2x user register (8bit)
- * @param  userdata£ºthe parameter to be need write
+ * @param  userdataÂ£Âºthe parameter to be need write
  * @retval return ENABLE(succeed ) and DISABLE(defeat)
  */
 FunctionalState SHT2x_WriteUserRegister(u8 userdata)

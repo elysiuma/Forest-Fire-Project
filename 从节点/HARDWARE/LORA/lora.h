@@ -2,18 +2,18 @@
 #define __LORA_H
 #include "sys.h"
 
-//RS066/067 LoraÄ£¿é£¬Ğ¾Æ¬RX1278
+//RS066/067 Loraæ¨¡å—ï¼ŒèŠ¯ç‰‡RX1278
 
-#define LORA PDout(4);  //loraÄ£¿é¿ª¹Ø
+#define LORA PDout(4);  //loraæ¨¡å—å¼€å…³
 
-extern u8 is_need_send_lora_data;  //ÊÇ·ñĞèÒª·¢ËÍLORAÊı¾İ
+extern u8 is_need_send_lora_data;  //æ˜¯å¦éœ€è¦å‘é€LORAæ•°æ®
 
 void LORA_Init(void);
 void LORA_Send(u8 *buf,u8 len);
 void LORA_Receive(u8 *buf,u8 *len);
 int check_LORA_Receive(void);
 void LORA_Get_Common_Send_Msg(u8 *msg, u8 *msg_len, u8 *command, u8 *content, u8 content_len, u8 is_send_main);
-void LORA_DATA_Transfer(u8 *buf, u8 buf_len, u8 *address, u8 *receive_buf, u8 *receive_len); //Êı¾İ´«Êä
-u8 LORA_Query_Slave_Node_Status(void); //²éÑ¯×ÔÉí´Ó½Úµã×´Ì¬
+void LORA_DATA_Transfer(u8 *buf, u8 buf_len, u8 *address, u8 *receive_buf, u8 *receive_len); //æ•°æ®ä¼ è¾“
+u8 LORA_Query_Slave_Node_Status(void); //æŸ¥è¯¢è‡ªèº«ä»èŠ‚ç‚¹çŠ¶æ€
 #endif
 

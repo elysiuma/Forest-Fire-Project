@@ -3,52 +3,52 @@
 #include "delay.h"
 
 
-#if EN_USART5_RX   		//Èç¹ûÊ¹ÄÜUSART5ÁË½ÓÊÕ
+#if EN_USART5_RX   		//å¦‚æžœä½¿èƒ½USART5äº†æŽ¥æ”¶
 u8 USART5_RX_BUF[USART5_REC_LEN];
 u8 USART5_TX_BUF[USART5_REC_LEN];
-u16 USART5_RX_STA=0;   		//½ÓÊÕ×´Ì¬±ê¼Ç
+u16 USART5_RX_STA=0;   		//æŽ¥æ”¶çŠ¶æ€æ ‡è®°
 
-//´®¿Ú5ÖÐ¶Ï·þÎñ³ÌÐò
+//ä¸²å£5ä¸­æ–­æœåŠ¡ç¨‹åº
 void USART5_IRQHandler(void)
 {
 	u8 Res;	    
 	u16 Data_len;
 	if(USART_GetITStatus(UART5, USART_IT_RXNE) != RESET)
 	{	 	
-		// Ö¸ÁîÒÔ¡ç¿ªÍ·µÄÎªGPSÄ£¿é·¢À´µÄÐÅÏ¢ Ä¬ÈÏ½ÓÊÜGGAÐ­ÒéÐÅÏ¢ °üº¬Ê±¼ä¾­Î³¶ÈµÈµÈ£¬0x0d 0x0a½áÎ²
+		// æŒ‡ä»¤ä»¥ï¼„å¼€å¤´çš„ä¸ºGPSæ¨¡å—å‘æ¥çš„ä¿¡æ¯ é»˜è®¤æŽ¥å—GGAåè®®ä¿¡æ¯ åŒ…å«æ—¶é—´ç»çº¬åº¦ç­‰ç­‰ï¼Œ0x0d 0x0aç»“å°¾
 		//if((USART5_RX_STA==0&&Res==0x24)||USART5_RX_BUF[0]==0X24)
 		Res = USART_ReceiveData(UART5);
-		if((USART5_RX_STA&0x8000)==0)//½ÓÊÕÎ´Íê³É
+		if((USART5_RX_STA&0x8000)==0)//æŽ¥æ”¶æœªå®Œæˆ
 		{
-			//GPSÄ£¿é·µ»ØÈ·ÈÏÖ¡
+			//GPSæ¨¡å—è¿”å›žç¡®è®¤å¸§
 			if((USART5_RX_STA==0&&Res==0xA0)||USART5_RX_BUF[0]==0XA0)
 			{
 				USART5_RX_BUF[USART5_RX_STA&0X3FFF]=Res;
 				USART5_RX_STA++;
 				if((USART5_RX_STA&0X3FFF)>=4) 
 				{
-					Data_len = 256 * USART5_RX_BUF[2] + USART5_RX_BUF[3] + 7; 	// °üº¬0d0aµÄ³¤¶È
+					Data_len = 256 * USART5_RX_BUF[2] + USART5_RX_BUF[3] + 7; 	// åŒ…å«0d0açš„é•¿åº¦
 					//printf("USART_RX_BUF[1]: %i\r\n", USART_RX_BUF[1]); //Data_len = Res + 5;
 					//printf("UART4_RX_STA: %i, Data len: %i", UART4_RX_STA, Data_len);
 					if(USART5_RX_STA>(USART5_REC_LEN-1)) 
-						USART5_RX_STA=0;//½ÓÊÕÊý¾Ý´íÎó(³¬¹ý×î´ó½ÓÊÜ×Ö½ÚÊý),ÖØÐÂ¿ªÊ¼½ÓÊÕ
+						USART5_RX_STA=0;//æŽ¥æ”¶æ•°æ®é”™è¯¯(è¶…è¿‡æœ€å¤§æŽ¥å—å­—èŠ‚æ•°),é‡æ–°å¼€å§‹æŽ¥æ”¶
 					if((USART5_RX_STA&0X3FFF) == Data_len) 
-						USART5_RX_STA|=0x8000;	//½ÓÊÕÍê³ÉÁË
+						USART5_RX_STA|=0x8000;	//æŽ¥æ”¶å®Œæˆäº†
 				}
 			}
 			
 			else
 			{	
-				if(USART5_RX_STA&0x4000)//½ÓÊÕµ½ÁË0x0d
+				if(USART5_RX_STA&0x4000)//æŽ¥æ”¶åˆ°äº†0x0d
 				{
-					if(Res!=0x0a) USART5_RX_STA=0;//½ÓÊÕ´íÎó,ÖØÐÂ¿ªÊ¼
+					if(Res!=0x0a) USART5_RX_STA=0;//æŽ¥æ”¶é”™è¯¯,é‡æ–°å¼€å§‹
 					else 
 					{
 						USART5_RX_BUF[USART5_RX_STA&0X3FFF]=Res;
-						USART5_RX_STA|=0x8000;	//½ÓÊÕÍê³ÉÁË 
+						USART5_RX_STA|=0x8000;	//æŽ¥æ”¶å®Œæˆäº† 
 					}
 				}
-				else //»¹Ã»ÊÕµ½0X0D
+				else //è¿˜æ²¡æ”¶åˆ°0X0D
 				{	
 					if(Res==0x0d) 
 					{
@@ -60,7 +60,7 @@ void USART5_IRQHandler(void)
 					{
 						USART5_RX_BUF[USART5_RX_STA&0X3FFF]=Res;
 						USART5_RX_STA++;
-						if(USART5_RX_STA>(USART5_REC_LEN-1)) USART5_RX_STA=0;//½ÓÊÕÊý¾Ý´íÎó,ÖØÐÂ¿ªÊ¼½ÓÊÕ	  
+						if(USART5_RX_STA>(USART5_REC_LEN-1)) USART5_RX_STA=0;//æŽ¥æ”¶æ•°æ®é”™è¯¯,é‡æ–°å¼€å§‹æŽ¥æ”¶	  
 					}		 
 				}
 			}
@@ -78,52 +78,52 @@ void USART5_IRQHandler(void)
 
 void uart5_init(u32 bound)
 {  	
-	//GPIO¶Ë¿ÚÉèÖÃ
-	//´®¿ÚÍ¨ÐÅ¿Ú
-    //TXDO Ä£¿é·¢ËÍ TTL PD5
-    //RXDI Ä£¿é½ÓÊÕ TTL PD6
+	//GPIOç«¯å£è®¾ç½®
+	//ä¸²å£é€šä¿¡å£
+    //TXDO æ¨¡å—å‘é€ TTL PD5
+    //RXDI æ¨¡å—æŽ¥æ”¶ TTL PD6
   	GPIO_InitTypeDef GPIO_InitStructure;
 	USART_InitTypeDef USART_InitStructure;
 	NVIC_InitTypeDef NVIC_InitStructure;
 	
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD,ENABLE); 
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC,ENABLE); 
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART5,ENABLE);	//Ê¹ÄÜUSART5Ê±ÖÓ
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART5,ENABLE);	//ä½¿èƒ½USART5æ—¶é’Ÿ
 	
-	GPIO_PinAFConfig(GPIOC,GPIO_PinSource12,GPIO_AF_UART5); //PC12¸´ÓÃÎªUSART3
-	GPIO_PinAFConfig(GPIOD,GPIO_PinSource2,GPIO_AF_UART5); //PD2¸´ÓÃÎªUSART3
+	GPIO_PinAFConfig(GPIOC,GPIO_PinSource12,GPIO_AF_UART5); //PC12å¤ç”¨ä¸ºUSART3
+	GPIO_PinAFConfig(GPIOD,GPIO_PinSource2,GPIO_AF_UART5); //PD2å¤ç”¨ä¸ºUSART3
 	
   	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12 | GPIO_Pin_2;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF; //¸´ÓÃ¹¦ÄÜ 
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;	//ËÙ¶È 50MHz 
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP; 	//ÍÆÍì¸´ÓÃÊä³ö
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP; 	//ÉÏÀ­ 
-	GPIO_Init(GPIOC,&GPIO_InitStructure);	//³õÊ¼»¯ PC12
-	GPIO_Init(GPIOD,&GPIO_InitStructure); 	//³õÊ¼»¯ PD2
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF; //å¤ç”¨åŠŸèƒ½ 
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;	//é€Ÿåº¦ 50MHz 
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP; 	//æŽ¨æŒ½å¤ç”¨è¾“å‡º
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP; 	//ä¸Šæ‹‰ 
+	GPIO_Init(GPIOC,&GPIO_InitStructure);	//åˆå§‹åŒ– PC12
+	GPIO_Init(GPIOD,&GPIO_InitStructure); 	//åˆå§‹åŒ– PD2
 		
 
-	USART_InitStructure.USART_BaudRate = bound;//²¨ÌØÂÊÉèÖÃ
-	USART_InitStructure.USART_WordLength = USART_WordLength_8b;//×Ö³¤Îª9Î»Êý¾Ý¸ñÊ½
-	USART_InitStructure.USART_StopBits = USART_StopBits_1;//Ò»¸öÍ£Ö¹Î»
-	USART_InitStructure.USART_Parity = USART_Parity_No;//ÎÞÆæÅ¼Ð£ÑéÎ»
-	//USART_InitStructure.USART_Parity = USART_Parity_Even;//Å¼Ð£ÑéÎ»
-	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;//ÎÞÓ²¼þÊý¾ÝÁ÷¿ØÖÆ
-	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;	//ÊÕ·¢Ä£Ê½
-  	USART_Init(UART5, &USART_InitStructure); //³õÊ¼»¯´®¿Ú3
+	USART_InitStructure.USART_BaudRate = bound;//æ³¢ç‰¹çŽ‡è®¾ç½®
+	USART_InitStructure.USART_WordLength = USART_WordLength_8b;//å­—é•¿ä¸º9ä½æ•°æ®æ ¼å¼
+	USART_InitStructure.USART_StopBits = USART_StopBits_1;//ä¸€ä¸ªåœæ­¢ä½
+	USART_InitStructure.USART_Parity = USART_Parity_No;//æ— å¥‡å¶æ ¡éªŒä½
+	//USART_InitStructure.USART_Parity = USART_Parity_Even;//å¶æ ¡éªŒä½
+	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;//æ— ç¡¬ä»¶æ•°æ®æµæŽ§åˆ¶
+	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;	//æ”¶å‘æ¨¡å¼
+  	USART_Init(UART5, &USART_InitStructure); //åˆå§‹åŒ–ä¸²å£3
 	
- 	USART_Cmd(UART5, ENABLE);  //Ê¹ÄÜ´®¿Ú 3
+ 	USART_Cmd(UART5, ENABLE);  //ä½¿èƒ½ä¸²å£ 3
 	
 	USART_ClearFlag(UART5, USART_FLAG_TC);
 	
 #if EN_USART5_RX
-	USART_ITConfig(UART5, USART_IT_RXNE, ENABLE);//¿ªÆô½ÓÊÜÖÐ¶Ï
+	USART_ITConfig(UART5, USART_IT_RXNE, ENABLE);//å¼€å¯æŽ¥å—ä¸­æ–­
 
-	//Usart2 NVIC ÅäÖÃ
+	//Usart2 NVIC é…ç½®
 	NVIC_InitStructure.NVIC_IRQChannel = UART5_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=3;//ÇÀÕ¼ÓÅÏÈ¼¶3
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority =3;		//×ÓÓÅÏÈ¼¶3
-	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;			//IRQÍ¨µÀÊ¹ÄÜ
-	NVIC_Init(&NVIC_InitStructure);	//¸ù¾ÝÖ¸¶¨µÄ²ÎÊý³õÊ¼»¯VIC¼Ä´æÆ÷¡¢
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=3;//æŠ¢å ä¼˜å…ˆçº§3
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority =3;		//å­ä¼˜å…ˆçº§3
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;			//IRQé€šé“ä½¿èƒ½
+	NVIC_Init(&NVIC_InitStructure);	//æ ¹æ®æŒ‡å®šçš„å‚æ•°åˆå§‹åŒ–VICå¯„å­˜å™¨ã€
 
 #endif	
 }
@@ -164,7 +164,7 @@ void USART5_Receive_Data(u8 *buf,u8 *len)
 	u8 i=0;		
 	u8 data_len=USART5_RX_STA&0x3fff;
 	delay_ms(10);	
-	// ´òÓ¡½ÓÊÕµ½µÄÊý¾Ý
+	// æ‰“å°æŽ¥æ”¶åˆ°çš„æ•°æ®
 	//printf("data_len: %i, len: %i", data_len, *len);
 	if(data_len>0)
 	{

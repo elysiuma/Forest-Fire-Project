@@ -1,9 +1,9 @@
 /******************** IECAS********************************
- * file £ºBMP280.c
+ * file Â£ÂºBMP280.c
  * description: itialization BMP280 and with Calculate temperature and pressure.
- * writer    £ºzhaorongjian
+ * writer    Â£Âºzhaorongjian
  * Version update date: 2017-7-20
- * hardware connection:PB6-I2C1_SCL¡¢PB7-I2C1_SDA
+ * hardware connection:PB6-I2C1_SCLÂ¡Â¢PB7-I2C1_SDA
  * Debug :STLink
 **********************************************************************************/
 /* Includes ------------------------------------------------------------------*/
@@ -103,7 +103,7 @@ void bmp280_uint(void)
   * @file   bmp280_compensate_temperature_double
   * @brief  use  correction coefficient,Calculation adc_T to temperature
   * @param  adc_T
-  * @retval Returns temperature in DegC, double precision. Output value of “51.23” equals 51.23 DegC.
+  * @retval Returns temperature in DegC, double precision. Output value of â€œ51.23â€ equals 51.23 DegC.
   */
  double bmp280_compensate_temperature_double( int32_t bmp280_adc_T)
 {  
@@ -123,7 +123,7 @@ void bmp280_uint(void)
   * @file   bmp280_compensate_pressure_double
   * @brief  use  correction coefficient,Calculation adc_P to pressure
   * @param  adc_P
-  * @retval Returns pressure in Pa as double. Output value of “96386.2” equals 96386.2 Pa = 963.862 hPa
+  * @retval Returns pressure in Pa as double. Output value of â€œ96386.2â€ equals 96386.2 Pa = 963.862 hPa
   */  
 
  double bmp280_compensate_pressure_double( int32_t bmp280_adc_P) 

@@ -1,7 +1,7 @@
 #ifndef __BMP280_H__
 #define __BMP280_H__
 #include "stm32f4xx.h"
-#define BMP280_ADDRESS 0x76 //if GDO connect VCC£¬Device Address is 0x77,if GDO connect GND£¬Device Address is 0x76. 
+#define BMP280_ADDRESS 0x76 //if GDO connect VCCÂ£Â¬Device Address is 0x77,if GDO connect GNDÂ£Â¬Device Address is 0x76. 
 #define BMP280_RESET_VALUE 0xB6  ///soft RESET_REG
  
 /*calibration parameters register */  
