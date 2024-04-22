@@ -1,10 +1,9 @@
 #include "sys.h"
 #include "timer2.h"
 #include "mq2.h"
-#include "lora.h"
+#include "mq7.h"
 
-static u8 timer_flag=1;
-void Timer_mq2_Init(void)
+void Timer_mq2_Init(u16 interval)
 {
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;
 
@@ -39,21 +38,38 @@ void TIM5_IRQHandler(void)
 {
     if(TIM_GetITStatus(TIM5,TIM_IT_Update)!=RESET)
     {
-		if(MQ2)
-		{	
-			MQ2 = !MQ2;
-			timer_flag = 0;
-		}
-		else
-		{	
-			if(timer_flag==0)
-			timer_flag = 1;
-			else if(timer_flag==1)
-			{
-				MQ2 = !MQ2;
-				timer_flag = 0;
-			}
-		}
+		mq2_state_count++;
+        if (flag_mq2)
+        {
+            // MQ2启动的时候
+            if (mq2_state_count>MQ2_ON_MAX)
+            {
+                // MQ2启动时间到，关闭MQ2
+                MQ2_Switch(0);
+                MQ7_Switch(0);
+                mq2_state_count = 0;
+            }
+            else if (mq2_state_count==1)
+            {
+                MQ2_Switch(1); // 启动预热
+                MQ7_Switch(1);
+                flag_mq2_is_need_measure = 0;   // 即使有未进行的测量，预热期间也需关闭测量
+            }
+            else
+                flag_mq2_is_need_measure = 1;    // MQ2需要测量，在main循环中执行，执行完复位0
+        }
+        else 
+        {
+            if (mq2_state_count>MQ2_OFF_MAX)
+            {
+                // MQ2关闭时间到
+                MQ2_Switch(1);
+                MQ7_Switch(1);
+                mq2_state_count = 0;
+            }
+            else
+                flag_mq2_is_need_measure = 0;   // 重新声明无需测量，避免问题
+        }
         TIM_ClearITPendingBit(TIM5,TIM_IT_Update);
     }
 }

@@ -3,6 +3,7 @@
 #include "usart4.h"
 #include "led.h"
 #include "mq2.h"
+#include "mq7.h"
 #include "adc.h"
 #include "battery.h"
 #include "lora.h"
@@ -11,16 +12,20 @@
 #include "timer2.h"
 #include "rtc.h"
 #include "mqtt4g.h"
-#include "i2c.h"
-#include "bmp280.h"
-#include "SHT2X.h"
+// #include "i2c.h"
+// #include "bmp280.h"
+// #include "SHT2X.h"
+
+#define MQ2PreheatInterval 10 // MQ2预热时间间隔，单位为秒  至少为20秒
+#define GPSTimeInterval 120	// GPS时间校时间隔，单位为秒  测试时2分钟一次，正式为5分钟一次
 
 uint8_t EnableMaster = 1;		  // 主从选择 1为主机，0为从机
 u8 is_debug = 1;				  // 是否调试模式，1为调试模式，0为正常模式
 u8 query_node_data_max_times = 5; // 查询节点数据最大次数
-u8 is_lora = 1;					  // 是否启动lora模块
-u8 is_gps = 1;					  // 是否启动GPS模块
-u8 is_4g = 1;					  // 是否启动4G模块,需要先启动lora和gps
+u8 is_lora = 0;					  // 是否启动lora模块
+u8 is_gps = 0;					  // 是否启动GPS模块
+u8 is_4g = 0;					  // 是否启动4G模块,需要先启动lora和gps
+u8 is_battery = 0;				  // 是否启动电池电压检测
 
 // 函数申明
 void UART4_Handler(void); // 处理串口4PC通信的内容
@@ -29,25 +34,22 @@ void GPS_Handler(void);	  // 处理GPS通信的内容
 
 int main(void)
 {
-	float co2_queue[10] = {0};	   // 最近10次的烟雾浓度
 	float co2 = 0; // 烟雾浓度
-	float is_co2_collect_init = 0; // 是否已经收集了至少10个co2数据了，未满10个均值需要动态考虑
-	u8 co2_idx = 0;
+	float co_latest = 0; // 最新的CO浓度
+
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2); // 设置系统中断优先级分组2
 	delay_init(168);								// 初始化延时函数
 	uart4_init(9600);								// 初始化串口波特率为9600
 	LED_Init();										// 初始化LED
 
 	MQ2_Init();
-	Timer_mq2_Init();
-	BATTERY_Init();
-	if (is_4g)
-		mqtt4g_init();
+	MQ7_Init();
+	Timer_mq2_Init(MQ2PreheatInterval);		// 初始化MQ2定时器，每MQ2PreheatInterval秒状态位递增，用于MQ2的预热（20秒）和测量，MQ7共用一个定时器
+	if (is_battery) BATTERY_Init();
+	if (is_4g) mqtt4g_init();
 	customRTC_Init();
-	if (is_gps)
-		GPS_Init();
-	Timer_Init(2 * 60); // 初始化定时器，TIM2用于读取gps时间给RTC校时, 间隔单位为秒，interval*12为校时总周期
-	// 测试时2分钟一次，正式为5分钟一次
+	if (is_gps) GPS_Init();
+	Timer_Init(GPSTimeInterval); // 初始化定时器，TIM2用于读取gps时间给RTC校时, 间隔单位为秒，interval*12为校时总周期
 	if (is_lora)
 	{
 		is_lora_init = LORA_Init();
@@ -56,10 +58,12 @@ int main(void)
 
 	LED = 1;
 	MQ2 = 1;
+	MQ7 = 1;
 
-	IIC_Init(); // I2C initialize
-	SHT2X_Init();
-	bmp280_uint();
+	// I2C初始化
+	// IIC_Init(); // I2C initialize
+	// SHT2X_Init();
+	// bmp280_uint();
 	delay_ms(500);
 
 	while (1)
@@ -71,7 +75,6 @@ int main(void)
 		u8 is_query_node_success = 0;	  // 是否成功查询到节点数据
 		u8 data_str[300];				  // 用于存储发送给服务器的数据
 
-		// float co2 = 0; // 烟雾浓度	不一定每次循环都会更新，因此在while外初始化
 		float BMP280_P = 100000;
 		float BMP280_T = 25.00;
 		float SHT2X_T = 25.00; // temperature of SHT2X
@@ -79,52 +82,42 @@ int main(void)
 		float battery = 0;	   // 电源电压
 
 		// 读取烟雾浓度最近10次平均数据
-		if (MQ2) // 工作时才采数据
+		if (flag_mq2_is_need_measure) // 需要测量时采集MQ2数据
 		{
-			// printf("co2: %f\r\n", co2);
-			co2_queue[co2_idx++] = MQ2_Scan();
-			printf("current_co2_idx: %d\r\n", co2_idx);
-			if (co2_idx == 10)
-			{
-				co2_idx = 0;
-				is_co2_collect_init = 1;
-				printf("co2 queue init success!\r\n");
-			}
-			for (i = 0; i < 10; i++)
-			{
-				co2 += co2_queue[i];
-				// printf("co2 queue: %f\r\n", co2_queue[i]);
-			}
-			if (is_co2_collect_init)
-				co2 /= 10;
-			else
-				co2 /= co2_idx;
+			printf("MQ2_Scan state=%d\r\n", mq2_state_count);
+			co2 = MQ2_Scan();
+			co_latest = MQ7_Scan();
+			printf("CO2: %.2f, CO: %.2f\r\n", co2, co_latest);
+			flag_mq2_is_need_measure = 0;
 		}
 		// printf("bmp T: %f\r\n", bmp280_get_temperature());
 
-		SHT2X_T = SHT2X_TEST_T(); // get temperature of SHT2X.
-		// printf("raw T: %f\r\n", SHT2X_T);
-		SHT2X_T = 1.055 * SHT2X_T - 3.455;
-		SHT2X_T += 0.4;
+		// SHT2X_T = SHT2X_TEST_T(); // get temperature of SHT2X.
+		// // printf("raw T: %f\r\n", SHT2X_T);
+		// SHT2X_T = 1.055 * SHT2X_T - 3.455;
+		// SHT2X_T += 0.4;
 
-		BMP280_T = bmp280_get_temperature();
-		// printf("bmp_t:%f\r\n", BMP280_T);
-		BMP280_P = bmp280_get_pressure(); // get pressure of bmp280.
-		BMP280_P = (BMP280_P - 1.19) / 100;
+		// BMP280_T = bmp280_get_temperature();
+		// // printf("bmp_t:%f\r\n", BMP280_T);
+		// BMP280_P = bmp280_get_pressure(); // get pressure of bmp280.
+		// BMP280_P = (BMP280_P - 1.19) / 100;
 
-		SHT2X_H = SHT2X_TEST_RH(); // get humidity of SHT2X.
-		// printf("raw H: %f\r\n", SHT2X_H);
-		SHT2X_H = 0.976 * SHT2X_H + 6.551;
+		// SHT2X_H = SHT2X_TEST_RH(); // get humidity of SHT2X.
+		// // printf("raw H: %f\r\n", SHT2X_H);
+		// SHT2X_H = 0.976 * SHT2X_H + 6.551;
 
-		printf("smoke: %f\r\n", co2);
-		printf("pressure: %f\r\n", BMP280_P);
-		printf("temperature: %f\r\n", SHT2X_T);
-		printf("humidity: %f\r\n", SHT2X_H);
+		// printf("smoke: %f\r\n", co2);
+		// printf("pressure: %f\r\n", BMP280_P);
+		// printf("temperature: %f\r\n", SHT2X_T);
+		// printf("humidity: %f\r\n", SHT2X_H);
 
 		// 读取电池电压
-		battery = BATTERY_Scan();
-		printf("battery: %.2f%%\r\n", battery);
-		printf("\r\n");
+		if(is_battery)
+		{
+			battery = BATTERY_Scan();
+			printf("battery: %.2f%%\r\n", battery);
+			printf("\r\n");
+		}
 
 		//	如果lora模块未初始化成功，尝试重新初始化
 		if (is_lora && !is_lora_init)
