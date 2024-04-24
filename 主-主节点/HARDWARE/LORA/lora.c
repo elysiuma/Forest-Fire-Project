@@ -388,7 +388,7 @@ u8 LORA_Network_Init(void)
 }
 
 // 查询网络状态
-u8 LORA_Query_Network_Status(u8 *time, u8 is_debug)
+u8 LORA_Query_Network_Status(u8 *address, u8 *time, u8 is_debug)
 {
     // time: 时分秒
     // is_debug: 0:不打印调试信息 1:打印调试信息
@@ -423,6 +423,9 @@ u8 LORA_Query_Network_Status(u8 *time, u8 is_debug)
         if (check_LORA_Receive())
         {
             LORA_Receive(receive_buf, &receive_len);
+            //获取地址
+            address[4] =receive_buf[append_len];
+            address[5] =receive_buf[append_len + 1];
             // 获取时间
             time[0] = receive_buf[append_len + 2] / 16 * 10 + receive_buf[append_len + 2] % 16;
             time[1] = receive_buf[append_len + 3] / 16 * 10 + receive_buf[append_len + 3] % 16;
@@ -705,9 +708,8 @@ u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len)
 	battery_f = *(float *)battery;
 	isTime = RTC_check_device_time();
     // 打印时间和传感器数据
-	sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %f\r\npressure: %f\r\nhumidity: %f\r\nwind_speed: %f\r\n"
-	"wind_direction: %f\r\nsmoke: %f\r\nbattery: %f\r\nisTimeTrue: %d\r\n",
-           address[5], address[4], address[3], address[2], address[1], address[0], time[0], time[1], time[2], temperature_f, pressure_f, humidity_f, wind_speed_f, 
+	sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %.2f\r\npressure: %.2f\r\nhumidity: %.2f\r\nwind_speed: %.2f\r\nwind_direction: %.2f\r\nsmoke: %.2f\r\nbattery: %.2f\r\nisTimeTrue: %d\r\n",
+    address[5], address[4], address[3], address[2], address[1], address[0], time[0], time[1], time[2], temperature_f, pressure_f, humidity_f, wind_speed_f, 
 	wind_direction_f, smoke_f, battery_f, isTime);
 	puts(data_str);
 	printf("data_str len:%d\r\n", strlen(data_str));

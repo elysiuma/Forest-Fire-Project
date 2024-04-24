@@ -25,11 +25,13 @@
 uint8_t EnableMaster = 1;		  	// 主从选择 1为主机，0为从机
 u8 is_debug = 1;				  	// 是否调试模式，1为调试模式，0为正常模式
 u8 query_node_data_max_times = 5; 	// 查询节点数据最大次数
-u8 is_lora = 0;					  	// 是否启动lora模块
+u8 is_lora = 1;					  	// 是否启动lora模块
 u8 is_gps = 0;					  	// 是否启动GPS模块
 u8 is_4g = 0;					  	// 是否启动4G模块,需要先启动lora和gps
 u8 is_wind_sensor = 0;				// 是否启动风速风向传感器
 u8 is_battery = 0;					// 是否启动电池电压检测
+u8 is_calibration = 0;				// 是否启动风速风向校准
+u8 address[6] = {0x99, 0x99, 0x99, 0x99};				// 储存当前设备的lora模块地址
 u8 query_windsensor[11] = {0x24, 0x41, 0x44, 0x2C, 0x30, 0x34, 0x2A, 0x36, 0x33, 0x0D, 0x0A};	// 向风速传感器请求数据
 u8 cab_windsensor[11] = {0x24, 0x41, 0x5A, 0x2C, 0x30, 0x34, 0x2A, 0x37, 0x39, 0x0D, 0x0A};		// 风速风向校准
 
@@ -56,6 +58,9 @@ int main(void)
 	float wind_speed = 0;
 	float wind_direction = 0;
 	float co_latest = 0; // 最新的CO浓度
+	u8 time[3] = {0};
+	u8 flag = 0;
+	u8 i = 0;
 
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2); // 设置系统中断优先级分组2
 	delay_init(168);								// 初始化延时函数
@@ -88,17 +93,35 @@ int main(void)
 	// SHT2X_Init();
 	// bmp280_uint();
 	delay_ms(500);
-	if (is_wind_sensor)
+	if (is_calibration)
 	{
 		if (is_debug) printf("calibrating windsensor...please ensure NO WIND\r\n");
 		USART6_DATA(cab_windsensor, 11);
 		if (is_debug) printf("calibration DONE\r\n");
 		delay_ms(1000);
 	}
+	// 获取当前lora模块地址
+	flag = LORA_Query_Network_Status(address, time, is_debug);
+	if (flag)
+	{
+		if (is_debug)
+		{
+			printf("LORA Network Status: OK\r\n");
+			printf("LORA Address: ");
+			for (i = 0; i < 6; i++)
+				printf("%02X ", address[i]);
+			printf("\r\n");
+		}
+	}
+	else
+	{
+		if (is_debug) printf("LORA Network Status: ERROR\r\n");
+	}
 
 	while (1)
 	{
-		u8 time[3];
+		u8 time[3] = {0};
+		u8 flag = 0;
 		u8 i, j;
 		u8 current_addr[6] = {0};
 		u8 query[3] = {0x11, 0x22, 0x33}; // 用于向子节点发送，查询数据
@@ -158,7 +181,7 @@ int main(void)
 		}
 
 		// if (UART4_RX_STA & 0x8000)
-			// UART4_Handler(); // 处理串口4PC通信的内容
+		// 	UART4_Handler(); // 处理串口4PC通信的内容
 
 		if (is_lora && check_LORA_Receive())
 			LORA_Handler(); // 处理LORA通信的内容
@@ -235,7 +258,7 @@ int main(void)
 			// 主节点发送自身数据
 			// 打印时间和传感器数据
 			RTC_Get_Time(time);
-			sprintf(data_str, "address: 999999990505\r\ntime: %02d:%02d:%02d\r\ntemperature: %.2f\r\npressure: %.2f\r\nhumidity: %.2f\r\nwind_speed: %.2f\r\nwind_direction: %.2f\r\nsmoke: %.2f\r\nbattery: %.2f%%\r\nisTimeTrue: %d\r\n",
+			sprintf(data_str, "address: 999999990551\r\ntime: %02d:%02d:%02d\r\ntemperature: %.2f\r\npressure: %.2f\r\nhumidity: %.2f\r\nwind_speed: %.2f\r\nwind_direction: %.2f\r\nsmoke: %.2f\r\nbattery: %.2f%%\r\nisTimeTrue: %d\r\n",
 					time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H, wind_speed, wind_direction, co2, battery, RTC_check_device_time());
 			if (is_debug) puts(data_str);
 			if (is_debug) printf("sending main node data to server...\r\n");
@@ -309,7 +332,7 @@ void UART4_Handler(void)
 		{
 			u8 time[3] = {0};
 			u8 flag = 0;
-			flag = LORA_Query_Network_Status(time, is_debug);
+			flag = LORA_Query_Network_Status(address, time, is_debug);
 			if (flag)
 			{
 				if (is_debug) printf("LORA Network Status: OK\r\n");
@@ -459,7 +482,7 @@ void LORA_Handler(void)
 		{
 			u8 flag;
 			if (is_debug) printf("\r\n");
-			flag = LORA_Receive_Data_Analysis(temp_rec, rec_len);
+			flag = LORA_Receive_Data_Analysis(temp_rec, rec_len);		// 在这一步中将收集到的从节点数据通过4G上传
 			if (flag == 1)
 			{
 				if (is_debug) printf("LORA Receive Data Analysis Success\r\n");
