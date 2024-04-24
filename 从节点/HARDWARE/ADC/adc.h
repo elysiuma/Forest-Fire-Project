@@ -16,6 +16,7 @@
  							   
 void Adc_Init(void); 				//ADC通道初始化
 void Adc_Init_MQ2(void);            //烟雾传感器ADC初始化
+void Adc_Init_MQ7(void);            //CO传感器ADC初始化
 void Adc_Init_Battery(void);        //电源管理ADC初始化
 u16  Get_Adc(u8 ch); 				//获得某个通道值 
 u16 Get_Adc_Average(u8 ch,u8 times);//得到某个通道给定次数采样的平均值  

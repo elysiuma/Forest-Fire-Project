@@ -4,7 +4,10 @@
 #include "usart2.h"
 #include "led.h"
 #include "mq2.h"
+#include "mq7.h"
 #include "adc.h"
+#include "bmp280.h"
+#include "SHT2X.h"
 #include "battery.h"
 #include "lora.h"
 #include "timer.h"
@@ -12,16 +15,16 @@
 #include <string.h>
 #include <stdlib.h>
 
-uint8_t EnableMaster=0;//主从选择 1为主机，0为从机
+#define MQ2PreheatInterval 10 // MQ2预热时间间隔，单位为秒  至少为20秒
 
-float co2;	//烟雾浓度
-float battery;	//电源电压
+uint8_t EnableMaster=0;				//主从选择 1为主机，0为从机	(FIX:很久没用了，基本无效)
+u8 is_battery = 1;					// 是否启动电池电压检测
+u8 is_debug = 1;					// 是否启动调试模式
+
 u8 temp_rec[50];
 u8 rec_len=0;
 u8 query_rec[50];
 u8 query_rec_len=0;
-float co2_queue[10] = {0}; //最近10次的烟雾浓度
-u8 co2_idx = 0;
 //float data[6]={0};	//风速data[0] 风向1 温度2 气压3 湿度4 烟雾5 电量6
 u8 data_u8[28] = {0};
 union data{
@@ -34,55 +37,77 @@ void get_data(char*);
 
 int main(void)
 { 
+	float co2;	//烟雾浓度
+	float battery=0;	//电源电压
+	float co_latest = 0; // 最新的CO浓度
+	float BMP280_P = 100000; // pressure of BMP280
+	float BMP280_T = 25.00;	// temperature of BMP280，用于校正BMP280
+	float SHT2X_T = 25.00; // temperature of SHT2X
+	float SHT2X_H = 40.00; // humidity of SHT2X
 	
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);//设置系统中断优先级分组2
 	delay_init(168);    //初始化延时函数
 	uart_init(9600);	//初始化串口波特率为115200
 	uart3_init(9600);
 	LED_Init();					//初始化LED 
-	//Adc_Init();				//初始化ADC
+	Adc_Init();				//初始化ADC
 
 	MQ2_Init();
-	BATTERY_Init();
+	MQ7_Init();
+	if(is_battery) BATTERY_Init();
 	LORA_Init();
-	Timer_Init();
+	Timer_mq2_Init(MQ2PreheatInterval);		// 初始化MQ2定时器，每MQ2PreheatInterval秒状态位递增，用于MQ2的预热（20秒）和测量，MQ7共用一个定时器
 	LED = 1;
 	MQ2 = 1;
+	MQ7 = 1;
+
+	// i2c温湿度传感器初始化
+	IIC_Init(); // I2C initialize
+	SHT2X_Init();
+	bmp280_uint();
+
 	delay_ms(500);
 	
 	
 	while(1)
 	{ 
 		u8 len, t, i;
-		float data_f;
-		float co2_sum=0, co2;
 		
-		if(MQ2)	//工作时才采数据
+		// 读取烟雾浓度
+		if (flag_mq2_is_need_measure) // 需要测量时采集MQ2数据
 		{
+			printf("MQ2_Scan state=%d\r\n", mq2_state_count);
 			co2 = MQ2_Scan();
-			//printf("co2: %f\r\n", co2);
-		
-			co2_queue[co2_idx] = co2;
-			co2_idx++;
-			if(co2_idx==10) co2_idx=0;
-			for(i = 0; i < 10; i++)
-			{
-				co2_sum = co2_sum + co2_queue[i];
-				//printf("co2 queue: %f\r\n", co2_queue[i]);
-			}
-			co2 = co2_sum / 10;
-			data_1.f = co2;
-			//printf("ave co2 queue: %f\r\n", data_1.f);
-			//data_1.f = 123.53;
-			for(i = 0; i < 4; i++)
-			{
-				data_u8[20+i] = data_1.ch[i]; //共用体中ch与真实的16进制是倒过来的
-			}
+			co_latest = MQ7_Scan();
+			printf("CO2: %.2f, CO: %.2f\r\n", co2, co_latest);
+			flag_mq2_is_need_measure = 0;
 		}
 		
-		battery = BATTERY_Scan();
-		printf("battery: %.2f%%\r\n", battery);
-		printf("smoke: %f\r\n", co2);
+		// I2C传感器执行
+		SHT2X_T = SHT2X_TEST_T(); // get temperature of SHT2X.
+		if (is_debug) printf("raw T: %f\r\n", SHT2X_T);
+		SHT2X_T = 1.055 * SHT2X_T - 3.455;
+		SHT2X_T += 0.4;
+
+		BMP280_T = bmp280_get_temperature();
+		if (is_debug) printf("bmp_t:%f\r\n", BMP280_T);
+		BMP280_P = bmp280_get_pressure(); // get pressure of bmp280.
+		BMP280_P = (BMP280_P - 1.19) / 100;
+
+		SHT2X_H = SHT2X_TEST_RH(); // get humidity of SHT2X.
+		if (is_debug) printf("raw H: %f\r\n", SHT2X_H);
+		SHT2X_H = 0.976 * SHT2X_H + 6.551;
+
+		if (is_debug) printf("pressure: %f\r\n", BMP280_P);
+		if (is_debug) printf("temperature: %f\r\n", SHT2X_T);
+		if (is_debug) printf("humidity: %f\r\n", SHT2X_H);
+
+		if(is_battery)	// 电池电压检测
+		{
+			battery = BATTERY_Scan();
+			printf("battery: %.2f%%\r\n", battery);
+		}
+		
 		data_1.f = battery;
 		for(i=0;i<4;i++)
 			data_u8[i+24] = data_1.ch[i];
@@ -94,25 +119,26 @@ int main(void)
 		}
 		*/
 		
-		printf("query windsensor...\r\n");
-		USART3_DATA(query_windsensor, 11);
-		delay_ms(1000);
-		if (USART3_RX_CNT&0x8000)
-		{
-			printf("get windsensor data!\r\n");
-			USART3_Receive_Data(temp_rec, &rec_len);
-			puts(temp_rec);
-			printf("\r\n");
-			printf("data analyzing...\r\n");
-			get_data(temp_rec);
-		}
-		else
-			printf("no data!!!\r\n");
-		printf("windsensor query finished...\r\n");
-		for(i=0;i<28;i++)
-			printf("%02x ", data_u8[i]);
-		printf("\r\n");
-		rec_len=0;
+		// 串口查询风速风向
+		// printf("query windsensor...\r\n");
+		// USART3_DATA(query_windsensor, 11);
+		// delay_ms(1000);
+		// if (USART3_RX_CNT&0x8000)
+		// {
+		// 	printf("get windsensor data!\r\n");
+		// 	USART3_Receive_Data(temp_rec, &rec_len);
+		// 	puts(temp_rec);
+		// 	printf("\r\n");
+		// 	printf("data analyzing...\r\n");
+		// 	get_data(temp_rec);
+		// }
+		// else
+		// 	printf("no data!!!\r\n");
+		// printf("windsensor query finished...\r\n");
+		// for(i=0;i<28;i++)
+		// 	printf("%02x ", data_u8[i]);
+		// printf("\r\n");
+		// rec_len=0;
 		
 		if(USART_RX_STA&0x8000) 
 		{         
@@ -164,6 +190,7 @@ int main(void)
 		
 		delay_ms(1000);
 		DebugLed();	//LED闪烁说明程序正常运行
+		printf("\r\n");
 	}
 }
 

@@ -4,6 +4,5 @@
 #include "stdio.h"
 #include "sys.h" 
 
-void Timer_Init(void);
-static u8 timer_flag;
+void Timer_mq2_Init(u16 interval);
 #endif

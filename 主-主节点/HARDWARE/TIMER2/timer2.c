@@ -2,7 +2,6 @@
 #include "timer2.h"
 #include "mq2.h"
 #include "mq7.h"
-#include "lora.h"
 
 
 void Timer_mq2_Init(u16 interval)
