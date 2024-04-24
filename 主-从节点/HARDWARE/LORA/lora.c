@@ -388,7 +388,7 @@ u8 LORA_Network_Init(void)
 }
 
 // 查询网络状态
-u8 LORA_Query_Network_Status(u8 *time, u8 is_debug)
+u8 LORA_Query_Network_Status(u8 *address, u8 *time, u8 is_debug)
 {
     // time: 时分秒
     // is_debug: 0:不打印调试信息 1:打印调试信息
