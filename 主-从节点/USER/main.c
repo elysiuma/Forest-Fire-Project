@@ -25,13 +25,12 @@
 uint8_t EnableMaster = 1;		  // 主从选择 1为主机，0为从机
 u8 is_debug = 1;				  // 是否调试模式，1为调试模式，0为正常模式
 u8 query_node_data_max_times = 5; // 查询节点数据最大次数
-u8 is_lora = 0;					  // 是否启动lora模块
+u8 is_lora = 1;					  // 是否启动lora模块
 u8 is_gps = 1;					  // 是否启动GPS模块
 u8 is_4g = 0;					  // 是否启动4G模块,需要先启动lora和gps
-u8 is_battery = 0;				  // 是否启动电池电压检测
+u8 is_battery = 1;				  // 是否启动电池电压检测
 u8 is_wind_sensor = 0;				// 是否启动风速风向传感器
-u8 is_calibration = 0;				// 是否启动风速风向校准
-u8 address[6] = {0x99, 0x99, 0x99, 0x99};				// 储存当前设备的lora模块地址
+u8 is_calibration = 0;				// 是否启动风速风向校准 
 u8 query_windsensor[11] = {0x24, 0x41, 0x44, 0x2C, 0x30, 0x34, 0x2A, 0x36, 0x33, 0x0D, 0x0A};	// 向风速传感器请求数据
 u8 cab_windsensor[11] = {0x24, 0x41, 0x5A, 0x2C, 0x30, 0x34, 0x2A, 0x37, 0x39, 0x0D, 0x0A};		// 风速风向校准
 
@@ -91,29 +90,11 @@ int main(void)
 	// SHT2X_Init();
 	// bmp280_uint();
 	delay_ms(500);
-
-	// 查询LORA模块地址
-	flag = LORA_Query_Network_Status(address, time, is_debug);
-	if (flag)
-	{
-		if (is_debug)
-		{
-			printf("LORA Network Status: OK\r\n");
-			printf("LORA Address: ");
-			for (i = 0; i < 6; i++)
-				printf("%02X ", address[i]);
-			printf("\r\n");
-		}
-	}
-	else
-	{
-		if (is_debug) printf("LORA Network Status: ERROR\r\n");
-	}
+	printf("System Init OK\r\n");
 
 	while (1)
 	{
 		u8 time[3] = {0};
-		u8 flag = 0;
 		u8 i, j;
 		u8 current_addr[6] = {0};
 		u8 query[3] = {0x11, 0x22, 0x33}; // 用于向子节点发送，查询数据
@@ -193,13 +174,14 @@ int main(void)
 		}
 
 		if (is_lora)
+		// if (0)
 		{
 			// 向从节点要数据
 			printf("query data...\r\n");
-			for (i = 0; i < nNode; i++)
+			for (i = 0; i < SubNodeSet.nNode; i++)
 			{
 				for (j = 0; j < 6; j++)
-					current_addr[j] = SubNodeAddress[i * 6 + j];
+					current_addr[j] = SubNodeSet.SubNode_list[i].address[(i+1) * 6 - j -1];		// 从节点地址要倒过来查询
 				LORA_DATA_Transfer(query, 3, current_addr);
 				printf("query sent...node: %d\r\n", i);
 				delay_ms(5000);
@@ -322,7 +304,7 @@ void UART4_Handler(void)
 		{
 			u8 time[3] = {0};
 			u8 flag = 0;
-			flag = LORA_Query_Network_Status(address, time, is_debug);
+			flag = LORA_Query_Network_Status(SelfAddress, time, is_debug);
 			if (flag)
 			{
 				printf("LORA Network Status: OK\r\n");

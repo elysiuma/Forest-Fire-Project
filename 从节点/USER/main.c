@@ -184,6 +184,8 @@ int main(void)
 				float_to_u8(co_latest, data_u8+16);
 				float_to_u8(battery, data_u8+20);
 				LORA_Send(data_u8, NumOfData*4);
+				for (i=0; i<NumOfData*4; i++)
+					printf("%02x ", data_u8[i]);
 				printf("data reported!\r\n");
 				query_rec_len=0;
 			}
