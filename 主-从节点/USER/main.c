@@ -23,7 +23,7 @@ uint8_t EnableMaster = 1;		  // 主从选择 1为主机，0为从机
 u8 is_debug = 1;				  // 是否调试模式，1为调试模式，0为正常模式
 u8 query_node_data_max_times = 5; // 查询节点数据最大次数
 u8 is_lora = 0;					  // 是否启动lora模块
-u8 is_gps = 0;					  // 是否启动GPS模块
+u8 is_gps = 1;					  // 是否启动GPS模块
 u8 is_4g = 0;					  // 是否启动4G模块,需要先启动lora和gps
 u8 is_battery = 0;				  // 是否启动电池电压检测
 
@@ -448,13 +448,11 @@ void GPS_Handler(void)
 		return;
 	}
 	// 测试打印数据
-	/*
 	for (t = 0; t < rec_len; t++)
 	{
 		USART_SendData(UART4, temp_rec[t]); // 向串口4发送数据
 		while (USART_GetFlagStatus(UART4, USART_FLAG_TC) != SET); // 等待发送结束
 	}
-	*/
 	// 检测是否是完整的GPS数据包
 	if (temp_rec[3] == 0x47 && temp_rec[4] == 0x47 && temp_rec[5] == 0x41)
 	{

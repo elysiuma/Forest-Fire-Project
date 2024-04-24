@@ -114,7 +114,7 @@ u8 GPS_get_time(u8 *time)
             // GPS质量
             GPS_Quality = temp_rec[43+start_idx]-'0';
             // 卫星数量
-            GPS_Satellite_Num = 10 * (temp_rec[45+start_idx] - '0') + (temp_rec[46]+start_idx - '0');
+            GPS_Satellite_Num = 10 * (temp_rec[45+start_idx] - '0') + (temp_rec[46+start_idx] - '0');
 
             // 打印时间
             //printf("GPS Time: %d:%d:%d quality:%d, gps_num:%d\r\n", time[0], time[1], time[2],GPS_Quality,GPS_Satellite_Num);
