@@ -43,7 +43,7 @@ u8 check_LORA_Receive(void);
 u8 LORA_Network_Init(void); //一键初始化网络
 u8 LORA_Init_Time(u8 *time);
 u8 LORA_Add_Slave_Node(u8 nNode, u8 *SubNodeAddress);
-u8 LORA_Query_Network_Status(u8 *time, u8 is_debug);     // 查询网络状态
+u8 LORA_Query_Network_Status(u8 *address, u8 *time, u8 is_debug);     // 查询网络状态
 u8 LORA_Query_Slave_Node_Status(u8 is_debug); //查询从节点状态
 void LORA_DATA_Transfer(u8 *buf, u8 buf_len, u8 *address); //数据传输
 u8 LORA_Network_Clear(void);    //清除网络
