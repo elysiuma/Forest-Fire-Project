@@ -11,6 +11,7 @@
 SubNodeSetStruct SubNodeSet;
 // u16 last_time_gps = 999; 
 u8 is_lora_init = 0;
+u8 is_need_query_data = 0;
 u8 get_data_flag = 0;
 // u8 nNode = 1;
 u8 SelfAddress[6] = {0x99, 0x99, 0x99, 0x99};
@@ -832,7 +833,7 @@ u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len)
 	isTime = RTC_check_device_time();
     // 打印时间和传感器数据
 	sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %f\r\npressure: %f\r\nhumidity: %f\r\n"
-            "smoke: %f\r\nco: %f\r\nbattery: %f\r\nisTimeTrue: %d\r\n[SEP]",
+            "smoke: %f\r\nco: %f\r\nbattery: %f\r\nisTimeTrue: %d\r\n",
            address[0], address[1], address[2], address[3], address[4], address[5], time[0], time[1], time[2], temperature_f, pressure_f, humidity_f, 
            smoke_f,co_f, battery_f, isTime);
 	puts(data_str);

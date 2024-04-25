@@ -12,8 +12,9 @@
 #include "gps.h"
 #include "timer.h"
 #include "timer2.h"
+#include "timer3.h"
 #include "rtc.h"
-#include "mqtt4g.h"
+// #include "mqtt4g.h"
 // #include "i2c.h"
 // #include "bmp280.h"
 // #include "SHT2X.h"
@@ -21,13 +22,14 @@
 #include <stdlib.h>
 #define MQ2PreheatInterval 10 // MQ2预热时间间隔，单位为秒  至少为20秒
 #define GPSTimeInterval 120	// GPS时间校时间隔，单位为秒  测试时2分钟一次，正式为5分钟一次
+#define QueryTimeInterval 120	// 查询从节点数据时间间隔，单位为秒 测试时为5分钟，正式为30分钟
 
 uint8_t EnableMaster = 1;		  // 主从选择 1为主机，0为从机
 u8 is_debug = 1;				  // 是否调试模式，1为调试模式，0为正常模式
 u8 query_node_data_max_times = 5; // 查询节点数据最大次数
 u8 is_lora = 1;					  // 是否启动lora模块
 u8 is_gps = 1;					  // 是否启动GPS模块
-u8 is_4g = 0;					  // 是否启动4G模块,需要先启动lora和gps
+// u8 is_4g = 0;					  // 是否启动4G模块,需要先启动lora和gps
 u8 is_battery = 1;				  // 是否启动电池电压检测
 u8 is_wind_sensor = 0;				// 是否启动风速风向传感器
 u8 is_calibration = 0;				// 是否启动风速风向校准 
@@ -71,13 +73,14 @@ int main(void)
 	MQ7_Init();
 	Timer_mq2_Init(MQ2PreheatInterval);		// 初始化MQ2定时器，每MQ2PreheatInterval秒状态位递增，用于MQ2的预热（20秒）和测量，MQ7共用一个定时器
 	if (is_battery) BATTERY_Init();
-	if (is_4g) mqtt4g_init();
+	// if (is_4g) mqtt4g_init();
 	customRTC_Init();
 	if (is_gps) GPS_Init();
 	Timer_Init(GPSTimeInterval); // 初始化定时器，TIM2用于读取gps时间给RTC校时, 间隔单位为秒，interval*12为校时总周期
 	if (is_lora)
 	{
 		is_lora_init = LORA_Init();
+		Timer_querydata_Init(QueryTimeInterval); // 初始化定时器，TIM5用于查询从节点数据，间隔单位为秒
 		printf("LORA Init OK\r\n");
 	}
 
@@ -99,7 +102,8 @@ int main(void)
 		u8 current_addr[6] = {0};
 		u8 query[3] = {0x11, 0x22, 0x33}; // 用于向子节点发送，查询数据
 		u8 is_query_node_success = 0;	  // 是否成功查询到节点数据
-		u8 data_str[300];				  // 用于存储发送给服务器的数据
+		u8 data_str[300];				  // 用于存储发送给服务器的单条数据
+		u8 all_data_str[3000];			  // 用于存储发送给服务器的所有数据(按最大10个节点算)
 
 		// 读取烟雾浓度最近10次平均数据
 		if (flag_mq2_is_need_measure) // 需要测量时采集MQ2数据
@@ -173,10 +177,11 @@ int main(void)
 			}
 		}
 
-		if (is_lora)
+		if (is_lora & is_need_query_data)
 		// if (0)
 		{
 			// 向从节点要数据
+			is_need_query_data = 0;
 			printf("query data...\r\n");
 			for (i = 0; i < SubNodeSet.nNode; i++)
 			{
@@ -224,17 +229,31 @@ int main(void)
 			}
 		}
 
-		if (is_4g)
+		if (0)	// TODO: 完善与主主节点的通信
 		{
-			// 主节点发送自身数据
+			// 主从节点发送自身数据
 			// 打印时间和传感器数据
 			RTC_Get_Time(time);
-			sprintf(data_str, "address: 999999990505\r\ntime: %02d:%02d:%02d\r\ntemperature: %f\r\npressure: %f\r\nhumidity: %f\r\nwind_speed: -1\r\n"
-							  "wind_direction: -1\r\nsmoke: %f\r\nbattery: %f\r\nisTimeTrue: %d\r\n",
-					time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H, co2, battery, RTC_check_device_time());
-			puts(data_str);
-			printf("sending main node data to server...\r\n");
-			mqtt4g_send(data_str, strlen(data_str));
+			sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %f\r\npressure: %f\r\nhumidity: %f\r\nwind_speed: %f\r\n"
+							  "wind_direction: %f\r\nsmoke: %f\r\nco: %f\r\nbattery: %f\r\nisTimeTrue: %d\r\n[SEP]",SelfAddress[0], SelfAddress[1], SelfAddress[2], SelfAddress[3], SelfAddress[4], SelfAddress[5],
+					time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H,wind_speed, wind_direction, co2,co_latest, battery, RTC_check_device_time());\
+			strcat(all_data_str, data_str);
+			for (i = 0; i < SubNodeSet.nNode; i++) 
+			{
+				SubNode current_node = SubNodeSet.SubNode_list[i];
+				// 生成当前子节点的数据字符串
+				sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %f\r\npressure: %f\r\nhumidity: %f\r\n"
+						"smoke: %f\r\nco: %f\r\nbattery: %f\r\nisTimeTrue: %d\r\n[SEP]",
+						current_node.address[0], current_node.address[1], current_node.address[2], current_node.address[3], current_node.address[4], current_node.address[5],
+						current_node.sample_time[0], current_node.sample_time[1], current_node.sample_time[2], current_node.temperature, current_node.pressure, current_node.humidity,
+						current_node.smoke, current_node.co, current_node.battery, RTC_check_specified_time(current_node.last_gps));
+				// 将当前子节点的数据字符串拼接到all_data_str中
+				strcat(all_data_str, data_str);
+			}
+			// puts(all_data_str);
+			printf("sending all node data to MMNode...\r\n");
+			// TODO: 发送数据到主主节点
+			// mqtt4g_send(data_str, strlen(data_str));
 			printf("data sent...\r\n");
 		}
 
