@@ -62,7 +62,7 @@ int main(void)
 	float wind_direction = 0;
 	u8 time[3] = {0};
 	u8 flag = 0;
-	u8 i = 0;
+	u8 i = 0, len = 0;
 
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2); // 设置系统中断优先级分组2
 	delay_init(168);								// 初始化延时函数
@@ -177,7 +177,7 @@ int main(void)
 			}
 		}
 
-		if (is_lora & is_need_query_data)
+		if (is_lora && is_need_query_data)
 		// if (0)
 		{
 			// 向从节点要数据
@@ -229,32 +229,43 @@ int main(void)
 			}
 		}
 
-		if (1)	// TODO: 完善与主主节点的通信
+		// 收到大功率lora查询数据
+		if (USART5_RX_STA&0x8000)	
 		{
-			// 主从节点发送自身数据
-			// 打印时间和传感器数据
-			RTC_Get_Time(time);
-			sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %f\r\npressure: %f\r\nhumidity: %f\r\nwind_speed: %f\r\n"
-							  "wind_direction: %f\r\nsmoke: %f\r\nco: %f\r\nbattery: %f\r\nisTimeTrue: %d\r\n[SEP]",SelfAddress[0], SelfAddress[1], SelfAddress[2], SelfAddress[3], SelfAddress[4], SelfAddress[5],
-					time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H,wind_speed, wind_direction, co2,co_latest, battery, RTC_check_device_time());\
-			strcat(all_data_str, data_str);
-			for (i = 0; i < SubNodeSet.nNode; i++) 
+			len=USART5_RX_STA&0x3fff;//得到此次接收到的数据长度	
+			if (len == 6 &&  		// 6位地址
+				USART5_RX_BUF[0] == SelfAddress[0] &&
+				USART5_RX_BUF[1] == SelfAddress[1] &&
+				USART5_RX_BUF[2] == SelfAddress[2] &&
+				USART5_RX_BUF[3] == SelfAddress[3] &&
+				USART5_RX_BUF[4] == SelfAddress[4] &&
+				USART5_RX_BUF[5] == SelfAddress[5])
 			{
-				SubNode current_node = SubNodeSet.SubNode_list[i];
-				// 生成当前子节点的数据字符串
-				sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %f\r\npressure: %f\r\nhumidity: %f\r\n"
-						"smoke: %f\r\nco: %f\r\nbattery: %f\r\nisTimeTrue: %d\r\n[SEP]",
-						current_node.address[0], current_node.address[1], current_node.address[2], current_node.address[3], current_node.address[4], current_node.address[5],
-						current_node.sample_time[0], current_node.sample_time[1], current_node.sample_time[2], current_node.temperature, current_node.pressure, current_node.humidity,
-						current_node.smoke, current_node.co, current_node.battery, RTC_check_specified_time(current_node.last_gps));
-				// 将当前子节点的数据字符串拼接到all_data_str中
+				// 主从节点发送自身数据
+				// 打印时间和传感器数据
+				RTC_Get_Time(time);
+				sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %f\r\npressure: %f\r\nhumidity: %f\r\nwind_speed: %f\r\n"
+								"wind_direction: %f\r\nsmoke: %f\r\nco: %f\r\nbattery: %f\r\nisTimeTrue: %d\r\n[SEP]",SelfAddress[0], SelfAddress[1], SelfAddress[2], SelfAddress[3], SelfAddress[4], SelfAddress[5],
+						time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H,wind_speed, wind_direction, co2,co_latest, battery, RTC_check_device_time());\
 				strcat(all_data_str, data_str);
+				for (i = 0; i < SubNodeSet.nNode; i++) 
+				{
+					SubNode current_node = SubNodeSet.SubNode_list[i];
+					// 生成当前子节点的数据字符串
+					sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %f\r\npressure: %f\r\nhumidity: %f\r\n"
+							"smoke: %f\r\nco: %f\r\nbattery: %f\r\nisTimeTrue: %d\r\n[SEP]",
+							current_node.address[0], current_node.address[1], current_node.address[2], current_node.address[3], current_node.address[4], current_node.address[5],
+							current_node.sample_time[0], current_node.sample_time[1], current_node.sample_time[2], current_node.temperature, current_node.pressure, current_node.humidity,
+							current_node.smoke, current_node.co, current_node.battery, RTC_check_specified_time(current_node.last_gps));
+					// 将当前子节点的数据字符串拼接到all_data_str中
+					strcat(all_data_str, data_str);
+				}
+				// puts(all_data_str);
+				printf("sending all node data to MMNode...\r\n");
+				USART5_DATA(all_data_str, strlen(all_data_str));	// 发送给MMNode
+				// mqtt4g_send(data_str, strlen(data_str));
+				printf("data sent...\r\n");
 			}
-			// puts(all_data_str);
-			printf("sending all node data to MMNode...\r\n");
-			// TODO: 发送数据到主主节点
-			// mqtt4g_send(data_str, strlen(data_str));
-			printf("data sent...\r\n");
 		}
 
 		delay_ms(1000);
