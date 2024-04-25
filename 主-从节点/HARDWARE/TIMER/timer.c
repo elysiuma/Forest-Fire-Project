@@ -3,7 +3,6 @@
 #include "rtc.h"
 #include "lora.h"
 
-extern u8 data_u8[24];
 //u8 data_test[3] = {0x01, 0x02, 0x03};
 void Timer_Init(u16 interval)
 {
