@@ -2,7 +2,7 @@
 #include "usart6.h"	
 #include "delay.h"
 
-
+// 风速风向传感器
 #if EN_USART6_RX   		//如果使能USART6了接收
 u8 USART6_RX_BUF[USART6_REC_LEN];
 u8 USART6_TX_BUF[USART6_REC_LEN];

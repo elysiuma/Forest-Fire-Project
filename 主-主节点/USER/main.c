@@ -199,14 +199,14 @@ int main(void)
 		}
 		
 
-		if (is_lora & is_need_query_data)
+		if (is_lora && is_need_query_data)
 		{
 			// 向从节点要数据
 			if (is_debug) printf("query data...\r\n");
 			for (i = 0; i < SubNodeSet.nNode; i++)
 			{
 				for (j = 0; j < 6; j++)
-					current_addr[j] = SubNodeAddress[i * 6 + j];
+					current_addr[j] = SubNodeSet.SubNode_list[i].address[(i+1) * 6 - j -1];
 				LORA_DATA_Transfer(query, 3, current_addr);
 				if (is_debug) printf("query sent...node: %d\r\n", i);
 				delay_ms(5000);

@@ -2,8 +2,8 @@
 #include "usart5.h"	
 #include "delay.h"
 
-
-#if EN_USART5_RX   		//如果使能USART5了接收
+// 大功率lora模块
+#if EN_USART5_RX   		//如果使能USART5了接收	
 u8 USART5_RX_BUF[USART5_REC_LEN];
 u8 USART5_TX_BUF[USART5_REC_LEN];
 u16 USART5_RX_STA=0;   		//接收状态标记
@@ -15,7 +15,6 @@ void USART5_IRQHandler(void)
 	u16 Data_len;
 	if(USART_GetITStatus(UART5, USART_IT_RXNE) != RESET)
 	{	 	
-		// 指令以＄开头的为GPS模块发来的信息 默认接受GGA协议信息 包含时间经纬度等等，0x0d 0x0a结尾
 		//if((USART5_RX_STA==0&&Res==0x24)||USART5_RX_BUF[0]==0X24)
 		Res = USART_ReceiveData(UART5);
 		if((USART5_RX_STA&0x8000)==0)//接收未完成

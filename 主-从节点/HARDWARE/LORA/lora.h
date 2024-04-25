@@ -55,7 +55,7 @@ u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len);  //接收数据解析
 u8 LORA_Network_Naming(void);   // 全网点名
 u8 LORA_Network_Start(void);    // 启动组网
 u8 LORA_Find_SubNode(u8 *address);  // 查找从节点
-u8 LORA_update_device_time(void);   // 更新设备时间
+// u8 LORA_update_device_time(void);   // 更新设备时间
 
 #endif
 
