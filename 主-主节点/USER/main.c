@@ -14,18 +14,20 @@
 #include "timer2.h"
 #include "rtc.h"
 #include "mqtt4g.h"
-#include "i2c.h"
-#include "bmp280.h"
-#include "SHT2X.h"
+// #include "i2c.h"
+// #include "bmp280.h"
+// #include "SHT2X.h"
 #include <string.h>
 #include <stdlib.h>
 #define MQ2PreheatInterval 10 // MQ2预热时间间隔，单位为秒  至少为20秒
 #define GPSTimeInterval 120	// GPS时间校时间隔，单位为秒  测试时2分钟一次，正式为5分钟一次
+#define nMSnode 8
 
 uint8_t EnableMaster = 1;		  	// 主从选择 1为主机，0为从机
 u8 is_debug = 1;				  	// 是否调试模式，1为调试模式，0为正常模式
 u8 query_node_data_max_times = 5; 	// 查询节点数据最大次数
 u8 is_lora = 1;					  	// 是否启动lora模块
+u8 is_biglora = 1;					// 是否启动大功率lora模块
 u8 is_gps = 0;					  	// 是否启动GPS模块
 u8 is_4g = 0;					  	// 是否启动4G模块,需要先启动lora和gps
 u8 is_wind_sensor = 0;				// 是否启动风速风向传感器
@@ -34,6 +36,13 @@ u8 is_calibration = 0;				// 是否启动风速风向校准
 u8 address[6] = {0x99, 0x99, 0x99, 0x99};				// 储存当前设备的lora模块地址
 u8 query_windsensor[11] = {0x24, 0x41, 0x44, 0x2C, 0x30, 0x34, 0x2A, 0x36, 0x33, 0x0D, 0x0A};	// 向风速传感器请求数据
 u8 cab_windsensor[11] = {0x24, 0x41, 0x5A, 0x2C, 0x30, 0x34, 0x2A, 0x37, 0x39, 0x0D, 0x0A};		// 风速风向校准
+u8 MSNodeAddress[120] = {
+        // 0x36, 0x49, 0x01, 0x00, 0x00, 0x00,
+        // 0x28, 0x49, 0x01, 0x00, 0x00, 0x00,
+        0x26, 0x49, 0x01, 0x00, 0x00, 0x00,
+        // 0x27, 0x49, 0x01, 0x00, 0x00, 0x00,
+        // 0x29, 0x49, 0x01, 0x00, 0x00, 0x00,
+};									// 主从节点的地址
 
 union data{
 	float f;
@@ -61,6 +70,8 @@ int main(void)
 	u8 time[3] = {0};
 	u8 flag = 0;
 	u8 i = 0;
+	u8 MSrec[300];
+	u8 MSrec_len = 0;
 
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2); // 设置系统中断优先级分组2
 	delay_init(168);								// 初始化延时函数
@@ -202,7 +213,6 @@ int main(void)
 			}
 		}
 		
-
 		if (is_lora)
 		{
 			// 向从节点要数据
@@ -264,6 +274,61 @@ int main(void)
 			if (is_debug) printf("sending main node data to server...\r\n");
 			mqtt4g_send(data_str, strlen(data_str));
 			if (is_debug) printf("data sent...\r\n");
+		}
+
+		if (is_biglora)
+		{
+			if (is_debug) printf("query M-S node data...\r\n");
+			for (i = 0; i < nMSnode; i++)
+			{
+				for (j = 0; j < 6; j++)
+					current_addr[j] = MSNodeAddress[i * 6 + j];
+				USART5_DATA(current_addr, 6);
+				if (is_debug) printf("query sent...node: %d\r\n", i);
+				delay_ms(5000);
+				for (j = 0; j < query_node_data_max_times; j++)
+				{
+					if (USART5_RX_STA & 0x8000)				// 如果大功率LORA模块收到数据
+					{
+						if (is_debug) printf("data received!\r\n");
+						USART5_Receive_Data(MSrec, &MSrec_len);
+						is_query_node_success = 1;
+						mqtt4g_send(MSrec, strlen(MSrec));
+						MSrec_len = 0;
+						if (is_debug) printf("MS data sent...\r\n");
+						break;
+					}
+					delay_ms(2000);
+				}
+				if (is_query_node_success)
+				{
+					continue;
+				}
+				else
+				{
+					if (is_debug) printf("query data again... node: %d\r\n", i);
+					USART5_DATA(current_addr, 6);
+					if (is_debug) printf("query sent...node: %d\r\n", i);
+					delay_ms(5000);
+					for (j = 0; j < query_node_data_max_times; j++)
+					{
+						if (USART5_RX_STA & 0x8000)				// 如果大功率LORA模块收到数据
+						{
+							if (is_debug) printf("data received!\r\n");
+							USART5_Receive_Data(MSrec, &MSrec_len);
+							is_query_node_success = 1;
+							mqtt4g_send(MSrec, strlen(MSrec));
+							MSrec_len = 0;
+							if (is_debug) printf("MS data sent...\r\n");
+							break;
+						}
+						delay_ms(2000);
+					}
+				}
+				if (!is_query_node_success)
+					if (is_debug) printf("query data failed... node: %d\r\n", i);
+				is_query_node_success = 0;
+			}
 		}
 
 		delay_ms(1000);

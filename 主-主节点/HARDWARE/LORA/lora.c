@@ -424,8 +424,8 @@ u8 LORA_Query_Network_Status(u8 *address, u8 *time, u8 is_debug)
         {
             LORA_Receive(receive_buf, &receive_len);
             //获取地址
-            address[4] =receive_buf[append_len];
-            address[5] =receive_buf[append_len + 1];
+            address[4] =receive_buf[6];
+            address[5] =receive_buf[7];
             // 获取时间
             time[0] = receive_buf[append_len + 2] / 16 * 10 + receive_buf[append_len + 2] % 16;
             time[1] = receive_buf[append_len + 3] / 16 * 10 + receive_buf[append_len + 3] % 16;
