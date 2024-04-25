@@ -16,6 +16,7 @@
 #include <stdlib.h>
 
 #define MQ2PreheatInterval 10 // MQ2预热时间间隔，单位为秒  至少为20秒
+#define NumOfData 6 		// 数据个数, 温度0 气压1 湿度2 烟雾3 一氧化碳4 电量5
 
 uint8_t EnableMaster=0;				//主从选择 1为主机，0为从机	(FIX:很久没用了，基本无效)
 u8 is_battery = 1;					// 是否启动电池电压检测
@@ -26,14 +27,12 @@ u8 rec_len=0;
 u8 query_rec[50];
 u8 query_rec_len=0;
 //float data[6]={0};	//风速data[0] 风向1 温度2 气压3 湿度4 烟雾5 电量6
-u8 data_u8[28] = {0};
-union data{
-	float f;
-	u8 ch[4];
-} data_1;
+u8 data_u8[NumOfData*4] = {0};
 u8 query_windsensor[11] = {0x24, 0x41, 0x44, 0x2C, 0x30, 0x34, 0x2A, 0x36, 0x33, 0x0D, 0x0A};	// 风速风向请求
 u8 cab_windsensor[11] = {0x24, 0x41, 0x5A, 0x2C, 0x30, 0x34, 0x2A, 0x37, 0x39, 0x0D, 0x0A};		// 风速风向校准
-void get_data(char*);
+// void get_data(char*);
+float u8_to_float(u8*);
+void float_to_u8(float, u8*);
 
 int main(void)
 { 
@@ -85,17 +84,15 @@ int main(void)
 		
 		// I2C传感器执行
 		SHT2X_T = SHT2X_TEST_T(); // get temperature of SHT2X.
-		if (is_debug) printf("raw T: %f\r\n", SHT2X_T);
+		// if (is_debug) printf("raw T: %f\r\n", SHT2X_T);
 		SHT2X_T = 1.055 * SHT2X_T - 3.455;
 		SHT2X_T += 0.4;
-
 		BMP280_T = bmp280_get_temperature();
-		if (is_debug) printf("bmp_t:%f\r\n", BMP280_T);
+		// if (is_debug) printf("bmp_t:%f\r\n", BMP280_T);
 		BMP280_P = bmp280_get_pressure(); // get pressure of bmp280.
 		BMP280_P = (BMP280_P - 1.19) / 100;
-
 		SHT2X_H = SHT2X_TEST_RH(); // get humidity of SHT2X.
-		if (is_debug) printf("raw H: %f\r\n", SHT2X_H);
+		// if (is_debug) printf("raw H: %f\r\n", SHT2X_H);
 		SHT2X_H = 0.976 * SHT2X_H + 6.551;
 
 		if (is_debug) printf("pressure: %f\r\n", BMP280_P);
@@ -107,10 +104,7 @@ int main(void)
 			battery = BATTERY_Scan();
 			printf("battery: %.2f%%\r\n", battery);
 		}
-		
-		data_1.f = battery;
-		for(i=0;i<4;i++)
-			data_u8[i+24] = data_1.ch[i];
+
 		/*
 		if (is_need_send_lora_data)
 		{
@@ -182,8 +176,17 @@ int main(void)
 			if (query_rec_len==3 & query_rec[0] == 0x11 & query_rec[1] == 0x22 & query_rec[2] == 0x33)
 			{
 				printf("data reporting...\r\n");
-				LORA_Send(data_u8, 28);
-				printf("data reported...\r\n");
+				// 将float数据转成u8列表
+				float_to_u8(SHT2X_T, data_u8);
+				float_to_u8(BMP280_P, data_u8+4);
+				float_to_u8(SHT2X_H, data_u8+8);
+				float_to_u8(co2, data_u8+12);
+				float_to_u8(co_latest, data_u8+16);
+				float_to_u8(battery, data_u8+20);
+				LORA_Send(data_u8, NumOfData*4);
+				for (i=0; i<NumOfData*4; i++)
+					printf("%02x ", data_u8[i]);
+				printf("data reported!\r\n");
 				query_rec_len=0;
 			}
 		}
@@ -194,35 +197,66 @@ int main(void)
 	}
 }
 
-
-void get_data(char* data_str)
+float u8_to_float(u8* data)
 {
-	u8 i = 0, flag = 0, j = 0, k = 0, t = 0;
+	union data{	
+		float f;
+		u8 ch[4];
+	} data_1;		// 联合体变量
 	float data_float;
-	char float_str[20];
-	char* substr = strstr(data_str, "\"T\"");
-	
-	for(k=0;k<5;k++)
-	{
-		while(1)
-		{	
-			if(substr[i] == ',' || substr[i] == '}') {i++;break;}
-			if(flag)
-			{
-				float_str[j] = substr[i];
-				j++;
-			}
-			if(substr[i] == ':') flag = 1;
-			i++;
-		}
-		float_str[j] = '\0';
-		//puts(float_str);
-		//printf("\r\n");
-		flag=0;
-		j=0;
-		data_float = atof(float_str);
-		data_1.f = data_float;
-		for(t=0;t<4;t++)
-			data_u8[k*4+t] = data_1.ch[t];
-	}
+
+	data_1.ch[0] = data[0];
+	data_1.ch[1] = data[1];
+	data_1.ch[2] = data[2];
+	data_1.ch[3] = data[3];
+	data_float = data_1.f;
+	return data_float;
 }
+
+void float_to_u8(float data, u8* data_u8)
+{
+	union data{	
+		float f;
+		u8 ch[4];
+	} data_1;		// 联合体变量
+
+	data_1.f = data;
+	data_u8[0] = data_1.ch[0];
+	data_u8[1] = data_1.ch[1];
+	data_u8[2] = data_1.ch[2];
+	data_u8[3] = data_1.ch[3];
+}
+
+
+// // 解析串口风速风向数据
+// void get_data(char* data_str)
+// {
+// 	u8 i = 0, flag = 0, j = 0, k = 0, t = 0;
+// 	float data_float;
+// 	char float_str[20];
+// 	char* substr = strstr(data_str, "\"T\"");
+	
+// 	for(k=0;k<5;k++)
+// 	{
+// 		while(1)
+// 		{	
+// 			if(substr[i] == ',' || substr[i] == '}') {i++;break;}
+// 			if(flag)
+// 			{
+// 				float_str[j] = substr[i];
+// 				j++;
+// 			}
+// 			if(substr[i] == ':') flag = 1;
+// 			i++;
+// 		}
+// 		float_str[j] = '\0';
+// 		//puts(float_str);
+// 		//printf("\r\n");
+// 		flag=0;
+// 		j=0;
+// 		data_float = atof(float_str);
+// 		data_1.f = data_float;
+// 		for(t=0;t<4;t++)
+// 			data_u8[k*4+t] = data_1.ch[t];
+// 	}
+// }

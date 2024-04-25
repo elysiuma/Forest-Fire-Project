@@ -4,21 +4,119 @@
 #include "gps.h"
 #include "rtc.h"
 #include "string.h"
-#include "mqtt4g.h"
+// #include "mqtt4g.h"
+#include "tool.h"
 
 // 定义全局变量
 SubNodeSetStruct SubNodeSet;
 // u16 last_time_gps = 999; 
 u8 is_lora_init = 0;
+u8 is_need_query_data = 0;
 u8 get_data_flag = 0;
-u8 nNode = 1;
-u8 SubNodeAddress[120] = {
-        // 0x36, 0x49, 0x01, 0x00, 0x00, 0x00,
-        // 0x28, 0x49, 0x01, 0x00, 0x00, 0x00,
-        0x26, 0x49, 0x01, 0x00, 0x00, 0x00,
-        // 0x27, 0x49, 0x01, 0x00, 0x00, 0x00,
-        // 0x29, 0x49, 0x01, 0x00, 0x00, 0x00,
-                              };
+// u8 nNode = 1;
+u8 SelfAddress[6] = {0x99, 0x99, 0x99, 0x99};
+// u8 SubNodeAddress[120] = {
+//         // 0x36, 0x49, 0x01, 0x00, 0x00, 0x00,
+//         // 0x28, 0x49, 0x01, 0x00, 0x00, 0x00,
+//         0x26, 0x49, 0x01, 0x00, 0x00, 0x00,
+//         // 0x27, 0x49, 0x01, 0x00, 0x00, 0x00,
+//         // 0x29, 0x49, 0x01, 0x00, 0x00, 0x00,
+//                               };
+
+// 主模块与从模块对应关系
+typedef struct {
+    u8 masterAddress[6];
+    u8 _nNode;          // 从节点个数
+    u8 slaveAddress[60];
+} NodeMappingStruct;
+
+u8 NodeMappingLen = 10;      // 共有多少组地址映射
+
+NodeMappingStruct NodeMapping[] = {
+    {{0x99, 0x99, 0x99, 0x99, 0x05, 0x50}, 1,  {0x00, 0x00, 0x00, 0x01, 0x58, 0x63,         // 1号主从
+                                                // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                }},
+    {{0x99, 0x99, 0x99, 0x99, 0x05, 0x51}, 8,  {0x00, 0x00, 0x00, 0x01, 0x58, 0x63,      // 2号主从
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                }},
+    {{0x99, 0x99, 0x99, 0x99, 0x05, 0x52}, 8,  {0x00, 0x00, 0x00, 0x01, 0x58, 0x63,      // 3号主从
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                }},
+    {{0x99, 0x99, 0x99, 0x99, 0x05, 0x53}, 8,  {0x00, 0x00, 0x00, 0x01, 0x58, 0x63,      // 4号主从
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                }},
+    {{0x99, 0x99, 0x99, 0x99, 0x05, 0x54}, 8,  {0x00, 0x00, 0x00, 0x01, 0x58, 0x63,      // 5号主从
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                }},                                      
+    {{0x99, 0x99, 0x99, 0x99, 0x05, 0x55}, 8,  {0x00, 0x00, 0x00, 0x01, 0x58, 0x63,      // 6号主从
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                }},
+    {{0x99, 0x99, 0x99, 0x99, 0x05, 0x56}, 8,  {0x00, 0x00, 0x00, 0x01, 0x58, 0x63,      // 7号主从
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                }},
+    {{0x99, 0x99, 0x99, 0x99, 0x05, 0x57}, 8,  {0x00, 0x00, 0x00, 0x01, 0x58, 0x63,      // 8号主从
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                }},
+    {{0x99, 0x99, 0x99, 0x99, 0x05, 0x58}, 8,  {0x00, 0x00, 0x00, 0x01, 0x58, 0x63,      // 主主
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                }},
+    {{0x99, 0x99, 0x99, 0x99, 0x00, 0x00}, 0,  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00,      // 未知
+                                                }},
+};
 
 u8 LORA_Init(void)
 {
@@ -218,11 +316,12 @@ u8 LORA_Add_Slave_Node(u8 nNode, u8 *SubNodeAddress)
     }
 
     content[0] = nNode;
+    // 添加从节点地址时需要将地址倒过来
     for (n = 0; n < nNode; n = n + 1)
     {
         for (m = 0; m < 6; m = m + 1)
         {
-            content[1 + n * 6 + m] = SubNodeAddress[n * 6 + m];
+            content[1 + n * 6 + m] = SubNodeAddress[(n+1) * 6 - m - 1];
         }
     }
     LORA_Get_Common_Send_Msg(msg, &sen_msg_len, command, content, 1 + nNode * 6);
@@ -258,18 +357,20 @@ u8 LORA_Add_Slave_Node(u8 nNode, u8 *SubNodeAddress)
                             new_node.address[n] = SubNodeAddress[m * 6 + n];
                         }
                         new_node.SubNodeStatus = 0;
-                        new_node.wind_speed = 0;
-                        new_node.wind_direction = 0;
+                        // new_node.wind_speed = 0;
+                        // new_node.wind_direction = 0;
                         new_node.temperature = 0;
                         new_node.humidity = 0;
                         new_node.pressure = 0;
                         new_node.smoke = 0;
+                        new_node.co = 0;
+                        new_node.battery = 0;
                         new_node.sample_time[0] = 0;
                         new_node.sample_time[1] = 0;
                         new_node.sample_time[2] = 0;
                         SubNodeSet.SubNode_list[SubNodeSet.nNode] = new_node;
                         SubNodeSet.nNode++;
-                        printf("add new SubNodeAddress[%d] = %02x %02x %02x %02x %02x %02x\r\n", m, SubNodeAddress[m * 6 + 5], SubNodeAddress[m * 6 + 4], SubNodeAddress[m * 6 + 3], SubNodeAddress[m * 6 + 2], SubNodeAddress[m * 6 + 1], SubNodeAddress[m * 6]);
+                        printf("add new SubNodeAddress[%d] = %02x %02x %02x %02x %02x %02x\r\n", m, SubNodeAddress[m * 6], SubNodeAddress[m * 6 + 1], SubNodeAddress[m * 6 + 2], SubNodeAddress[m * 6 + 3], SubNodeAddress[m * 6 + 4], SubNodeAddress[m * 6+5]);
                     }
                 }
             }
@@ -340,10 +441,13 @@ u8 LORA_Network_Clear(void)
 // LORA模块一键初始化
 u8 LORA_Network_Init(void)
 {
-    u8 time[3];
+    u8 i, time[3];
+    u8 index_mapping = 0;       // 主从地址映射表索引
     u8 flag_set_time = 0;       // 0:设置时间失败 1:设置时间成功
+    u8 flag_query_network = 0;  // 0:查询网络状态失败 1:查询网络状态成功
     u8 flag_add_slave_node = 0; // 0:添加从节点失败 1:添加从节点成功
     u8 flag_network_start = 0;  // 0:网络启动失败 1:网络启动成功
+
 
     printf("LORA network init start!\r\n");
     // 1.不再同步时间，直接设置时间
@@ -355,9 +459,34 @@ u8 LORA_Network_Init(void)
     //if (flag_set_time != 1)
        // return 0;
 
-    // 2.添加从节点地址档案
+    // 2.查询自身地址
+    flag_query_network = LORA_Query_Network_Status(SelfAddress, time, 0);
+    if (flag_query_network)
+    {
+        printf("LORA Network Status: OK\r\n");
+        printf("LORA Address: ");
+        for (i = 0; i < 6; i++)
+            printf("%02X ", SelfAddress[i]);
+        printf("\r\n");
+    }
+    else
+    {
+        printf("LORA Network Status: ERROR\r\n");
+    }
+
+    // 3.添加从节点地址档案
     SubNodeSet.nNode = 0; // 从节点数量清零
-    flag_add_slave_node = LORA_Add_Slave_Node(nNode, SubNodeAddress);
+    for (i = 0; i < NodeMappingLen; i++)
+    {
+        if (SelfAddress[4] == NodeMapping[i].masterAddress[4] && SelfAddress[5] == NodeMapping[i].masterAddress[5])
+        {
+            index_mapping = i;
+            break;
+        }
+        index_mapping = i;
+        printf("Can't find the master address in the NodeMapping table\r\n");
+    }
+    flag_add_slave_node = LORA_Add_Slave_Node(NodeMapping[index_mapping]._nNode, NodeMapping[index_mapping].slaveAddress);
     if (flag_add_slave_node == 1)
     {
         printf("Add slave node success!\r\n");
@@ -423,6 +552,9 @@ u8 LORA_Query_Network_Status(u8 *address, u8 *time, u8 is_debug)
         if (check_LORA_Receive())
         {
             LORA_Receive(receive_buf, &receive_len);
+            //获取地址
+            address[4] =receive_buf[6];
+            address[5] =receive_buf[7];
             // 获取时间
             time[0] = receive_buf[append_len + 2] / 16 * 10 + receive_buf[append_len + 2] % 16;
             time[1] = receive_buf[append_len + 3] / 16 * 10 + receive_buf[append_len + 3] % 16;
@@ -639,36 +771,30 @@ u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len)
 
     // 目前时间向LORA主模块查询，约有0.5~1秒的延迟
     u8 time[3] = {0};
-    // 风速风向（风速4字节，风向4个字节）、温度（四字节）、气压（四字节）湿度（四字节）、烟雾（四字节）
-    u8 wind_speed[4] = {0};
-    u8 wind_direction[4] = {0};
-    u8 temperature[4] = {0};
-    u8 pressure[4] = {0};
-    u8 humidity[4] = {0};
-    u8 smoke[4] = {0};
-	u8 battery[4] = {0};
+    // 风温度（四字节）、气压（四字节）湿度（四字节）、烟雾（四字节）、一氧化碳（四字节）、电池电量（四字节）
 	u8 data_str[300];
 	u8 isTime;
-    float wind_speed_f = 0;
-    float wind_direction_f = 0;
+    // float wind_speed_f = 0;
+    // float wind_direction_f = 0;
     float temperature_f = 0;
     float pressure_f = 0;
     float humidity_f = 0;
     float smoke_f = 0;
+    float co_f = 0;
 	float battery_f = 0;
 
     for (i = 0; i < 6; i = i + 1)
     {
-        address[i] = buf[8 + i];
+        address[5-i] = buf[8 + i];
     }
     data_len = buf[16];
     for (i = 0; i < data_len; i = i + 1)
     {
         data[i] = buf[17 + i];
     }
-
+    // 接收到的来自从节点的数据，从节点地址也是倒的，需要正过来
     printf("address: %02x%02x%02x%02x%02x%02x, data_len: %d, data: ",
-           address[5], address[4], address[3], address[2], address[1], address[0], data_len);
+           address[0], address[1], address[2], address[3], address[4], address[5], data_len);
     for (i = 0; i < data_len; i = i + 1)
     {
         printf("%x ", data[i]);
@@ -677,7 +803,7 @@ u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len)
 
     // 获取采样时间
     RTC_Get_Time(time);
-    printf("time: %02d:%02d:%02d\r\n", time[0], time[1], time[2]);
+    // printf("time: %02d:%02d:%02d\r\n", time[0], time[1], time[2]);
     // flag = LORA_Query_Network_Status(time, 0);
     // printf("LORA_Query_Time, Status=%d\r\n", flag);
     // if (flag != 1)
@@ -685,35 +811,36 @@ u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len)
 
     flag = 0; // 重置flag
     // 解析传感器数据
-    for (i = 0; i < 4; i = i + 1)
-    {	//温 压 湿 风速风向
-        temperature[i] = data[i];
-        pressure[i] = data[4 + i];
-        humidity[i] = data[8 + i];
-        wind_speed[i] = data[12 + i];
-        wind_direction[i] = data[16 + i];
-        smoke[i] = data[20 + i];
-		battery[i] = data[24 + i];
-    }
+    // for (i = 0; i < 4; i = i + 1)
+    // {	//温 压 湿 风速风向
+    //     temperature[i] = data[i];
+    //     pressure[i] = data[4 + i];
+    //     humidity[i] = data[8 + i];
+    //     wind_speed[i] = data[12 + i];
+    //     wind_direction[i] = data[16 + i];
+    //     smoke[i] = data[20 + i];
+	// 	battery[i] = data[24 + i];
+    // }
     // 四字节u8转float
-    wind_speed_f = *(float *)wind_speed;
-    wind_direction_f = *(float *)wind_direction;
-    temperature_f = *(float *)temperature;
-    pressure_f = *(float *)pressure;
-    humidity_f = *(float *)humidity;
-    smoke_f = *(float *)smoke;
-	battery_f = *(float *)battery;
+    // wind_speed_f = *(float *)wind_speed;
+    // wind_direction_f = *(float *)wind_direction;
+    temperature_f = u8_to_float(data);
+    pressure_f = u8_to_float(data + 4);
+    humidity_f = u8_to_float(data + 8);
+    smoke_f = u8_to_float(data + 12);
+    co_f = u8_to_float(data + 16);
+	battery_f = u8_to_float(data + 20);
 	isTime = RTC_check_device_time();
     // 打印时间和传感器数据
-	sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %f\r\npressure: %f\r\nhumidity: %f\r\nwind_speed: %f\r\n"
-	"wind_direction: %f\r\nsmoke: %f\r\nbattery: %f\r\nisTimeTrue: %d\r\n",
-           address[5], address[4], address[3], address[2], address[1], address[0], time[0], time[1], time[2], temperature_f, pressure_f, humidity_f, wind_speed_f, 
-	wind_direction_f, smoke_f, battery_f, isTime);
+	sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %f\r\npressure: %f\r\nhumidity: %f\r\n"
+            "smoke: %f\r\nco: %f\r\nbattery: %f\r\nisTimeTrue: %d\r\n",
+           address[0], address[1], address[2], address[3], address[4], address[5], time[0], time[1], time[2], temperature_f, pressure_f, humidity_f, 
+           smoke_f,co_f, battery_f, isTime);
 	puts(data_str);
 	printf("data_str len:%d\r\n", strlen(data_str));
 	printf("sending data to server...\r\n");
-	mqtt4g_send(data_str, strlen(data_str));
-	printf("data sent...\r\n");
+	// mqtt4g_send(data_str, strlen(data_str));
+	// printf("data sent...\r\n");
     //printf("time: %02d:%02d:%02d, wind_speed: %f, wind_direction: %f, temperature: %f, pressure: %f, humidity: %f, smoke: %f\r\n",
            //time[0], time[1], time[2], wind_speed_f, wind_direction_f, temperature_f, pressure_f, humidity_f, smoke_f);
     // 保存传感器数据
@@ -731,16 +858,18 @@ u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len)
         SubNodeSet.SubNode_list[SubNodeSet.nNode] = new_node;
         SubNodeSet.nNode++;
         printf("Add new node,new address%02x %02x %02x %02x %02x %02x, nNode: %d\r\n",
-               address[5], address[4], address[3], address[2], address[1], address[0], SubNodeSet.nNode);
+               address[0], address[1], address[2], address[3], address[4], address[5], SubNodeSet.nNode);
         node_location = SubNodeSet.nNode - 1;
     }
     // 找到该从节点，更新该从节点的数据
-    SubNodeSet.SubNode_list[node_location].wind_speed = wind_speed_f;
-    SubNodeSet.SubNode_list[node_location].wind_direction = wind_direction_f;
+    // SubNodeSet.SubNode_list[node_location].wind_speed = wind_speed_f;
+    // SubNodeSet.SubNode_list[node_location].wind_direction = wind_direction_f;
     SubNodeSet.SubNode_list[node_location].temperature = temperature_f;
     SubNodeSet.SubNode_list[node_location].pressure = pressure_f;
     SubNodeSet.SubNode_list[node_location].humidity = humidity_f;
     SubNodeSet.SubNode_list[node_location].smoke = smoke_f;
+    SubNodeSet.SubNode_list[node_location].co = co_f;
+    SubNodeSet.SubNode_list[node_location].battery = battery_f;
     SubNodeSet.SubNode_list[node_location].sample_time[0] = time[0];
     SubNodeSet.SubNode_list[node_location].sample_time[1] = time[1];
     SubNodeSet.SubNode_list[node_location].sample_time[2] = time[2];

@@ -70,6 +70,8 @@ void RTC_Get_Time(u8* time){
 u8 RTC_update_device_time(void){
 
     u8 time[3];
+    float position[4];
+    char lati_longi_str[2];
     printf("last_time_gps=%d\r\n",last_time_gps);
     last_time_gps++;
     if(last_time_gps > 999)
@@ -80,7 +82,8 @@ u8 RTC_update_device_time(void){
     {
         printf("Try to get time from GPS!\r\n");
         // 0.获取时间
-        flag_get_time = GPS_get_time(time);
+        // flag_get_time = GPS_get_time(time);
+        flag_get_time = GPS_get_time_and_pos(time, position, lati_longi_str);
         printf("flag_get_time=%d\r\n",flag_get_time);
         if (flag_get_time == 1)
         {
@@ -101,6 +104,16 @@ u8 RTC_update_device_time(void){
         // 1.设置时间
         RTC_Set_Time(time[0],time[1],time[2]);
         printf("Set time success!\r\n");
+        // 2.更新位置信息
+        node_position[0] = position[0];             // 纬度
+        node_position[1] = position[1];             // 纬分
+        node_position[2] = position[2];             // 经度
+        node_position[3] = position[3];             // 经分
+        node_lati_longi_str[0] = lati_longi_str[0]; // 纬度标识
+        node_lati_longi_str[1] = lati_longi_str[1]; // 经度标识
+        printf("Set position success!%c%.0f*%.5f':%c%.0f*%.5f'\r\n", 
+                node_lati_longi_str[0], node_position[0], node_position[1], 
+                node_lati_longi_str[1], node_position[2], node_position[3]);
         if(flag_get_time == 1)
             last_time_gps = 0;
     }
@@ -115,4 +128,11 @@ u8 RTC_check_device_time(void){
         return 1;
 }
 
+// 检测指定的last_gps时间是否已经过期
+u8 RTC_check_specified_time(u16 last_gps){
+    if(last_gps == 999)
+        return 0;
+    else
+        return 1;
+}
 
