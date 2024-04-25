@@ -12,6 +12,7 @@
 #include "gps.h"
 #include "timer.h"
 #include "timer2.h"
+#include "timer3.h"
 #include "rtc.h"
 #include "mqtt4g.h"
 #include "i2c.h"
@@ -21,6 +22,7 @@
 #include <stdlib.h>
 #define MQ2PreheatInterval 10 // MQ2预热时间间隔，单位为秒  至少为20秒
 #define GPSTimeInterval 120	// GPS时间校时间隔，单位为秒  测试时2分钟一次，正式为5分钟一次
+#define QueryTimeInterval 120	// 查询从节点数据时间间隔，单位为秒 测试时为5分钟，正式为30分钟
 
 uint8_t EnableMaster = 1;		  	// 主从选择 1为主机，0为从机
 u8 is_debug = 1;				  	// 是否调试模式，1为调试模式，0为正常模式
@@ -31,7 +33,6 @@ u8 is_4g = 0;					  	// 是否启动4G模块,需要先启动lora和gps
 u8 is_wind_sensor = 0;				// 是否启动风速风向传感器
 u8 is_battery = 0;					// 是否启动电池电压检测
 u8 is_calibration = 0;				// 是否启动风速风向校准
-u8 address[6] = {0x99, 0x99, 0x99, 0x99};				// 储存当前设备的lora模块地址
 u8 query_windsensor[11] = {0x24, 0x41, 0x44, 0x2C, 0x30, 0x34, 0x2A, 0x36, 0x33, 0x0D, 0x0A};	// 向风速传感器请求数据
 u8 cab_windsensor[11] = {0x24, 0x41, 0x5A, 0x2C, 0x30, 0x34, 0x2A, 0x37, 0x39, 0x0D, 0x0A};		// 风速风向校准
 
@@ -81,6 +82,7 @@ int main(void)
 	if (is_lora)
 	{
 		is_lora_init = LORA_Init();
+		Timer_querydata_Init(QueryTimeInterval); // 初始化定时器，TIM5用于查询从节点数据，间隔单位为秒
 		if (is_debug) printf("LORA Init OK\r\n");
 	}
 
@@ -99,23 +101,6 @@ int main(void)
 		USART6_DATA(cab_windsensor, 11);
 		if (is_debug) printf("calibration DONE\r\n");
 		delay_ms(1000);
-	}
-	// 获取当前lora模块地址
-	flag = LORA_Query_Network_Status(address, time, is_debug);
-	if (flag)
-	{
-		if (is_debug)
-		{
-			printf("LORA Network Status: OK\r\n");
-			printf("LORA Address: ");
-			for (i = 0; i < 6; i++)
-				printf("%02X ", address[i]);
-			printf("\r\n");
-		}
-	}
-	else
-	{
-		if (is_debug) printf("LORA Network Status: ERROR\r\n");
 	}
 
 	while (1)
@@ -203,7 +188,7 @@ int main(void)
 		}
 		
 
-		if (is_lora)
+		if (is_lora & is_need_query_data)
 		{
 			// 向从节点要数据
 			if (is_debug) printf("query data...\r\n");

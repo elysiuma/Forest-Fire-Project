@@ -11,12 +11,14 @@ typedef struct
 {
     u8 address[6];   //从节点地址
     u8 SubNodeStatus;   //从节点状态
-    float wind_speed; //风速
-    float wind_direction; //风向
+    // float wind_speed; //风速
+    // float wind_direction; //风向
     float temperature;    //温度
     float pressure;       //气压
     float humidity;       //湿度
     float smoke;          //烟雾
+    float co;             //一氧化碳
+    float battery;        //电量
     u8 sample_time[3];  //采样时间
     u16 last_gps;   //距离上一次同步gps时间多少时间周期，5分钟一个周期，12次为1小时， 999为未同步
 } SubNode;
@@ -31,9 +33,11 @@ typedef struct
 extern SubNodeSetStruct SubNodeSet;
 // extern u16 last_time_gps;     // 距离上一次同步gps时间多少时间周期，5分钟一个周期，12次为1小时， 999为未同步
 extern u8 is_lora_init;     // 是否已经初始化网络
+extern u8 is_need_query_data;   // 是否需要查询子节点数据
 extern u8 get_data_flag;
-extern u8 nNode;
-extern u8 SubNodeAddress[120];
+// extern u8 nNode;
+extern u8 SubNodeAddress[120];  //从节点地址集合
+extern u8 SelfAddress[6];    //自身地址
 
 u8 LORA_Init(void);
 void LORA_Send(u8 *buf,u8 len);
@@ -51,7 +55,7 @@ u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len);  //接收数据解析
 u8 LORA_Network_Naming(void);   // 全网点名
 u8 LORA_Network_Start(void);    // 启动组网
 u8 LORA_Find_SubNode(u8 *address);  // 查找从节点
-u8 LORA_update_device_time(void);   // 更新设备时间
+// u8 LORA_update_device_time(void);   // 更新设备时间
 
 #endif
 
