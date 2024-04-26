@@ -24,17 +24,18 @@
 #define GPSTimeInterval 120	// GPS时间校时间隔，单位为秒  测试时2分钟一次，正式为5分钟一次
 #define QueryTimeInterval 120	// 查询从节点数据时间间隔，单位为秒 测试时为5分钟，正式为30分钟
 #define nMSnode 1
+#define is_battery 1				// 是否启动电压模块
+#define is_4g 1						// 是否启动4G模块,需要先启动lora和gps
+#define is_gps 1					// 是否启动GPS模块
+#define is_lora 1					// 是否启动lora模块
+#define is_wind_sensor 1			// 是否启动风速风向传感器
+#define is_calibration 0			// 是否启动风速风向校准
+
 
 uint8_t EnableMaster = 1;		  	// 主从选择 1为主机，0为从机
 u8 is_debug = 1;				  	// 是否调试模式，1为调试模式，0为正常模式
 u8 query_node_data_max_times = 5; 	// 查询节点数据最大次数
-u8 is_lora = 1;					  	// 是否启动lora模块
 u8 is_biglora = 1;					// 是否启动大功率lora模块
-u8 is_gps = 0;					  	// 是否启动GPS模块
-u8 is_4g = 0;					  	// 是否启动4G模块,需要先启动lora和gps
-u8 is_wind_sensor = 0;				// 是否启动风速风向传感器
-u8 is_battery = 0;					// 是否启动电池电压检测
-u8 is_calibration = 0;				// 是否启动风速风向校准
 u8 query_windsensor[11] = {0x24, 0x41, 0x44, 0x2C, 0x30, 0x34, 0x2A, 0x36, 0x33, 0x0D, 0x0A};	// 向风速传感器请求数据
 u8 cab_windsensor[11] = {0x24, 0x41, 0x5A, 0x2C, 0x30, 0x34, 0x2A, 0x37, 0x39, 0x0D, 0x0A};		// 风速风向校准
 u8 MSNodeAddress[120] = {
@@ -44,6 +45,7 @@ u8 MSNodeAddress[120] = {
         // 0x27, 0x49, 0x01, 0x00, 0x00, 0x00,
         // 0x29, 0x49, 0x01, 0x00, 0x00, 0x00,
 };									// 主从节点的地址
+u8 MS_query_flag = 0;
 
 union data{
 	float f;
@@ -55,8 +57,8 @@ void UART4_Handler(void); 	// 处理串口4PC通信的内容
 void LORA_Handler(void);  	// 处理LORA通信的内容
 void GPS_Handler(void);	  	// 处理GPS通信的内容
 // 用于解析数据
-void DATA_Handler(float *temp, float *pres, float *humi, float *wind_sp, float *wind_dir, float *smoke, float *batt);																																	
-void get_data(char*, u8*);		// 用于解析数据
+void DATA_Handler(float *temp, float *pres, float *humi, float *wind_sp, float *wind_dir);
+void get_data(char*, float*);		// 用于解析数据
 int main(void)
 {
 	float co2 = 0; // 烟雾浓度
@@ -84,18 +86,30 @@ int main(void)
 	MQ2_Init();
 	MQ7_Init();
 	Timer_mq2_Init(MQ2PreheatInterval); 	// 初始化MQ2定时器，每MQ2PreheatInterval秒状态位递增，用于MQ2的预热（20秒）和测量，MQ7共用一个定时器
-	if (is_battery)	BATTERY_Init();
-	if (is_4g)	mqtt4g_init();
+
+	#if (is_battery)
+		BATTERY_Init();
+	#endif
+
+	#if (is_4g)
+		mqtt4g_init();
+	#endif
+
 	customRTC_Init();
-	if (is_gps)	GPS_Init();
+
+
+	#if (is_gps)
+		GPS_Init();
+	#endif
 	Timer_Init(GPSTimeInterval); // 初始化定时器，TIM2用于读取gps时间给RTC校时, 间隔单位为秒，GPSTimeInterval*12为校时总周期
 	
-	if (is_lora)
+	#if (is_lora)
 	{
 		is_lora_init = LORA_Init();
 		Timer_querydata_Init(QueryTimeInterval); // 初始化定时器，TIM5用于查询从节点数据，间隔单位为秒
 		if (is_debug) printf("LORA Init OK\r\n");
 	}
+	#endif
 
 	LED = 1;
 	MQ2 = 1;
@@ -106,13 +120,14 @@ int main(void)
 	// SHT2X_Init();
 	// bmp280_uint();
 	delay_ms(500);
-	if (is_calibration)
+	#if (is_calibration)
 	{
 		if (is_debug) printf("calibrating windsensor...please ensure NO WIND\r\n");
 		USART6_DATA(cab_windsensor, 11);
 		if (is_debug) printf("calibration DONE\r\n");
 		delay_ms(1000);
 	}
+	#endif
 
 	while (1)
 	{
@@ -156,12 +171,13 @@ int main(void)
 		// if (is_debug) printf("humidity: %f\r\n", SHT2X_H);
 
 		// 读取电池电压
-		if (is_battery)
+		#if (is_battery)
 		{
 			battery = BATTERY_Scan();
 			if (is_debug) printf("battery: %.2f%%\r\n", battery);
 			if (is_debug) printf("\r\n");
 		}
+		#endif
 
 		//	如果lora模块未初始化成功，尝试重新初始化
 		if (is_lora && !is_lora_init)
@@ -187,21 +203,22 @@ int main(void)
 			GPS_Handler(); // 处理GPS通信的内容
 
 		// 向风速风向传感器串口要数据
-		if (is_wind_sensor)
+		#if (is_wind_sensor)
 		{
 			printf("query windsensor...\r\n");
 			USART6_DATA(query_windsensor, 11);
 			delay_ms(3000);
 			if (USART6_RX_STA&0x8000)
 			{
-				DATA_Handler(&SHT2X_T, &BMP280_P, &SHT2X_H, &wind_speed, &wind_direction, &co2, &battery);
+				DATA_Handler(&SHT2X_T, &BMP280_P, &SHT2X_H, &wind_speed, &wind_direction);
 			}
 		}
+		#endif
 		
-
 		if (is_lora && is_need_query_data)
 		{
 			// 向从节点要数据
+			is_need_query_data = 0;
 			if (is_debug) printf("query data...\r\n");
 			for (i = 0; i < SubNodeSet.nNode; i++)
 			{
@@ -249,18 +266,19 @@ int main(void)
 			}
 		}
 
-		if (is_4g)
+		#if (is_4g)
 		{
 			// 主节点发送自身数据
 			// 打印时间和传感器数据
 			RTC_Get_Time(time);
-			sprintf(data_str, "address: 999999990551\r\ntime: %02d:%02d:%02d\r\ntemperature: %.2f\r\npressure: %.2f\r\nhumidity: %.2f\r\nwind_speed: %.2f\r\nwind_direction: %.2f\r\nsmoke: %.2f\r\nbattery: %.2f%%\r\nisTimeTrue: %d\r\n",
-					time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H, wind_speed, wind_direction, co2, battery, RTC_check_device_time());
-			if (is_debug) puts(data_str);
+			sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %.2f\r\npressure: %.2f\r\nhumidity: %.2f\r\nwind_speed: %.2f\r\nwind_direction: %.2f\r\nsmoke: %.2f\r\nbattery: %.2f%%\r\nisTimeTrue: %d\r\n",
+					SelfAddress[0], SelfAddress[1], SelfAddress[2], SelfAddress[3], SelfAddress[4], SelfAddress[5], time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H, wind_speed, wind_direction, co2, battery, RTC_check_device_time());
+			if (is_debug) {puts(data_str);printf("\r\n");}
 			if (is_debug) printf("sending main node data to server...\r\n");
 			mqtt4g_send(data_str, strlen(data_str));
 			if (is_debug) printf("data sent...\r\n");
 		}
+		#endif
 
 		if (is_biglora)
 		{
@@ -602,59 +620,39 @@ void GPS_Handler(void)
 }
 
 //	数据模块处理
-void DATA_Handler(float *temp, float *pres, float *humi, float *wind_sp, float *wind_dir, float *smoke, float *batt)
+void DATA_Handler(float *temp, float *pres, float *humi, float *wind_sp, float *wind_dir)
 {
 	u8 i;
-	u8 temp_rec[300];
+	u8 temp_rec[150];
 	u8 rec_len=0;
-	u8 wind_speed[4] = {0};
-    u8 wind_direction[4] = {0};
-    u8 temperature[4] = {0};
-    u8 pressure[4] = {0};
-    u8 humidity[4] = {0};
-    u8 _smoke[4] = {0};
-	u8 battery[4] = {0};
-	u8 data_u8[28] = {0};				// 用于存储数据
+	float data[5] = {0};	// 用于存储数据
 
 	if (is_debug) printf("get windsensor data!\r\n");
 	USART6_Receive_Data(temp_rec, &rec_len);
 	// puts(temp_rec);
-	if (is_debug) printf("\r\n");
 	if (is_debug) printf("data analyzing...\r\n");
-	get_data(temp_rec, data_u8);
+	get_data(temp_rec, data);
 	
 	if (is_debug) 
 	{
 	printf("windsensor query finished...\r\n");
-	for(i=0;i<28;i++)
-		printf("%02x ", data_u8[i]);
+	for(i=0;i<5;i++)
+		printf("%f ", data[i]);
 	printf("\r\n");
 	}
 
-	for (i = 0; i < 4; i = i + 1)
-    {	//温 压 湿 风速风向
-        temperature[i] = data_u8[i];
-        pressure[i] = data_u8[4 + i];
-        humidity[i] = data_u8[8 + i];
-        wind_speed[i] = data_u8[12 + i];
-        wind_direction[i] = data_u8[16 + i];
-        _smoke[i] = data_u8[20 + i];
-		battery[i] = data_u8[24 + i];
-    }
-	*temp = *(float *)(temperature);
-	*pres = *(float *)(pressure);
-	*humi = *(float *)(humidity);
-	*wind_sp = *(float *)(wind_speed);
-	*wind_dir = *(float *)(wind_direction);
-	*smoke = *(float *)(_smoke);
-	*batt = *(float *)(battery);
+	*temp = data[0];
+	*pres = data[1];
+	*humi = data[2];
+	*wind_sp = data[3];
+	*wind_dir = data[4];
 }
 
-void get_data(char* data_str, u8* data_u8)
+void get_data(char* data_str, float* data)
 {
 	u8 i = 0, flag = 0, j = 0, k = 0, t = 0;
 	float data_float;
-	char float_str[20];
+	char float_str[15];
 	char* substr;
 	substr = strstr(data_str, "\"T\"");
 	
@@ -672,13 +670,9 @@ void get_data(char* data_str, u8* data_u8)
 			i++;
 		}
 		float_str[j] = '\0';
-		//puts(float_str);
-		//printf("\r\n");
-		flag=0;
-		j=0;
+		flag = 0;
+		j = 0;
 		data_float = atof(float_str);
-		data_1.f = data_float;
-		for(t=0;t<4;t++)
-			data_u8[k*4+t] = data_1.ch[t];
+		data[k] = data_float;
 	}
 }
