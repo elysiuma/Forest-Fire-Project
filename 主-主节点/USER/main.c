@@ -202,6 +202,7 @@ int main(void)
 		if (is_lora && is_need_query_data)
 		{
 			// 向从节点要数据
+			is_need_query_data = 0;
 			if (is_debug) printf("query data...\r\n");
 			for (i = 0; i < SubNodeSet.nNode; i++)
 			{

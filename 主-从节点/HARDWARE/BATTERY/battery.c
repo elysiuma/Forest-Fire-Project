@@ -20,7 +20,7 @@ float BATTERY_Scan(void)
     adcx=Get_Adc_Average(ADC_Channel_15,15);
     // printf("adcx=%d\r\n",adcx);
     battery_quantity=(float)adcx*(2.5/4096);        //接入的标准源电压2.5V
-    printf("adc_battery_quantity=%f\r\n",battery_quantity);
+    // printf("adc_battery_quantity=%f\r\n",battery_quantity);
     battery_quantity = battery_quantity*(R1+R2)/R1;
     battery_quantity_percent = (battery_quantity-min_battery_quantity)/(max_battery_quantity-min_battery_quantity)*100;
     // 百分比取一位小数

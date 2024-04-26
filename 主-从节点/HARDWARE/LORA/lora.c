@@ -838,7 +838,7 @@ u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len)
            smoke_f,co_f, battery_f, isTime);
 	puts(data_str);
 	printf("data_str len:%d\r\n", strlen(data_str));
-	printf("sending data to server...\r\n");
+	printf("collect data from SNode...\r\n");
 	// mqtt4g_send(data_str, strlen(data_str));
 	// printf("data sent...\r\n");
     //printf("time: %02d:%02d:%02d, wind_speed: %f, wind_direction: %f, temperature: %f, pressure: %f, humidity: %f, smoke: %f\r\n",
