@@ -21,7 +21,7 @@
 // #include "SHT2X.h"
 #include <string.h>
 #include <stdlib.h>
-#define MQ2PreheatInterval			10 				// MQ2预热时间间隔，单位为秒  至少为20秒
+#define MQ2PreheatInterval			20 				// MQ2预热时间间隔，单位为秒  至少为20秒 （传感器采集数据共用这个）
 #define GPSTimeInterval 			120				// GPS时间校时间隔，单位为秒  测试时2分钟一次，正式为5分钟一次
 #define QueryTimeInterval			120				// 查询从节点数据时间间隔，单位为秒 测试时为5分钟，正式为30分钟
 #define is_debug					1				// 是否调试模式，1为调试模式，0为正常模式
@@ -141,11 +141,12 @@ int main(void)
 		// printf("humidity: %f\r\n", SHT2X_H);
 
 		// 读取电池电压
-		if(is_battery)
+		if(is_battery && flag_battery_is_need_measure)
 		{
 			battery = BATTERY_Scan();
 			printf("battery: %.2f%%\r\n", battery);
 			printf("\r\n");
+			flag_battery_is_need_measure = 0;
 		}
 
 		//	如果lora模块未初始化成功，尝试重新初始化

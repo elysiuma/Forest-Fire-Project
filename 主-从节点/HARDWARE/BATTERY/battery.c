@@ -1,6 +1,8 @@
 #include "battery.h"
 #include "adc.h"
 
+u8 flag_battery_is_need_measure=0;
+
 void BATTERY_Init(void)
 {
     Adc_Init_Battery();

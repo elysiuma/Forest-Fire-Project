@@ -2,6 +2,7 @@
 #include "timer2.h"
 #include "mq2.h"
 #include "mq7.h"
+#include "battery.h"
 
 void Timer_mq2_Init(u16 interval)
 {
@@ -38,6 +39,10 @@ void TIM3_IRQHandler(void)
 {
     if(TIM_GetITStatus(TIM3,TIM_IT_Update)!=RESET)
     {
+        // 电源电压部分
+        flag_battery_is_need_measure = 1;    // 电源电压需要测量，在main循环中执行，执行完复位0
+        
+        // MQ2和MQ7部分
 		mq2_state_count++;
         if (flag_mq2)
         {
