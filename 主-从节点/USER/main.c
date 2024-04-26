@@ -14,25 +14,28 @@
 #include "timer2.h"
 #include "timer3.h"
 #include "rtc.h"
+#include "tool.h"
 // #include "mqtt4g.h"
 // #include "i2c.h"
 // #include "bmp280.h"
 // #include "SHT2X.h"
 #include <string.h>
 #include <stdlib.h>
-#define MQ2PreheatInterval 10 // MQ2预热时间间隔，单位为秒  至少为20秒
-#define GPSTimeInterval 120	// GPS时间校时间隔，单位为秒  测试时2分钟一次，正式为5分钟一次
-#define QueryTimeInterval 120	// 查询从节点数据时间间隔，单位为秒 测试时为5分钟，正式为30分钟
+#define MQ2PreheatInterval			10 				// MQ2预热时间间隔，单位为秒  至少为20秒
+#define GPSTimeInterval 			120				// GPS时间校时间隔，单位为秒  测试时2分钟一次，正式为5分钟一次
+#define QueryTimeInterval			120				// 查询从节点数据时间间隔，单位为秒 测试时为5分钟，正式为30分钟
+#define is_debug					1				// 是否调试模式，1为调试模式，0为正常模式
+#define query_node_data_max_times	5 				// 查询节点数据最大次数
+#define is_lora						1				// 是否启动lora模块
+#define is_gps						1				// 是否启动GPS模块
+#define is_battery					1				// 是否启动电池电压检测
+#define is_wind_sensor				1				// 是否启动风速风向传感器
+#define is_calibration				0				// 是否启动风速风向校准 1为校准，0为不校准
 
 uint8_t EnableMaster = 1;		  // 主从选择 1为主机，0为从机
-u8 is_debug = 1;				  // 是否调试模式，1为调试模式，0为正常模式
-u8 query_node_data_max_times = 5; // 查询节点数据最大次数
-u8 is_lora = 1;					  // 是否启动lora模块
-u8 is_gps = 1;					  // 是否启动GPS模块
+
 // u8 is_4g = 0;					  // 是否启动4G模块,需要先启动lora和gps
-u8 is_battery = 1;				  // 是否启动电池电压检测
-u8 is_wind_sensor = 0;				// 是否启动风速风向传感器
-u8 is_calibration = 0;				// 是否启动风速风向校准 
+
 u8 query_windsensor[11] = {0x24, 0x41, 0x44, 0x2C, 0x30, 0x34, 0x2A, 0x36, 0x33, 0x0D, 0x0A};	// 向风速传感器请求数据
 u8 cab_windsensor[11] = {0x24, 0x41, 0x5A, 0x2C, 0x30, 0x34, 0x2A, 0x37, 0x39, 0x0D, 0x0A};		// 风速风向校准
 
@@ -46,7 +49,7 @@ void UART4_Handler(void); // 处理串口4PC通信的内容
 void LORA_Handler(void);  // 处理LORA通信的内容
 void GPS_Handler(void);	  // 处理GPS通信的内容
 // 用于解析数据
-void DATA_Handler(float *temp, float *pres, float *humi, float *wind_sp, float *wind_dir, float *smoke, float *batt);
+void DATA_Handler(float *temp, float *pres, float *humi, float *wind_sp, float *wind_dir);
 void get_data(char*, u8*);		// 用于解析数据
 
 int main(void)
@@ -63,10 +66,13 @@ int main(void)
 	u8 time[3] = {0};
 	u8 flag = 0;
 	u8 i = 0, len = 0;
+	// static u8 all_data_str[600]={0};			  // 用于存储发送给服务器的所有数据(按最大10个节点算)
 
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2); // 设置系统中断优先级分组2
 	delay_init(168);								// 初始化延时函数
 	uart4_init(9600);								// 初始化串口波特率为9600
+	uart5_init(9600);								// 初始化串口波特率为9600
+	if(is_wind_sensor) uart6_init(9600);								// 初始化串口波特率为9600
 	LED_Init();										// 初始化LED
 
 	MQ2_Init();
@@ -103,7 +109,6 @@ int main(void)
 		u8 query[3] = {0x11, 0x22, 0x33}; // 用于向子节点发送，查询数据
 		u8 is_query_node_success = 0;	  // 是否成功查询到节点数据
 		u8 data_str[300];				  // 用于存储发送给服务器的单条数据
-		u8 all_data_str[3000];			  // 用于存储发送给服务器的所有数据(按最大10个节点算)
 
 		// 读取烟雾浓度最近10次平均数据
 		if (flag_mq2_is_need_measure) // 需要测量时采集MQ2数据
@@ -173,7 +178,7 @@ int main(void)
 			delay_ms(3000);
 			if (USART6_RX_STA&0x8000)
 			{
-				DATA_Handler(&SHT2X_T, &BMP280_P, &SHT2X_H, &wind_speed, &wind_direction, &co2, &battery);
+				DATA_Handler(&SHT2X_T, &BMP280_P, &SHT2X_H, &wind_speed, &wind_direction);
 			}
 		}
 
@@ -230,41 +235,51 @@ int main(void)
 		}
 
 		// 收到大功率lora查询数据
-		if (USART5_RX_STA&0x8000)	
+		// if(0)
+		// if (USART5_RX_STA&0x8000)	
+		if (1)
 		{
-			len=USART5_RX_STA&0x3fff;//得到此次接收到的数据长度	
-			if (len == 6 &&  		// 6位地址
-				USART5_RX_BUF[0] == SelfAddress[0] &&
-				USART5_RX_BUF[1] == SelfAddress[1] &&
-				USART5_RX_BUF[2] == SelfAddress[2] &&
-				USART5_RX_BUF[3] == SelfAddress[3] &&
-				USART5_RX_BUF[4] == SelfAddress[4] &&
-				USART5_RX_BUF[5] == SelfAddress[5])
+			USART5_Receive_Data(temp_buf, &len);	// 接收数据
+			printf("received data from big lora: ");
+			for (i = 0; i < len; i++)
+			{
+				printf("%02x ", temp_buf[i]);
+			}
+			printf("\r\n");
+			// if (len == 6 &&  		// 6位地址
+			// 	temp_buf[0] == SelfAddress[0] &&
+			// 	temp_buf[1] == SelfAddress[1] &&
+			// 	temp_buf[2] == SelfAddress[2] &&
+			// 	temp_buf[3] == SelfAddress[3] &&
+			// 	temp_buf[4] == SelfAddress[4] &&
+			// 	temp_buf[5] == SelfAddress[5])
+			if(1)
 			{
 				// 主从节点发送自身数据
 				// 打印时间和传感器数据
 				RTC_Get_Time(time);
-				sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %f\r\npressure: %f\r\nhumidity: %f\r\nwind_speed: %f\r\n"
-								"wind_direction: %f\r\nsmoke: %f\r\nco: %f\r\nbattery: %f\r\nisTimeTrue: %d\r\n[SEP]",SelfAddress[0], SelfAddress[1], SelfAddress[2], SelfAddress[3], SelfAddress[4], SelfAddress[5],
-						time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H,wind_speed, wind_direction, co2,co_latest, battery, RTC_check_device_time());\
-				strcat(all_data_str, data_str);
-				for (i = 0; i < SubNodeSet.nNode; i++) 
-				{
-					SubNode current_node = SubNodeSet.SubNode_list[i];
-					// 生成当前子节点的数据字符串
-					sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %f\r\npressure: %f\r\nhumidity: %f\r\n"
-							"smoke: %f\r\nco: %f\r\nbattery: %f\r\nisTimeTrue: %d\r\n[SEP]",
-							current_node.address[0], current_node.address[1], current_node.address[2], current_node.address[3], current_node.address[4], current_node.address[5],
-							current_node.sample_time[0], current_node.sample_time[1], current_node.sample_time[2], current_node.temperature, current_node.pressure, current_node.humidity,
-							current_node.smoke, current_node.co, current_node.battery, RTC_check_specified_time(current_node.last_gps));
-					// 将当前子节点的数据字符串拼接到all_data_str中
-					strcat(all_data_str, data_str);
-				}
+				sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %.2f\r\npressure: %.2f\r\nhumidity: %.2f\r\nwind_speed: %.2f\r\n"
+								"wind_direction: %.2f\r\nsmoke: %.2f\r\nco: %.2f\r\nbattery: %.2f\r\nisTimeTrue: %d\r\n[SEP]",SelfAddress[0], SelfAddress[1], SelfAddress[2], SelfAddress[3], SelfAddress[4], SelfAddress[5],
+						time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H,wind_speed, wind_direction, co2,co_latest, battery, RTC_check_device_time());
+				// strcat(all_data_str, data_str);
+				// for (i = 0; i < SubNodeSet.nNode; i++) 
+				// {
+				// 	SubNode current_node = SubNodeSet.SubNode_list[i];
+				// 	// 生成当前子节点的数据字符串
+				// 	sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %.2f\r\npressure: %.2f\r\nhumidity: %.2f\r\n"
+				// 			"smoke: %.2f\r\nco: %.2f\r\nbattery: %.2f\r\nisTimeTrue: %d\r\n[SEP]",
+				// 			current_node.address[0], current_node.address[1], current_node.address[2], current_node.address[3], current_node.address[4], current_node.address[5],
+				// 			current_node.sample_time[0], current_node.sample_time[1], current_node.sample_time[2], current_node.temperature, current_node.pressure, current_node.humidity,
+				// 			current_node.smoke, current_node.co, current_node.battery, RTC_check_specified_time(current_node.last_gps));
+				// 	// 将当前子节点的数据字符串拼接到all_data_str中
+				// 	strcat(all_data_str, data_str);
+				// }
+				// printf("all data: \r\n");
 				// puts(all_data_str);
-				printf("sending all node data to MMNode...\r\n");
-				USART5_DATA(all_data_str, strlen(all_data_str));	// 发送给MMNode
+				// printf("sending all node data to MMNode..., len=%d\r\n", strlen(all_data_str));
+				USART5_DATA("data_str", strlen(data_str));	// 发送给MMNode
 				// mqtt4g_send(data_str, strlen(data_str));
-				printf("data sent...\r\n");
+				printf("all node data sent...\r\n");
 			}
 		}
 
@@ -511,11 +526,11 @@ void GPS_Handler(void)
 		return;
 	}
 	// 测试打印数据
-	for (t = 0; t < rec_len; t++)
-	{
-		USART_SendData(UART4, temp_rec[t]); // 向串口4发送数据
-		while (USART_GetFlagStatus(UART4, USART_FLAG_TC) != SET); // 等待发送结束
-	}
+	// for (t = 0; t < rec_len; t++)
+	// {
+	// 	USART_SendData(UART4, temp_rec[t]); // 向串口4发送数据
+	// 	while (USART_GetFlagStatus(UART4, USART_FLAG_TC) != SET); // 等待发送结束
+	// }
 	// 检测是否是完整的GPS数据包
 	if (temp_rec[3] == 0x47 && temp_rec[4] == 0x47 && temp_rec[5] == 0x41)
 	{
@@ -549,18 +564,11 @@ void GPS_Handler(void)
 	// printf("\r\n");//插入换行
 	//  printf("Receive %d,%d, len=%d", temp_rec[0],temp_rec[1],rec_len);
 }
-void DATA_Handler(float *temp, float *pres, float *humi, float *wind_sp, float *wind_dir, float *smoke, float *batt)
+void DATA_Handler(float *temp, float *pres, float *humi, float *wind_sp, float *wind_dir)
 {
 	u8 i;
 	u8 temp_rec[300];
 	u8 rec_len=0;
-	u8 wind_speed[4] = {0};
-    u8 wind_direction[4] = {0};
-    u8 temperature[4] = {0};
-    u8 pressure[4] = {0};
-    u8 humidity[4] = {0};
-    u8 _smoke[4] = {0};
-	u8 battery[4] = {0};
 	u8 data_u8[28] = {0};				// 用于存储数据
 
 	if (is_debug) printf("get windsensor data!\r\n");
@@ -578,23 +586,22 @@ void DATA_Handler(float *temp, float *pres, float *humi, float *wind_sp, float *
 	printf("\r\n");
 	}
 
-	for (i = 0; i < 4; i = i + 1)
-    {	//温 压 湿 风速风向
-        temperature[i] = data_u8[i];
-        pressure[i] = data_u8[4 + i];
-        humidity[i] = data_u8[8 + i];
-        wind_speed[i] = data_u8[12 + i];
-        wind_direction[i] = data_u8[16 + i];
-        _smoke[i] = data_u8[20 + i];
-		battery[i] = data_u8[24 + i];
-    }
-	*temp = *(float *)(temperature);
-	*pres = *(float *)(pressure);
-	*humi = *(float *)(humidity);
-	*wind_sp = *(float *)(wind_speed);
-	*wind_dir = *(float *)(wind_direction);
-	*smoke = *(float *)(_smoke);
-	*batt = *(float *)(battery);
+	// for (i = 0; i < 4; i = i + 1)
+    // {	//温 压 湿 风速风向
+    //     temperature[i] = data_u8[i];
+    //     pressure[i] = data_u8[4 + i];
+    //     humidity[i] = data_u8[8 + i];
+    //     wind_speed[i] = data_u8[12 + i];
+    //     wind_direction[i] = data_u8[16 + i];
+    //     _smoke[i] = data_u8[20 + i];
+	// 	battery[i] = data_u8[24 + i];
+    // }
+	*temp = u8_to_float(data_u8);
+	*pres = u8_to_float(data_u8+4);
+	*humi = u8_to_float(data_u8+8);
+	*wind_sp = u8_to_float(data_u8+12);
+	*wind_dir = u8_to_float(data_u8+16);
+	printf("temperature: %.2f\r\npressure: %.2f\r\nhumidity: %.2f\r\nwind_speed: %.2f\r\nwind_direction: %.2f\r\n", *temp, *pres, *humi, *wind_sp, *wind_dir);
 }
 
 void get_data(char* data_str, u8* data_u8)
