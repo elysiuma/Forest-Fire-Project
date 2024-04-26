@@ -15,37 +15,31 @@
 #include "timer3.h"
 #include "rtc.h"
 #include "mqtt4g.h"
+#include "biglora.h"
 // #include "i2c.h"
 // #include "bmp280.h"
 // #include "SHT2X.h"
 #include <string.h>
 #include <stdlib.h>
-#define MQ2PreheatInterval 10 // MQ2预热时间间隔，单位为秒  至少为20秒
-#define GPSTimeInterval 120	// GPS时间校时间隔，单位为秒  测试时2分钟一次，正式为5分钟一次
-#define QueryTimeInterval 120	// 查询从节点数据时间间隔，单位为秒 测试时为5分钟，正式为30分钟
-#define nMSnode 1
+#define MQ2PreheatInterval 10		// MQ2预热时间间隔，单位为秒  至少为20秒
+#define GPSTimeInterval 120			// GPS时间校时间隔，单位为秒  测试时2分钟一次，正式为5分钟一次
+#define QueryTimeInterval 120		// 查询从节点数据时间间隔，单位为秒 测试时为5分钟，正式为30分钟
 #define is_battery 1				// 是否启动电压模块
 #define is_4g 1						// 是否启动4G模块,需要先启动lora和gps
 #define is_gps 1					// 是否启动GPS模块
 #define is_lora 1					// 是否启动lora模块
 #define is_wind_sensor 1			// 是否启动风速风向传感器
 #define is_calibration 0			// 是否启动风速风向校准
-
+#define is_biglora 1				// 是否启动大功率lora模块
 
 uint8_t EnableMaster = 1;		  	// 主从选择 1为主机，0为从机
 u8 is_debug = 1;				  	// 是否调试模式，1为调试模式，0为正常模式
 u8 query_node_data_max_times = 5; 	// 查询节点数据最大次数
-u8 is_biglora = 1;					// 是否启动大功率lora模块
 u8 query_windsensor[11] = {0x24, 0x41, 0x44, 0x2C, 0x30, 0x34, 0x2A, 0x36, 0x33, 0x0D, 0x0A};	// 向风速传感器请求数据
 u8 cab_windsensor[11] = {0x24, 0x41, 0x5A, 0x2C, 0x30, 0x34, 0x2A, 0x37, 0x39, 0x0D, 0x0A};		// 风速风向校准
-u8 MSNodeAddress[120] = {
-        // 0x36, 0x49, 0x01, 0x00, 0x00, 0x00,
-        // 0x28, 0x49, 0x01, 0x00, 0x00, 0x00,
-        0x99, 0x99, 0x99, 0x99, 0x05, 0x50,
-        // 0x27, 0x49, 0x01, 0x00, 0x00, 0x00,
-        // 0x29, 0x49, 0x01, 0x00, 0x00, 0x00,
-};									// 主从节点的地址
-u8 MS_query_flag = 0;
+u8 query[3] = {0x11, 0x22, 0x33}; 	// 用于向子节点发送，查询数据
+u8 MSrec[300];						// 用于储存主从节点来的信息，4G发送
+u8 data_str[200];				  	// 用于存储主主自身发送给服务器的数据
 
 union data{
 	float f;
@@ -56,9 +50,10 @@ union data{
 void UART4_Handler(void); 	// 处理串口4PC通信的内容
 void LORA_Handler(void);  	// 处理LORA通信的内容
 void GPS_Handler(void);	  	// 处理GPS通信的内容
-// 用于解析数据
-void DATA_Handler(float *temp, float *pres, float *humi, float *wind_sp, float *wind_dir);
+void DATA_Handler(float *temp, float *pres, float *humi, float *wind_sp, float *wind_dir);	// 用于解析数据
 void get_data(char*, float*);		// 用于解析数据
+void BIGLORA_Handler(void);	//处理大功率LORA通信的内容
+
 int main(void)
 {
 	float co2 = 0; // 烟雾浓度
@@ -72,14 +67,15 @@ int main(void)
 	float co_latest = 0; // 最新的CO浓度
 	u8 time[3] = {0};
 	u8 flag = 0;
-	u8 i = 0;
-	u8 MSrec[300];
+	u8 i = 0, j = 0;
 	u8 MSrec_len = 0;
+	u8 current_addr[6] = {0};
+	u8 is_query_node_success = 0;	  // 是否成功查询到节点数据
 
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2); // 设置系统中断优先级分组2
 	delay_init(168);								// 初始化延时函数
 	uart4_init(9600);								// 初始化串口波特率为9600
-	uart5_init(9600);								// 初始化串口波特率为9600，大功率Lora
+	printf("***********Init***********\r\n");
 	uart6_init(9600);								// 初始化串口波特率为9600，传感器
 	LED_Init();										// 初始化LED
 
@@ -97,7 +93,6 @@ int main(void)
 
 	customRTC_Init();
 
-
 	#if (is_gps)
 		GPS_Init();
 	#endif
@@ -109,6 +104,10 @@ int main(void)
 		Timer_querydata_Init(QueryTimeInterval); // 初始化定时器，TIM5用于查询从节点数据，间隔单位为秒
 		if (is_debug) printf("LORA Init OK\r\n");
 	}
+	#endif
+
+	#if (is_biglora)
+		BIGLORA_init();
 	#endif
 
 	LED = 1;
@@ -130,18 +129,20 @@ int main(void)
 	#endif
 
 	while (1)
-	{
-		u8 time[3] = {0};
-		u8 flag = 0;
-		u8 i, j;
-		u8 current_addr[6] = {0};
-		u8 query[3] = {0x11, 0x22, 0x33}; // 用于向子节点发送，查询数据
-		u8 is_query_node_success = 0;	  // 是否成功查询到节点数据
-		u8 data_str[300];				  // 用于存储发送给服务器的数据
+	{	
+		printf("***********INTO THE LOOP***********\r\n");
+		time[0] = 0; time[1] = 0; time[2] = 0;
+		flag = 0;
+		for (i = 0; i < 6; i++)
+		{
+			current_addr[i] = 0;
+		}
+		is_query_node_success = 0;
 
 		// 读取烟雾浓度
 		if (flag_mq2_is_need_measure) // 需要测量时采集MQ2数据
 		{
+			printf("***********SMOKE***********\r\n");
 			printf("MQ2_Scan state=%d\r\n", mq2_state_count);
 			co2 = MQ2_Scan();
 			co_latest = MQ7_Scan();
@@ -173,6 +174,7 @@ int main(void)
 		// 读取电池电压
 		#if (is_battery)
 		{
+			printf("***********BATTERY***********\r\n");
 			battery = BATTERY_Scan();
 			if (is_debug) printf("battery: %.2f%%\r\n", battery);
 			if (is_debug) printf("\r\n");
@@ -187,6 +189,7 @@ int main(void)
 		// is_need_update_time =1;	// 调试用，每次都更新时间
 		if (is_gps && is_need_update_time)
 		{
+			printf("***********GPS***********\r\n");
 			// 更新RTC时间需要GPS，在GPS未启动的时候不进行时间更新
 			RTC_update_device_time();
 			is_need_update_time = 0;
@@ -196,16 +199,28 @@ int main(void)
 		// 	UART4_Handler(); // 处理串口4PC通信的内容
 
 		if (is_lora && check_LORA_Receive())
+		{
+			printf("***********LORA HANDLING***********\r\n");
 			LORA_Handler(); // 处理LORA通信的内容
+		}
+
+		if (is_biglora && check_BIGLORA_Receive())
+		{
+			printf("***********BIGLORA HANDLING***********\r\n");
+			BIGLORA_Handler();	// 处理大功率LORA通信的内容
+		}
 
 		// TODO: 这一步操作实际没有效果，校时为按需校时
 		if (is_gps && check_GPS_Receive())
+		{
+			printf("***********GPS HANDLING***********\r\n");
 			GPS_Handler(); // 处理GPS通信的内容
+		}
 
 		// 向风速风向传感器串口要数据
 		#if (is_wind_sensor)
 		{
-			printf("query windsensor...\r\n");
+			printf("***********QEURY WINDSENSOR***********\r\n");
 			USART6_DATA(query_windsensor, 11);
 			delay_ms(3000);
 			if (USART6_RX_STA&0x8000)
@@ -217,6 +232,7 @@ int main(void)
 		
 		if (is_lora && is_need_query_data)
 		{
+			printf("***********QEURY LORA***********\r\n");
 			// 向从节点要数据
 			is_need_query_data = 0;
 			if (is_debug) printf("query data...\r\n");
@@ -268,6 +284,7 @@ int main(void)
 
 		#if (is_4g)
 		{
+			printf("***********4G SENDING SELF DATA***********\r\n");
 			// 主节点发送自身数据
 			// 打印时间和传感器数据
 			RTC_Get_Time(time);
@@ -280,61 +297,20 @@ int main(void)
 		}
 		#endif
 
-		if (is_biglora)
+		#if (is_biglora)
 		{
-			if (is_debug) printf("query M-S node data...\r\n");
-			for (i = 0; i < nMSnode; i++)
-			{
-				for (j = 0; j < 6; j++)
-					current_addr[j] = MSNodeAddress[i * 6 + j];
-				USART5_DATA(current_addr, 6);
-				if (is_debug) printf("query sent...node: %d\r\n", i);
-				delay_ms(5000);
-				for (j = 0; j < query_node_data_max_times; j++)
-				{
-					if (USART5_RX_STA & 0x8000)				// 如果大功率LORA模块收到数据
-					{
-						if (is_debug) printf("data received!\r\n");
-						USART5_Receive_Data(MSrec, &MSrec_len);
-						is_query_node_success = 1;
-						mqtt4g_send(MSrec, strlen(MSrec));
-						MSrec_len = 0;
-						if (is_debug) printf("MS data sent...\r\n");
-						break;
-					}
-					delay_ms(2000);
-				}
-				if (is_query_node_success)
-				{
-					continue;
-				}
-				else
-				{
-					if (is_debug) printf("query data again... node: %d\r\n", i);
-					USART5_DATA(current_addr, 6);
-					if (is_debug) printf("query sent...node: %d\r\n", i);
-					delay_ms(5000);
-					for (j = 0; j < query_node_data_max_times; j++)
-					{
-						if (USART5_RX_STA & 0x8000)				// 如果大功率LORA模块收到数据
-						{
-							if (is_debug) printf("data received!\r\n");
-							USART5_Receive_Data(MSrec, &MSrec_len);
-							is_query_node_success = 1;
-							mqtt4g_send(MSrec, strlen(MSrec));
-							MSrec_len = 0;
-							if (is_debug) printf("MS data sent...\r\n");
-							break;
-						}
-						delay_ms(2000);
-					}
-				}
-				if (!is_query_node_success)
-					if (is_debug) printf("query data failed... node: %d\r\n", i);
-				is_query_node_success = 0;
-			}
+			printf("***********QEURY BIGLORA***********\r\n");
+			BIGLORA_send_query();
+		}
+		#endif
+
+		if (is_biglora && check_BIGLORA_Receive())
+		{
+			printf("***********BIGLORA HANDLING***********\r\n");
+			BIGLORA_Handler(); // 处理大功率LORA模块通信的内容
 		}
 
+		printf("***********OUT THE LOOP***********\r\n");
 		delay_ms(1000);
 		DebugLed(); // LED闪烁说明程序正常运行
 	}
@@ -568,7 +544,7 @@ void LORA_Handler(void)
 void GPS_Handler(void)
 {
 	u8 t;
-	u8 temp_rec[300];
+	u8 temp_rec[100];
 	u8 rec_len = 0;
 	u8 time[3] = {0};
 	// 接收数据
@@ -675,4 +651,15 @@ void get_data(char* data_str, float* data)
 		data_float = atof(float_str);
 		data[k] = data_float;
 	}
+}
+
+void BIGLORA_Handler(void)
+{
+	u8 temp_rec[3000] = {0};
+	u8 rec_len = 0;
+
+	BIGLORA_Receive(temp_rec, &rec_len);
+	printf("BIGLORA sending to 4G...");
+	mqtt4g_send(temp_rec, strlen(temp_rec));
+	printf("BIGLORA sending to 4G DONE!!!");
 }
