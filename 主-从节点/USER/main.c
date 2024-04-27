@@ -26,7 +26,7 @@
 #define GPSTimeInterval 			120				// GPS时间校时间隔，单位为秒  测试时2分钟一次，正式为5分钟一次
 #define QueryTimeInterval			120				// 查询从节点数据时间间隔，单位为秒 测试时为5分钟，正式为30分钟
 #define is_debug					1				// 是否调试模式，1为调试模式，0为正常模式
-#define query_node_data_max_times	5 				// 查询节点数据最大次数
+// #define query_node_data_max_times	5 				// 查询节点数据最大次数
 #define is_lora						1				// 是否启动lora模块
 #define is_gps						1				// 是否启动GPS模块
 #define is_battery					1				// 是否启动电池电压检测
@@ -66,12 +66,11 @@ int main(void)
 	u8 flag = 0;
 	u8 len = 0;
 	
-	
-	
 
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2); // 设置系统中断优先级分组2
 	delay_init(168);								// 初始化延时函数
 	uart4_init(9600);								// 初始化串口波特率为9600
+	printf("***********Init***********\r\n");
 	uart5_init(9600);								// 初始化串口波特率为9600
 	if(is_wind_sensor) Wind_Init();								// 初始化串口波特率为9600
 	LED_Init();										// 初始化LED
@@ -79,7 +78,11 @@ int main(void)
 	MQ2_Init();
 	MQ7_Init();
 	Timer_mq2_Init(MQ2PreheatInterval);		// 初始化MQ2定时器，每MQ2PreheatInterval秒状态位递增，用于MQ2的预热（20秒）和测量，MQ7共用一个定时器
-	if (is_battery) BATTERY_Init();
+	
+	#if is_battery
+		BATTERY_Init();
+	#endif
+
 	// if (is_4g) mqtt4g_init();
 	customRTC_Init();
 	if (is_gps) GPS_Init();
@@ -140,13 +143,18 @@ int main(void)
 		// printf("humidity: %f\r\n", SHT2X_H);
 
 		// 读取电池电压
-		if(is_battery && flag_battery_is_need_measure)
+		#if (is_battery)
 		{
-			battery = BATTERY_Scan();
-			printf("battery: %.2f%%\r\n", battery);
-			printf("\r\n");
-			flag_battery_is_need_measure = 0;
+			if (flag_battery_is_need_measure)
+			{
+				printf("***********BATTERY***********\r\n");
+				battery = BATTERY_Scan();
+				if (is_debug) printf("battery: %.2f%%\r\n", battery);
+				if (is_debug) printf("\r\n");
+				flag_battery_is_need_measure = 0;
+			}
 		}
+		#endif
 
 		//	如果lora模块未初始化成功，尝试重新初始化
 		if (is_lora && !is_lora_init)

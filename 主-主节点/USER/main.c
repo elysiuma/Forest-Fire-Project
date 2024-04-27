@@ -21,20 +21,21 @@
 // #include "SHT2X.h"
 #include <string.h>
 #include <stdlib.h>
-#define MQ2PreheatInterval 10		// MQ2预热时间间隔，单位为秒  至少为20秒
-#define GPSTimeInterval 120			// GPS时间校时间隔，单位为秒  测试时2分钟一次，正式为5分钟一次
-#define QueryTimeInterval 120		// 查询从节点数据时间间隔，单位为秒 测试时为5分钟，正式为30分钟
-#define is_battery 1				// 是否启动电压模块
-#define is_4g 1						// 是否启动4G模块,需要先启动lora和gps
-#define is_gps 1					// 是否启动GPS模块
-#define is_lora 1					// 是否启动lora模块
-#define is_wind_sensor 1			// 是否启动风速风向传感器
-#define is_calibration 0			// 是否启动风速风向校准
-#define is_biglora 1				// 是否启动大功率lora模块
+
+#define MQ2PreheatInterval			20 				// MQ2预热时间间隔，单位为秒  至少为20秒 （传感器采集数据共用这个）
+#define GPSTimeInterval 			120				// GPS时间校时间隔，单位为秒  测试时2分钟一次，正式为5分钟一次
+#define QueryTimeInterval			120				// 查询从节点数据时间间隔，单位为秒 测试时为5分钟，正式为30分钟
+#define is_debug					1				// 是否调试模式，1为调试模式，0为正常模式
+#define query_node_data_max_times	5 				// 查询节点数据最大次数
+#define is_lora						1				// 是否启动lora模块
+#define is_gps						1				// 是否启动GPS模块
+#define is_4g 						1				// 是否启动4G模块,需要先启动lora和gps
+#define is_battery					1				// 是否启动电池电压检测
+#define is_wind_sensor				1				// 是否启动风速风向传感器
+#define is_calibration				0				// 是否启动风速风向校准 1为校准，0为不校准
+#define is_biglora 					1				// 是否启动大功率lora模块
 
 uint8_t EnableMaster = 1;		  	// 主从选择 1为主机，0为从机
-u8 is_debug = 1;				  	// 是否调试模式，1为调试模式，0为正常模式
-u8 query_node_data_max_times = 5; 	// 查询节点数据最大次数
 u8 query_windsensor[11] = {0x24, 0x41, 0x44, 0x2C, 0x30, 0x34, 0x2A, 0x36, 0x33, 0x0D, 0x0A};	// 向风速传感器请求数据
 u8 cab_windsensor[11] = {0x24, 0x41, 0x5A, 0x2C, 0x30, 0x34, 0x2A, 0x37, 0x39, 0x0D, 0x0A};		// 风速风向校准
 u8 query[3] = {0x11, 0x22, 0x33}; 	// 用于向子节点发送，查询数据
@@ -83,7 +84,7 @@ int main(void)
 	MQ7_Init();
 	Timer_mq2_Init(MQ2PreheatInterval); 	// 初始化MQ2定时器，每MQ2PreheatInterval秒状态位递增，用于MQ2的预热（20秒）和测量，MQ7共用一个定时器
 
-	#if (is_battery)
+	#if is_battery
 		BATTERY_Init();
 	#endif
 
@@ -174,10 +175,14 @@ int main(void)
 		// 读取电池电压
 		#if (is_battery)
 		{
-			printf("***********BATTERY***********\r\n");
-			battery = BATTERY_Scan();
-			if (is_debug) printf("battery: %.2f%%\r\n", battery);
-			if (is_debug) printf("\r\n");
+			if (flag_battery_is_need_measure)
+			{
+				printf("***********BATTERY***********\r\n");
+				battery = BATTERY_Scan();
+				if (is_debug) printf("battery: %.2f%%\r\n", battery);
+				if (is_debug) printf("\r\n");
+				flag_battery_is_need_measure = 0;
+			}
 		}
 		#endif
 
