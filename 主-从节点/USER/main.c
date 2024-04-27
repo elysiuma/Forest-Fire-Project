@@ -65,6 +65,7 @@ int main(void)
 	u8 time[3] = {0};
 	u8 flag = 0;
 	u8 len = 0;
+	u8 i, j;
 	
 
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2); // 设置系统中断优先级分组2
@@ -85,14 +86,17 @@ int main(void)
 
 	// if (is_4g) mqtt4g_init();
 	customRTC_Init();
-	if (is_gps) GPS_Init();
+	#if is_gps
+		GPS_Init();
+	#endif
 	Timer_Init(GPSTimeInterval); // 初始化定时器，TIM2用于读取gps时间给RTC校时, 间隔单位为秒，interval*12为校时总周期
-	if (is_lora)
+	#if is_lora
 	{
 		is_lora_init = LORA_Init();
 		Timer_querydata_Init(QueryTimeInterval); // 初始化定时器，TIM5用于查询从节点数据，间隔单位为秒
-		printf("LORA Init OK\r\n");
+		if (is_debug) printf("LORA Init OK\r\n");
 	}
+	#endif
 
 	LED = 1;
 	MQ2 = 1;
@@ -102,16 +106,18 @@ int main(void)
 	// IIC_Init(); // I2C initialize
 	// SHT2X_Init();
 	// bmp280_uint();
-	delay_ms(500);
+	
+	#if (is_calibration)
+		if (is_debug) printf("calibrating windsensor...please ensure NO WIND\r\n");
+		Wind_calibration();
+		if (is_debug) printf("calibration DONE\r\n");
+		delay_ms(1000);
+	#endif
 	printf("System Init OK\r\n");
+	delay_ms(500);
 
 	while (1)
 	{
-		u8 i, j;
-		u8 current_addr[6] = {0};
-		u8 is_query_node_success = 0;	  // 是否成功查询到节点数据
-		
-
 		// 读取烟雾浓度最近10次平均数据
 		if (flag_mq2_is_need_measure) // 需要测量时采集MQ2数据
 		{
@@ -143,8 +149,7 @@ int main(void)
 		// printf("humidity: %f\r\n", SHT2X_H);
 
 		// 读取电池电压
-		#if (is_battery)
-		{
+		#if is_battery
 			if (flag_battery_is_need_measure)
 			{
 				printf("***********BATTERY***********\r\n");
@@ -153,7 +158,6 @@ int main(void)
 				if (is_debug) printf("\r\n");
 				flag_battery_is_need_measure = 0;
 			}
-		}
 		#endif
 
 		//	如果lora模块未初始化成功，尝试重新初始化
@@ -175,15 +179,19 @@ int main(void)
 		if (is_lora && check_LORA_Receive())
 			LORA_Handler(); // 处理LORA通信的内容
 
-		if (is_gps && check_GPS_Receive())
-			GPS_Handler(); // 处理GPS通信的内容
+		#if is_gps
+			if (check_GPS_Receive())
+			{
+				printf("***********GPS HANDLING***********\r\n");
+				GPS_Handler(); // 处理GPS通信的内容
+			}
+		#endif
 
 		// 向风速风向传感器串口要数据
-		if (is_wind_sensor)
-		{
+		#if is_wind_sensor
 			if (flag_wind_is_need_measure)	// 需要测量时采集风速风向数据
 			{
-				printf("Send query windsensor...\r\n");
+				printf("***********QEURY WINDSENSOR***********\r\n");
 				Wind_query();
 				flag_wind_is_need_measure = 0;
 			}
@@ -193,7 +201,7 @@ int main(void)
 				Wind_analysis(&SHT2X_T, &BMP280_P, &SHT2X_H, &wind_speed, &wind_direction);
 				printf("temperature: %.2f, pressure: %.2f, humidity: %.2f, wind_speed: %.2f, wind_direction: %.2f\r\n", SHT2X_T, BMP280_P, SHT2X_H, wind_speed, wind_direction);
 			}
-		}
+		#endif
 
 		if (is_lora && is_need_query_data)
 		// if (0)

@@ -16,6 +16,7 @@
 #include "rtc.h"
 #include "mqtt4g.h"
 #include "biglora.h"
+#include "wind.h"
 // #include "i2c.h"
 // #include "bmp280.h"
 // #include "SHT2X.h"
@@ -36,8 +37,6 @@
 #define is_biglora 					1				// 是否启动大功率lora模块
 
 uint8_t EnableMaster = 1;		  	// 主从选择 1为主机，0为从机
-u8 query_windsensor[11] = {0x24, 0x41, 0x44, 0x2C, 0x30, 0x34, 0x2A, 0x36, 0x33, 0x0D, 0x0A};	// 向风速传感器请求数据
-u8 cab_windsensor[11] = {0x24, 0x41, 0x5A, 0x2C, 0x30, 0x34, 0x2A, 0x37, 0x39, 0x0D, 0x0A};		// 风速风向校准
 u8 query[3] = {0x11, 0x22, 0x33}; 	// 用于向子节点发送，查询数据
 u8 MSrec[300];						// 用于储存主从节点来的信息，4G发送
 u8 data_str[200];				  	// 用于存储主主自身发送给服务器的数据
@@ -88,18 +87,18 @@ int main(void)
 		BATTERY_Init();
 	#endif
 
-	#if (is_4g)
+	#if is_4g
 		mqtt4g_init();
 	#endif
 
 	customRTC_Init();
 
-	#if (is_gps)
+	#if is_gps
 		GPS_Init();
 	#endif
 	Timer_Init(GPSTimeInterval); // 初始化定时器，TIM2用于读取gps时间给RTC校时, 间隔单位为秒，GPSTimeInterval*12为校时总周期
 	
-	#if (is_lora)
+	#if is_lora
 	{
 		is_lora_init = LORA_Init();
 		Timer_querydata_Init(QueryTimeInterval); // 初始化定时器，TIM5用于查询从节点数据，间隔单位为秒
@@ -107,7 +106,7 @@ int main(void)
 	}
 	#endif
 
-	#if (is_biglora)
+	#if is_biglora
 		BIGLORA_init();
 	#endif
 
@@ -119,7 +118,7 @@ int main(void)
 	// IIC_Init(); // I2C initialize
 	// SHT2X_Init();
 	// bmp280_uint();
-	delay_ms(500);
+	
 	#if (is_calibration)
 	{
 		if (is_debug) printf("calibrating windsensor...please ensure NO WIND\r\n");
@@ -128,6 +127,8 @@ int main(void)
 		delay_ms(1000);
 	}
 	#endif
+	printf("System Init OK\r\n");
+	delay_ms(500);
 
 	while (1)
 	{	
@@ -173,7 +174,7 @@ int main(void)
 		// if (is_debug) printf("humidity: %f\r\n", SHT2X_H);
 
 		// 读取电池电压
-		#if (is_battery)
+		#if is_battery
 		{
 			if (flag_battery_is_need_measure)
 			{
@@ -223,16 +224,19 @@ int main(void)
 		}
 
 		// 向风速风向传感器串口要数据
-		#if (is_wind_sensor)
-		{
-			printf("***********QEURY WINDSENSOR***********\r\n");
-			USART6_DATA(query_windsensor, 11);
-			delay_ms(3000);
-			if (USART6_RX_STA&0x8000)
+		#if is_wind_sensor
+			if (flag_wind_is_need_measure)	// 需要测量时采集风速风向数据
 			{
-				DATA_Handler(&SHT2X_T, &BMP280_P, &SHT2X_H, &wind_speed, &wind_direction);
+				printf("***********QEURY WINDSENSOR***********\r\n");
+				Wind_query();
+				flag_wind_is_need_measure = 0;
 			}
-		}
+			
+			if (check_Wind_receive())	// 检查是否接收到风速风向数据
+			{
+				Wind_analysis(&SHT2X_T, &BMP280_P, &SHT2X_H, &wind_speed, &wind_direction);
+				printf("temperature: %.2f, pressure: %.2f, humidity: %.2f, wind_speed: %.2f, wind_direction: %.2f\r\n", SHT2X_T, BMP280_P, SHT2X_H, wind_speed, wind_direction);
+			}
 		#endif
 		
 		if (is_lora && is_need_query_data)
@@ -600,63 +604,6 @@ void GPS_Handler(void)
 	//  if (is_debug) printf("Receive %d,%d, len=%d", temp_rec[0],temp_rec[1],rec_len);
 }
 
-//	数据模块处理
-void DATA_Handler(float *temp, float *pres, float *humi, float *wind_sp, float *wind_dir)
-{
-	u8 i;
-	u8 temp_rec[150];
-	u8 rec_len=0;
-	float data[5] = {0};	// 用于存储数据
-
-	if (is_debug) printf("get windsensor data!\r\n");
-	USART6_Receive_Data(temp_rec, &rec_len);
-	// puts(temp_rec);
-	if (is_debug) printf("data analyzing...\r\n");
-	get_data(temp_rec, data);
-	
-	if (is_debug) 
-	{
-	printf("windsensor query finished...\r\n");
-	for(i=0;i<5;i++)
-		printf("%f ", data[i]);
-	printf("\r\n");
-	}
-
-	*temp = data[0];
-	*pres = data[1];
-	*humi = data[2];
-	*wind_sp = data[3];
-	*wind_dir = data[4];
-}
-
-void get_data(char* data_str, float* data)
-{
-	u8 i = 0, flag = 0, j = 0, k = 0, t = 0;
-	float data_float;
-	char float_str[15];
-	char* substr;
-	substr = strstr(data_str, "\"T\"");
-	
-	for(k=0;k<5;k++)
-	{
-		while(1)
-		{	
-			if(substr[i] == ',' || substr[i] == '}') {i++;break;}
-			if(flag)
-			{
-				float_str[j] = substr[i];
-				j++;
-			}
-			if(substr[i] == ':') flag = 1;
-			i++;
-		}
-		float_str[j] = '\0';
-		flag = 0;
-		j = 0;
-		data_float = atof(float_str);
-		data[k] = data_float;
-	}
-}
 
 void BIGLORA_Handler(void)
 {
