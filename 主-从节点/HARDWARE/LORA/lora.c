@@ -13,7 +13,6 @@ SubNodeSetStruct SubNodeSet;
 u8 is_lora_init = 0;
 u8 is_need_query_data = 0;
 u8 get_data_flag = 0;
-// u8 nNode = 1;
 u8 SelfAddress[6] = {0x99, 0x99, 0x99, 0x99};
 u8 query[3] = {0x11, 0x22, 0x33}; // 用于向子节点发送，查询数据
 // u8 SubNodeAddress[120] = {

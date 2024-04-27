@@ -35,7 +35,6 @@ extern SubNodeSetStruct SubNodeSet;
 extern u8 is_lora_init;     // 是否已经初始化网络
 extern u8 is_need_query_data;   // 是否需要查询子节点数据
 extern u8 get_data_flag;
-extern u8 nNode;
 extern u8 SubNodeAddress[120];  //从节点地址集合
 extern u8 SelfAddress[6];    //自身地址
 

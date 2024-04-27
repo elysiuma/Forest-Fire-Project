@@ -36,9 +36,9 @@ void Wind_analysis(float *temp, float *pres, float *humi, float *wind_sp, float 
     get_data(temp_rec, data);
 
     printf("windsensor query finished...\r\n");
-    for (i = 0; i < 5; i++)
-        printf("%f ", data[i]);
-    printf("\r\n");
+    // for (i = 0; i < 5; i++)
+    //     printf("%f ", data[i]);
+    // printf("\r\n");
 
     *temp = data[0];
     *pres = data[1];

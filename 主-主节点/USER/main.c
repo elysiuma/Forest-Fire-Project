@@ -37,14 +37,9 @@
 #define is_biglora 					1				// 是否启动大功率lora模块
 
 uint8_t EnableMaster = 1;		  	// 主从选择 1为主机，0为从机
-u8 query[3] = {0x11, 0x22, 0x33}; 	// 用于向子节点发送，查询数据
 u8 MSrec[300];						// 用于储存主从节点来的信息，4G发送
 u8 data_str[200];				  	// 用于存储主主自身发送给服务器的数据
 
-union data{
-	float f;
-	u8 ch[4];
-} data_1;							// 用于转换数据格式： char -> float
 
 // 函数申明
 void UART4_Handler(void); 	// 处理串口4PC通信的内容
@@ -66,11 +61,8 @@ int main(void)
 	float wind_direction = 0;
 	float co_latest = 0; // 最新的CO浓度
 	u8 time[3] = {0};
-	u8 flag = 0;
 	u8 i = 0, j = 0;
 	u8 MSrec_len = 0;
-	u8 current_addr[6] = {0};
-	u8 is_query_node_success = 0;	  // 是否成功查询到节点数据
 
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2); // 设置系统中断优先级分组2
 	delay_init(168);								// 初始化延时函数
@@ -133,13 +125,6 @@ int main(void)
 	while (1)
 	{	
 		printf("***********INTO THE LOOP***********\r\n");
-		time[0] = 0; time[1] = 0; time[2] = 0;
-		flag = 0;
-		for (i = 0; i < 6; i++)
-		{
-			current_addr[i] = 0;
-		}
-		is_query_node_success = 0;
 
 		// 读取烟雾浓度
 		if (flag_mq2_is_need_measure) // 需要测量时采集MQ2数据
@@ -244,51 +229,7 @@ int main(void)
 			printf("***********QEURY LORA***********\r\n");
 			// 向从节点要数据
 			is_need_query_data = 0;
-			if (is_debug) printf("query data...\r\n");
-			for (i = 0; i < SubNodeSet.nNode; i++)
-			{
-				for (j = 0; j < 6; j++)
-					current_addr[j] = SubNodeSet.SubNode_list[i].address[(i+1) * 6 - j -1];
-				LORA_DATA_Transfer(query, 3, current_addr);
-				if (is_debug) printf("query sent...node: %d\r\n", i);
-				delay_ms(5000);
-				for (j = 0; j < query_node_data_max_times; j++)
-				{
-					if (check_LORA_Receive())
-					{
-						if (is_debug) printf("data received!\r\n");
-						LORA_Handler(); // 处理LORA通信的内容
-						is_query_node_success = 1;
-						break;
-					}
-					delay_ms(2000);
-				}
-				if (is_query_node_success)
-				{
-					continue;
-				}
-				else
-				{
-					if (is_debug) printf("query data again... node: %d\r\n", i);
-					LORA_DATA_Transfer(query, 3, current_addr);
-					if (is_debug) printf("query sent...node: %d\r\n", i);
-					delay_ms(5000);
-					for (j = 0; j < query_node_data_max_times; j++)
-					{
-						if (check_LORA_Receive())
-						{
-							if (is_debug) printf("data received!\r\n");
-							LORA_Handler(); // 处理LORA通信的内容
-							is_query_node_success = 1;
-							break;
-						}
-						delay_ms(2000);
-					}
-				}
-				if (!is_query_node_success)
-					if (is_debug) printf("query data failed... node: %d\r\n", i);
-				is_query_node_success = 0;
-			}
+			LORA_Query_All_SubNode_Data();
 		}
 
 		#if (is_4g)
