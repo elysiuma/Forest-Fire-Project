@@ -15,6 +15,7 @@ u8 is_need_query_data = 0;
 u8 get_data_flag = 0;
 // u8 nNode = 1;
 u8 SelfAddress[6] = {0x99, 0x99, 0x99, 0x99};
+u8 query[3] = {0x11, 0x22, 0x33}; // 用于向子节点发送，查询数据
 // u8 SubNodeAddress[120] = {
 //         // 0x36, 0x49, 0x01, 0x00, 0x00, 0x00,
 //         // 0x28, 0x49, 0x01, 0x00, 0x00, 0x00,
@@ -1060,3 +1061,25 @@ u8 LORA_Find_SubNode(u8 *address)
 //     else
 //         return 0;
 // }
+
+// 查询从节点数据，address为从节点地址，正向存储
+void LORA_Query_SubNode_Data(u8 *address)  
+{
+    u8 current_addr[6];     // 当前查询的从节点地址，倒过来存储
+    u8 i;
+    printf("query data from %02x%02x%02x%02x%02x%02x\r\n", address[0], address[1], address[2], address[3], address[4], address[5]);
+    for (i = 0; i < 6; i++)
+        current_addr[i] = address[5-i];		// 从节点地址要倒过来查询
+    LORA_DATA_Transfer(query, 3, current_addr);
+    printf("query sent...node: %d\r\n", i);
+}
+
+// 查询所有从节点数据
+void LORA_Query_All_SubNode_Data(void)
+{
+    u8 i;
+    for (i = 0; i < SubNodeSet.nNode; i++)
+    {
+        LORA_Query_SubNode_Data(SubNodeSet.SubNode_list[i].address);
+    }
+}

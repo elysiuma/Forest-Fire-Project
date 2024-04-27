@@ -106,7 +106,6 @@ int main(void)
 	{
 		u8 i, j;
 		u8 current_addr[6] = {0};
-		u8 query[3] = {0x11, 0x22, 0x33}; // 用于向子节点发送，查询数据
 		u8 is_query_node_success = 0;	  // 是否成功查询到节点数据
 		
 
@@ -191,59 +190,16 @@ int main(void)
 		if (is_lora && is_need_query_data)
 		// if (0)
 		{
+			printf("***********QEURY LORA***********\r\n");
 			// 向从节点要数据
 			is_need_query_data = 0;
-			printf("query data...\r\n");
-			for (i = 0; i < SubNodeSet.nNode; i++)
-			{
-				for (j = 0; j < 6; j++)
-					current_addr[j] = SubNodeSet.SubNode_list[i].address[(i+1) * 6 - j -1];		// 从节点地址要倒过来查询
-				LORA_DATA_Transfer(query, 3, current_addr);
-				printf("query sent...node: %d\r\n", i);
-				delay_ms(5000);
-				for (j = 0; j < query_node_data_max_times; j++)
-				{
-					if (check_LORA_Receive())
-					{
-						printf("data received!\r\n");
-						LORA_Handler(); // 处理LORA通信的内容
-						is_query_node_success = 1;
-						break;
-					}
-					delay_ms(2000);
-				}
-				if (is_query_node_success)
-				{
-					continue;
-				}
-				else
-				{
-					printf("query data again... node: %d\r\n", i);
-					LORA_DATA_Transfer(query, 3, current_addr);
-					printf("query sent...node: %d\r\n", i);
-					delay_ms(5000);
-					for (j = 0; j < query_node_data_max_times; j++)
-					{
-						if (check_LORA_Receive())
-						{
-							printf("data received!\r\n");
-							LORA_Handler(); // 处理LORA通信的内容
-							is_query_node_success = 1;
-							break;
-						}
-						delay_ms(2000);
-					}
-				}
-				if (!is_query_node_success)
-					printf("query data failed... node: %d\r\n", i);
-				is_query_node_success = 0;
-			}
+			LORA_Query_All_SubNode_Data();
 		}
 
 		// 收到大功率lora查询数据
 		// if(0)
-		// if (USART5_RX_STA&0x8000)	
-		if (1)
+		if (USART5_RX_STA&0x8000)	
+		// if (1)
 		{
 			len = 0;
 			USART5_Receive_Data(temp_buf, &len);	// 接收数据
@@ -257,14 +213,14 @@ int main(void)
 				printf("\r\n");
 			}
 		
-			// if (len == 6 &&  		// 6位地址
-			// 	temp_buf[0] == SelfAddress[0] &&
-			// 	temp_buf[1] == SelfAddress[1] &&
-			// 	temp_buf[2] == SelfAddress[2] &&
-			// 	temp_buf[3] == SelfAddress[3] &&
-			// 	temp_buf[4] == SelfAddress[4] &&
-			// 	temp_buf[5] == SelfAddress[5])
-			if(1)
+			if (len == 6 &&  		// 6位地址
+				temp_buf[0] == SelfAddress[0] &&
+				temp_buf[1] == SelfAddress[1] &&
+				temp_buf[2] == SelfAddress[2] &&
+				temp_buf[3] == SelfAddress[3] &&
+				temp_buf[4] == SelfAddress[4] &&
+				temp_buf[5] == SelfAddress[5])
+			// if(1)
 			{
 				// 主从节点发送自身数据
 				// 打印时间和传感器数据

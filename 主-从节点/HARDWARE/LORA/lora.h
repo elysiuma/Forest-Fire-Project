@@ -10,7 +10,7 @@
 typedef struct
 {
     u8 address[6];   //从节点地址
-    u8 SubNodeStatus;   //从节点状态    0: 未初始化 1：在线 2：需要索要数据
+    u8 SubNodeStatus;   //从节点状态
     // float wind_speed; //风速
     // float wind_direction; //风向
     float temperature;    //温度
@@ -55,6 +55,8 @@ u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len);  //接收数据解析
 u8 LORA_Network_Naming(void);   // 全网点名
 u8 LORA_Network_Start(void);    // 启动组网
 u8 LORA_Find_SubNode(u8 *address);  // 查找从节点
+void LORA_Query_SubNode_Data(u8 *address);  // 查询从节点数据, 只查询不等待解析
+void LORA_Query_All_SubNode_Data(void);  // 查询所有从节点数据
 // u8 LORA_update_device_time(void);   // 更新设备时间
 
 #endif

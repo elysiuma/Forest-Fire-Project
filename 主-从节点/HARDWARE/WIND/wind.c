@@ -77,9 +77,9 @@ void get_data(char *data_str, float *data)
         flag = 0;
         j = 0;
         data_float = atof(float_str);
-        printf("data_float: %f, float_str:", data_float);
-        puts(float_str);
-        printf("\r\n");
+        // printf("data_float: %f, float_str:", data_float);
+        // puts(float_str);
+        // printf("\r\n");
         data[k] = data_float;
     }
 }
