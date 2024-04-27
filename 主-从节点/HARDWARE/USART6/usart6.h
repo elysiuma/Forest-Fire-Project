@@ -14,5 +14,4 @@ void uart6_init(u32 bound);
 void USART6_DATA(u8 *buf,u8 len);           //发送数据
 void USART6_CMD(unsigned char *lb);         //发送指令
 void USART6_Receive_Data(u8 *buf,u8 *len);  //接受缓存
-void Usart6CommandAnalysis(void);
 #endif

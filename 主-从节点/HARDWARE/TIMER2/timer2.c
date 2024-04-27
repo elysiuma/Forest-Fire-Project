@@ -3,6 +3,7 @@
 #include "mq2.h"
 #include "mq7.h"
 #include "battery.h"
+#include "wind.h"
 
 void Timer_mq2_Init(u16 interval)
 {
@@ -15,7 +16,7 @@ void Timer_mq2_Init(u16 interval)
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=0x03;   //抢占优先级为3
     NVIC_InitStructure.NVIC_IRQChannelSubPriority=0x03;          //响应优先级为3
     TIM_TimeBaseInitStructure.TIM_Period=(interval*2000-1);     //Tout=(ARR+1)(PSC+1)/Tclk   (2999999+1)(TIM_Prescaler+1)/84M
-    TIM_TimeBaseInitStructure.TIM_Prescaler=41999;   // 84M/42000=2KHz，即0.5ms中断一次
+    TIM_TimeBaseInitStructure.TIM_Prescaler=41999;   // 84M/42000=2KHz的计数频率
     TIM_TimeBaseInitStructure.TIM_CounterMode=TIM_CounterMode_Up;   // 向上计数
     TIM_TimeBaseInitStructure.TIM_ClockDivision=TIM_CKD_DIV1;
     //使能定时器3的外设时钟
@@ -41,7 +42,7 @@ void TIM3_IRQHandler(void)
     {
         // 电源电压部分
         flag_battery_is_need_measure = 1;    // 电源电压需要测量，在main循环中执行，执行完复位0
-        
+        flag_wind_is_need_measure = 1;   // 风速风向需要测量，在main循环中执行，执行完复位0
         // MQ2和MQ7部分
 		mq2_state_count++;
         if (flag_mq2)

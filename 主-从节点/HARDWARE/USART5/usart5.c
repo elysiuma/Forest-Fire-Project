@@ -85,6 +85,7 @@ void uart5_init(u32 bound)
 	USART_InitTypeDef USART_InitStructure;
 	NVIC_InitTypeDef NVIC_InitStructure;
 	
+	
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD,ENABLE); 
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC,ENABLE); 
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART5,ENABLE);	//使能USART5时钟
@@ -136,7 +137,7 @@ void USART5_DATA(u8 *buf,u8 len)
 	{
 		USART_SendData(UART5,buf[t]); 
 	  	while(USART_GetFlagStatus(UART5,USART_FLAG_TC)!=SET);
-		//printf("SEND_DATA: %x", buf[t]);
+		// printf("SEND_DATA: %x", buf[t]);
     	    
 	}	 
 	//while(USART_GetFlagStatus(USART2,USART_FLAG_TC)==RESET);	
@@ -164,7 +165,7 @@ void USART5_Receive_Data(u8 *buf,u8 *len)
 	u8 data_len=USART5_RX_STA&0x3fff;
 	delay_ms(10);	
 	// 打印接收到的数据
-	//printf("data_len: %i, len: %i", data_len, *len);
+	// printf("data_len: %i, len: %i", data_len, *len);
 	if(data_len>0)
 	{
 		for(i=0;i<data_len;i++)

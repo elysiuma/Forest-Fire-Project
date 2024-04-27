@@ -10,7 +10,7 @@
 typedef struct
 {
     u8 address[6];   //从节点地址
-    u8 SubNodeStatus;   //从节点状态
+    u8 SubNodeStatus;   //从节点状态    0: 未初始化 1：在线 2：需要索要数据
     // float wind_speed; //风速
     // float wind_direction; //风向
     float temperature;    //温度
