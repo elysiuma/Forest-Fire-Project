@@ -68,8 +68,11 @@ int main(void)
 	delay_init(168);								// 初始化延时函数
 	uart4_init(9600);								// 初始化串口波特率为9600
 	printf("***********Init***********\r\n");
-	uart6_init(9600);								// 初始化串口波特率为9600，传感器
 	LED_Init();										// 初始化LED
+	#if is_wind_sensor
+		Wind_Init();								// 初始化风速风向传感器
+	#endif
+	
 
 	MQ2_Init();
 	MQ7_Init();
@@ -111,7 +114,7 @@ int main(void)
 	// SHT2X_Init();
 	// bmp280_uint();
 	
-	#if (is_calibration)
+	#if is_calibration
 	{
 		if (is_debug) printf("calibrating windsensor...please ensure NO WIND\r\n");
 		USART6_DATA(cab_windsensor, 11);
@@ -256,7 +259,7 @@ int main(void)
 			BIGLORA_Handler(); // 处理大功率LORA模块通信的内容
 		}
 
-		printf("***********OUT THE LOOP***********\r\n");
+		printf("***********OUT THE LOOP***********\r\n\r\n");
 		delay_ms(1000);
 		DebugLed(); // LED闪烁说明程序正常运行
 	}

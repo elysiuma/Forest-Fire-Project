@@ -16,6 +16,7 @@
 #include "rtc.h"
 #include "tool.h"
 #include "wind.h"
+#include "biglora.h"
 // #include "mqtt4g.h"
 // #include "i2c.h"
 // #include "bmp280.h"
@@ -32,12 +33,23 @@
 #define is_battery					1				// 是否启动电池电压检测
 #define is_wind_sensor				1				// 是否启动风速风向传感器
 #define is_calibration				0				// 是否启动风速风向校准 1为校准，0为不校准
+#define is_biglora 					1				// 是否启动大功率lora模块
 
 uint8_t EnableMaster = 1;		  // 主从选择 1为主机，0为从机
 
 u8 data_str[300];				  // 用于存储发送给服务器的单条数据
 u8 temp_buf[20];
 static u8 all_data_str[3000] = {0};			  // 用于存储发送给服务器的所有数据(按最大10个节点算)
+float co2 = 0; // 烟雾浓度
+float co_latest = 0; // 最新的CO浓度
+float BMP280_P = 100000;
+float BMP280_T = 25.00;
+float SHT2X_T = 25.00; // temperature of SHT2X
+float SHT2X_H = 40.00; // humidity of SHT2X
+float battery = 0;	   // 电源电压
+float wind_speed = 0;
+float wind_direction = 0;
+u8 time[3] = {0};
 
 // u8 is_4g = 0;					  // 是否启动4G模块,需要先启动lora和gps
 
@@ -50,32 +62,24 @@ union data{
 void UART4_Handler(void); // 处理串口4PC通信的内容
 void LORA_Handler(void);  // 处理LORA通信的内容
 void GPS_Handler(void);	  // 处理GPS通信的内容
+void BigLORA_Handler(void); // 处理大功率LORA通信的内容
 
 
 int main(void)
 {
-	float co2 = 0; // 烟雾浓度
-	float co_latest = 0; // 最新的CO浓度
-	float BMP280_P = 100000;
-	float BMP280_T = 25.00;
-	float SHT2X_T = 25.00; // temperature of SHT2X
-	float SHT2X_H = 40.00; // humidity of SHT2X
-	float battery = 0;	   // 电源电压
-	float wind_speed = 0;
-	float wind_direction = 0;
-	u8 time[3] = {0};
 	u8 flag = 0;
 	u8 len = 0;
 	u8 i, j;
 	
-
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2); // 设置系统中断优先级分组2
 	delay_init(168);								// 初始化延时函数
 	uart4_init(9600);								// 初始化串口波特率为9600
 	printf("***********Init***********\r\n");
-	uart5_init(9600);								// 初始化串口波特率为9600
-	if(is_wind_sensor) Wind_Init();								// 初始化串口波特率为9600
 	LED_Init();										// 初始化LED
+	#if is_wind_sensor
+		Wind_Init();								// 初始化风速风向传感器
+	#endif
+	
 
 	MQ2_Init();
 	MQ7_Init();
@@ -99,6 +103,10 @@ int main(void)
 	}
 	#endif
 
+	#if is_biglora
+		BIGLORA_init();
+	#endif
+
 	LED = 1;
 	MQ2 = 1;
 	MQ7 = 1;
@@ -108,7 +116,7 @@ int main(void)
 	// SHT2X_Init();
 	// bmp280_uint();
 	
-	#if (is_calibration)
+	#if is_calibration
 		if (is_debug) printf("calibrating windsensor...please ensure NO WIND\r\n");
 		Wind_calibration();
 		if (is_debug) printf("calibration DONE\r\n");
@@ -219,51 +227,16 @@ int main(void)
 			LORA_Query_All_SubNode_Data();
 		}
 
-		// 收到大功率lora查询数据
-		// if(0)
-		if (USART5_RX_STA&0x8000)	
-		// if (1)
-		{
-			len = 0;
-			USART5_Receive_Data(temp_buf, &len);	// 接收数据
-			if(len>0)
+		#if is_biglora
+			// 收到大功率lora查询数据
+			if (check_BIGLORA_Receive())	
+			// if (1)
 			{
-				printf("received data from big lora: ");
-				for (i = 0; i < len; i++)
-				{
-					printf("%02x ", temp_buf[i]);
-				}
-				printf("\r\n");
+				printf("***********BIGLORA HANDLING***********\r\n");
+				BigLORA_Handler();
 			}
-		
-			if (len == 6 &&  		// 6位地址
-				temp_buf[0] == SelfAddress[0] &&
-				temp_buf[1] == SelfAddress[1] &&
-				temp_buf[2] == SelfAddress[2] &&
-				temp_buf[3] == SelfAddress[3] &&
-				temp_buf[4] == SelfAddress[4] &&
-				temp_buf[5] == SelfAddress[5])
-			// if(1)
-			{
-				// 主从节点发送自身数据
-				// 打印时间和传感器数据
-				// 清空all_data_str
-				memset(all_data_str, 0, sizeof(all_data_str));
-				RTC_Get_Time(time);
-				sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %.2f\r\npressure: %.2f\r\nhumidity: %.2f\r\nwind_speed: %.2f\r\n"
-								"wind_direction: %.2f\r\nsmoke: %.2f\r\nco: %.2f\r\nbattery: %.2f\r\nisTimeTrue: %d\r\n[SEP]",SelfAddress[0], SelfAddress[1], SelfAddress[2], SelfAddress[3], SelfAddress[4], SelfAddress[5],
-						time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H,wind_speed, wind_direction, co2,co_latest, battery, RTC_check_device_time());
-				strcat(all_data_str, data_str);
-				LORA_Get_All_SubNode_Data(all_data_str);	// 获取所有从节点数据
-				printf("all data: \r\n");
-				puts(all_data_str);
-				printf("sending all node data to MMNode..., len=%d\r\n", strlen(all_data_str));
-				USART5_DATA("data_str", strlen(data_str));	// 发送给MMNode
-				// mqtt4g_send(data_str, strlen(data_str));
-				printf("all node data sent...\r\n");
-			}
-		}
-
+		#endif
+		printf("***********OUT THE LOOP***********\r\n\r\n");
 		delay_ms(1000);
 		DebugLed(); // LED闪烁说明程序正常运行
 	}
@@ -546,3 +519,40 @@ void GPS_Handler(void)
 	//  printf("Receive %d,%d, len=%d", temp_rec[0],temp_rec[1],rec_len);
 }
 
+// 大功率LORA模块通信处理
+void BigLORA_Handler(void)
+{
+	u8 len = 0;
+	u8 i;
+	BIGLORA_Receive(temp_buf, &len);	// 接收数据
+	if(len>0)
+	{
+		printf("received data from big lora: ");
+		for (i = 0; i < len; i++)
+		{
+			printf("%02x ", temp_buf[i]);
+		}
+		printf("\r\n");
+	}
+
+	if (check_addr(temp_buf, len, SelfAddress))	// temp_buf可能会包含多组地址
+	// if(1)
+	{
+		// 主从节点发送自身数据
+		// 打印时间和传感器数据
+		// 清空all_data_str
+		memset(all_data_str, 0, sizeof(all_data_str));
+		RTC_Get_Time(time);
+		sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %.2f\r\npressure: %.2f\r\nhumidity: %.2f\r\nwind_speed: %.2f\r\n"
+						"wind_direction: %.2f\r\nsmoke: %.2f\r\nco: %.2f\r\nbattery: %.2f\r\nisTimeTrue: %d\r\n[SEP]",SelfAddress[0], SelfAddress[1], SelfAddress[2], SelfAddress[3], SelfAddress[4], SelfAddress[5],
+				time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H,wind_speed, wind_direction, co2,co_latest, battery, RTC_check_device_time());
+		strcat(all_data_str, data_str);
+		LORA_Get_All_SubNode_Data(all_data_str);	// 获取所有从节点数据
+		printf("all data: \r\n");
+		puts(all_data_str);
+		printf("sending all node data to MMNode..., len=%d\r\n", strlen(all_data_str));
+		BIGLORA_Send("data_str", strlen(data_str));	// 发送给MMNode
+		// mqtt4g_send(data_str, strlen(data_str));
+		printf("all node data sent...\r\n");
+	}
+}
