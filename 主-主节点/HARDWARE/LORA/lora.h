@@ -57,6 +57,7 @@ u8 LORA_Network_Start(void);    // 启动组网
 u8 LORA_Find_SubNode(u8 *address);  // 查找从节点
 void LORA_Query_SubNode_Data(u8 *address);  // 查询从节点数据, 只查询不等待解析
 void LORA_Query_All_SubNode_Data(void);  // 查询所有从节点数据
+void LORA_Get_All_SubNode_Data(u8 *_all_data_str);  // 获取所有从节点数据
 // u8 LORA_update_device_time(void);   // 更新设备时间
 
 #endif

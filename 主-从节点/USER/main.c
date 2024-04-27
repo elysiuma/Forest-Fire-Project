@@ -51,6 +51,7 @@ void UART4_Handler(void); // 处理串口4PC通信的内容
 void LORA_Handler(void);  // 处理LORA通信的内容
 void GPS_Handler(void);	  // 处理GPS通信的内容
 
+
 int main(void)
 {
 	float co2 = 0; // 烟雾浓度
@@ -253,18 +254,7 @@ int main(void)
 								"wind_direction: %.2f\r\nsmoke: %.2f\r\nco: %.2f\r\nbattery: %.2f\r\nisTimeTrue: %d\r\n[SEP]",SelfAddress[0], SelfAddress[1], SelfAddress[2], SelfAddress[3], SelfAddress[4], SelfAddress[5],
 						time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H,wind_speed, wind_direction, co2,co_latest, battery, RTC_check_device_time());
 				strcat(all_data_str, data_str);
-				for (i = 0; i < SubNodeSet.nNode; i++) 
-				{
-					SubNode current_node = SubNodeSet.SubNode_list[i];
-					// 生成当前子节点的数据字符串
-					sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %.2f\r\npressure: %.2f\r\nhumidity: %.2f\r\n"
-							"smoke: %.2f\r\nco: %.2f\r\nbattery: %.2f\r\nisTimeTrue: %d\r\n[SEP]",
-							current_node.address[0], current_node.address[1], current_node.address[2], current_node.address[3], current_node.address[4], current_node.address[5],
-							current_node.sample_time[0], current_node.sample_time[1], current_node.sample_time[2], current_node.temperature, current_node.pressure, current_node.humidity,
-							current_node.smoke, current_node.co, current_node.battery, RTC_check_specified_time(current_node.last_gps));
-					// 将当前子节点的数据字符串拼接到all_data_str中
-					strcat(all_data_str, data_str);
-				}
+				LORA_Get_All_SubNode_Data(all_data_str);	// 获取所有从节点数据
 				printf("all data: \r\n");
 				puts(all_data_str);
 				printf("sending all node data to MMNode..., len=%d\r\n", strlen(all_data_str));
@@ -555,3 +545,4 @@ void GPS_Handler(void)
 	// printf("\r\n");//插入换行
 	//  printf("Receive %d,%d, len=%d", temp_rec[0],temp_rec[1],rec_len);
 }
+

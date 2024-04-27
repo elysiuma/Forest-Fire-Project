@@ -232,8 +232,7 @@ int main(void)
 			LORA_Query_All_SubNode_Data();
 		}
 
-		#if (is_4g)
-		{
+		#if is_4g
 			printf("***********4G SENDING SELF DATA***********\r\n");
 			// 主节点发送自身数据
 			// 打印时间和传感器数据
@@ -244,14 +243,11 @@ int main(void)
 			if (is_debug) printf("sending main node data to server...\r\n");
 			mqtt4g_send(data_str, strlen(data_str));
 			if (is_debug) printf("data sent...\r\n");
-		}
 		#endif
 
-		#if (is_biglora)
-		{
+		#if is_biglora
 			printf("***********QEURY BIGLORA***********\r\n");
 			BIGLORA_send_query();
-		}
 		#endif
 
 		if (is_biglora && check_BIGLORA_Receive())

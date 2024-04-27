@@ -13,4 +13,5 @@ void RTC_Set_Date(u8 year,u8 month,u8 date,u8 week);
 void RTC_Get_Time(u8* time);
 u8 RTC_update_device_time(void);
 u8 RTC_check_device_time(void);
+u8 RTC_check_specified_time(u16 last_gps);
 #endif

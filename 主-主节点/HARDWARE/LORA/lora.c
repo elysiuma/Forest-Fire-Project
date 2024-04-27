@@ -1083,3 +1083,23 @@ void LORA_Query_All_SubNode_Data(void)
         LORA_Query_SubNode_Data(SubNodeSet.SubNode_list[i].address);
     }
 }
+
+// 获取所有从节点数据
+void LORA_Get_All_SubNode_Data(u8 *_all_data_str)
+{
+    u8 i;
+    u8 temp_data_str[300];
+    for (i = 0; i < SubNodeSet.nNode; i++) 
+	{
+		SubNode current_node = SubNodeSet.SubNode_list[i];
+		// 生成当前子节点的数据字符串
+		sprintf(temp_data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %.2f\r\npressure: %.2f\r\nhumidity: %.2f\r\n"
+				"smoke: %.2f\r\nco: %.2f\r\nbattery: %.2f\r\nisTimeTrue: %d\r\n[SEP]",
+				current_node.address[0], current_node.address[1], current_node.address[2], current_node.address[3], current_node.address[4], current_node.address[5],
+				current_node.sample_time[0], current_node.sample_time[1], current_node.sample_time[2], current_node.temperature, current_node.pressure, current_node.humidity,
+				current_node.smoke, current_node.co, current_node.battery, RTC_check_specified_time(current_node.last_gps));
+		// 将当前子节点的数据字符串拼接到all_data_str中
+		strcat(_all_data_str, temp_data_str);
+	}
+
+}

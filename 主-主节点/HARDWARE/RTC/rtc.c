@@ -132,3 +132,11 @@ u8 RTC_check_device_time(void)
     else
         return 1;
 }
+
+// 检测指定的last_gps时间是否已经过期
+u8 RTC_check_specified_time(u16 last_gps){
+    if(last_gps == 999)
+        return 0;
+    else
+        return 1;
+}
