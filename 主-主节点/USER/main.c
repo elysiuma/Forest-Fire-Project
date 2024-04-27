@@ -195,7 +195,7 @@ int main(void)
 		// is_need_update_time =1;	// 调试用，每次都更新时间
 		if (is_gps && is_need_update_time)
 		{
-			printf("***********GPS***********\r\n");
+			printf("***********UPDATE TIME***********\r\n");
 			// 更新RTC时间需要GPS，在GPS未启动的时候不进行时间更新
 			RTC_update_device_time();
 			is_need_update_time = 0;

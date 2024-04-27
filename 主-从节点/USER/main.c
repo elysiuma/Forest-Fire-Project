@@ -118,9 +118,11 @@ int main(void)
 
 	while (1)
 	{
+		printf("***********INTO THE LOOP***********\r\n");
 		// 读取烟雾浓度最近10次平均数据
 		if (flag_mq2_is_need_measure) // 需要测量时采集MQ2数据
 		{
+			printf("***********SMOKE***********\r\n");
 			printf("MQ2_Scan state=%d\r\n", mq2_state_count);
 			co2 = MQ2_Scan();
 			co_latest = MQ7_Scan();
@@ -168,6 +170,7 @@ int main(void)
 		// is_need_update_time =1;	// 调试用，每次都更新时间
 		if (is_gps && is_need_update_time)
 		{
+			printf("***********UPDATE TIME***********\r\n");
 			// 更新RTC时间需要GPS，在GPS未启动的时候不进行时间更新
 			RTC_update_device_time();
 			is_need_update_time = 0;
@@ -177,7 +180,10 @@ int main(void)
 			UART4_Handler(); // 处理串口4PC通信的内容
 
 		if (is_lora && check_LORA_Receive())
+		{
+			printf("***********LORA HANDLING***********\r\n");
 			LORA_Handler(); // 处理LORA通信的内容
+		}
 
 		#if is_gps
 			if (check_GPS_Receive())
