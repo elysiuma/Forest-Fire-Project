@@ -39,13 +39,13 @@
 uint8_t EnableMaster = 1;		  	// 主从选择 1为主机，0为从机
 u8 MSrec[300];						// 用于储存主从节点来的信息，4G发送
 u8 data_str[200];				  	// 用于存储主主自身发送给服务器的数据
+static u8 all_data_str[3000] = {0};	// 用于存储发送给服务器的所有数据(按最大10个节点算)
 
 
 // 函数申明
 void UART4_Handler(void); 	// 处理串口4PC通信的内容
 void LORA_Handler(void);  	// 处理LORA通信的内容
 void GPS_Handler(void);	  	// 处理GPS通信的内容
-void DATA_Handler(float *temp, float *pres, float *humi, float *wind_sp, float *wind_dir);	// 用于解析数据
 void get_data(char*, float*);		// 用于解析数据
 void BIGLORA_Handler(void);	//处理大功率LORA通信的内容
 
@@ -236,22 +236,38 @@ int main(void)
 		}
 
 		#if is_4g
-			printf("***********4G SENDING SELF DATA***********\r\n");
+			printf("***********4G SENDING ALL DATA***********\r\n");
 			// 主节点发送自身数据
 			// 打印时间和传感器数据
+			memset(all_data_str, 0, sizeof(all_data_str));
 			RTC_Get_Time(time);
-			sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x;time: %02d:%02d:%02d;temperature: %.2f;pressure: %.2f;humidity: %.2f;wind_speed: %.2f;wind_direction: %.2f;smoke: %.2f;battery: %.2f%%;isTimeTrue: %d;\r\n",
-					SelfAddress[0], SelfAddress[1], SelfAddress[2], SelfAddress[3], SelfAddress[4], SelfAddress[5], time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H, wind_speed, wind_direction, co2, battery, RTC_check_device_time());
-			if (is_debug) {puts(data_str);printf("\r\n");}
+			sprintf(data_str,	"%02x%02x%02x%02x%02x%02x;"		// 主节点地址
+								"%02d:%02d:%02d;"				// 时间
+								"%.2f;"							// 温度
+								"%.2f;"							// 气压
+								"%.2f;"							// 湿度				
+								"%.2f;"							// 风速
+								"%.2f;"							// 风向
+								"%.2f;"							// CO2浓度
+								"%.2f;"							// CO浓度
+								"%.2f;"							// 电池电压
+								"%d;",						// RTC校时状态
+								SelfAddress[0], SelfAddress[1], SelfAddress[2], SelfAddress[3], SelfAddress[4], SelfAddress[5],
+				time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H,wind_speed, wind_direction, co2,co_latest, battery, RTC_check_device_time());
+			strcat(all_data_str, data_str);
+			LORA_Get_All_SubNode_Data(all_data_str);	// 获取所有从节点数据
+			printf("all data: \r\n");
+			puts(all_data_str);printf("\r\n");
 			if (is_debug) printf("sending main node data to server...\r\n");
 			mqtt4g_send(data_str, strlen(data_str));
 			if (is_debug) printf("data sent...\r\n");
 		#endif
 
-		#if is_biglora
-			printf("***********QEURY BIGLORA***********\r\n");
-			BIGLORA_send_query();
-		#endif
+		if (is_biglora && is_need_query_data)
+			{
+				printf("***********QEURY BIGLORA***********\r\n");
+				BIGLORA_send_query();
+			}
 
 		if (is_biglora && check_BIGLORA_Receive())
 		{

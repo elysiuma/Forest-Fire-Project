@@ -833,10 +833,19 @@ u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len)
 	battery_f = u8_to_float(data + 20);
 	isTime = RTC_check_device_time();
     // 打印时间和传感器数据
-	sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x;time: %02d:%02d:%02d;temperature: %f;pressure: %f;humidity: %f;"
-            "smoke: %f;co: %f;battery: %f;isTimeTrue: %d;\r\n",
-           address[0], address[1], address[2], address[3], address[4], address[5], time[0], time[1], time[2], temperature_f, pressure_f, humidity_f, 
-           smoke_f,co_f, battery_f, isTime);
+	sprintf(data_str,   "%02x%02x%02x%02x%02x%02x;"		// 主节点地址
+                        "%02d:%02d:%02d;"				// 时间
+                        "%.2f;"							// 温度
+                        "%.2f;"							// 气压
+                        "%.2f;"							// 湿度				
+                        "%.2f;"							// 风速
+                        "%.2f;"							// 风向
+                        "%.2f;"							// CO2浓度
+                        "%.2f;"							// CO浓度
+                        "%.2f;"							// 电池电压
+                        "%d\r\n",						// RTC校时状态
+                        SelfAddress[0], SelfAddress[1], SelfAddress[2], SelfAddress[3], SelfAddress[4], SelfAddress[5],
+				time[0], time[1], time[2], temperature_f, pressure_f, humidity_f, smoke_f, co_f, battery_f, isTime);
 	puts(data_str);
 	printf("data_str len:%d\r\n", strlen(data_str));
 	printf("sending data to server...\r\n");
@@ -1101,12 +1110,12 @@ void LORA_Get_All_SubNode_Data(u8 *_all_data_str)
 							    "%.2f;"							// CO2浓度
 							    "%.2f;"							// CO浓度
 							    "%.2f;"							// 电池电压
-							    "%d\r\n",						// RTC校时状态
+							    "%d;",						// RTC校时状态
                             current_node.address[0], current_node.address[1], current_node.address[2], current_node.address[3], current_node.address[4], current_node.address[5],
                             current_node.sample_time[0], current_node.sample_time[1], current_node.sample_time[2], current_node.temperature, current_node.pressure, current_node.humidity,
                             current_node.smoke, current_node.co, current_node.battery, RTC_check_specified_time(current_node.last_gps));
 		// 将当前子节点的数据字符串拼接到all_data_str中
 		strcat(_all_data_str, temp_data_str);
 	}
-
+    strcat(_all_data_str, "\r\n");
 }
