@@ -240,7 +240,7 @@ int main(void)
 			// 主节点发送自身数据
 			// 打印时间和传感器数据
 			RTC_Get_Time(time);
-			sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %.2f\r\npressure: %.2f\r\nhumidity: %.2f\r\nwind_speed: %.2f\r\nwind_direction: %.2f\r\nsmoke: %.2f\r\nbattery: %.2f%%\r\nisTimeTrue: %d\r\n",
+			sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x;time: %02d:%02d:%02d;temperature: %.2f;pressure: %.2f;humidity: %.2f;wind_speed: %.2f;wind_direction: %.2f;smoke: %.2f;battery: %.2f%%;isTimeTrue: %d;\r\n",
 					SelfAddress[0], SelfAddress[1], SelfAddress[2], SelfAddress[3], SelfAddress[4], SelfAddress[5], time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H, wind_speed, wind_direction, co2, battery, RTC_check_device_time());
 			if (is_debug) {puts(data_str);printf("\r\n");}
 			if (is_debug) printf("sending main node data to server...\r\n");

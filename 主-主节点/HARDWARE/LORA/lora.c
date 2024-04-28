@@ -833,8 +833,8 @@ u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len)
 	battery_f = u8_to_float(data + 20);
 	isTime = RTC_check_device_time();
     // 打印时间和传感器数据
-	sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %f\r\npressure: %f\r\nhumidity: %f\r\n"
-            "smoke: %f\r\nco: %f\r\nbattery: %f\r\nisTimeTrue: %d\r\n",
+	sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x;time: %02d:%02d:%02d;temperature: %f;pressure: %f;humidity: %f;"
+            "smoke: %f;co: %f;battery: %f;isTimeTrue: %d;\r\n",
            address[0], address[1], address[2], address[3], address[4], address[5], time[0], time[1], time[2], temperature_f, pressure_f, humidity_f, 
            smoke_f,co_f, battery_f, isTime);
 	puts(data_str);

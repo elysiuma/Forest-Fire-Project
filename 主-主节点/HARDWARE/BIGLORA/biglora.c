@@ -4,7 +4,7 @@
 #include "string.h"
 #define nMSnode 1
 
-u8 cur_addr[6] = {0};
+u8 cur_addr[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0d, 0x0a};
 u8 MSNodeAddress[120] = {
         // 0x36, 0x49, 0x01, 0x00, 0x00, 0x00,
         // 0x28, 0x49, 0x01, 0x00, 0x00, 0x00,
@@ -21,7 +21,7 @@ void BIGLORA_send_query(void)
         {
             for (j = 0; j < 6; j++)
                 cur_addr[j] = MSNodeAddress[i * 6 + j];
-            USART5_DATA(cur_addr, 6);
+            USART5_DATA(cur_addr, 8);
             printf("query sent...node: %d\r\n", i);
         }
 }
