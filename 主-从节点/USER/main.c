@@ -39,7 +39,7 @@ uint8_t EnableMaster = 1;		  // 主从选择 1为主机，0为从机
 
 u8 data_str[300];				  // 用于存储发送给服务器的单条数据
 u8 temp_buf[20];
-static u8 all_data_str[3000] = {0};			  // 用于存储发送给服务器的所有数据(按最大10个节点算)
+// static u8 all_data_str[3000] = {0};			  // 用于存储发送给服务器的所有数据(按最大10个节点算)
 float co2 = 0; // 烟雾浓度
 float co_latest = 0; // 最新的CO浓度
 float BMP280_P = 100000;
@@ -524,6 +524,9 @@ void BigLORA_Handler(void)
 {
 	u8 len = 0;
 	u8 i;
+	u8 SEP_STR[] = "[SEP]";
+	u8 END_STR[] = {0x0d, 0x0a};
+	u8 flag = 0;
 	BIGLORA_Receive(temp_buf, &len);	// 接收数据
 	if(len>0)
 	{
@@ -540,8 +543,6 @@ void BigLORA_Handler(void)
 	{
 		// 主从节点发送自身数据
 		// 打印时间和传感器数据
-		// 清空all_data_str
-		memset(all_data_str, 0, sizeof(all_data_str));
 		RTC_Get_Time(time);
 		sprintf(data_str,   "%02x%02x%02x%02x%02x%02x;"		// 主节点地址
 							"%02d:%02d:%02d;"				// 时间
@@ -552,19 +553,37 @@ void BigLORA_Handler(void)
 							"%.2f;"							// 风向
 							"%.2f;"							// CO2浓度
 							"%.2f;"							// CO浓度
+							"%c%.0f*%.5f':%c%.0f*%.5f"		// 纬度，经度
 							"%.2f;"							// 电池电压
-							"%d\r\n",						// RTC校时状态
+							"%d",							// RTC校时状态
 							SelfAddress[0], SelfAddress[1], SelfAddress[2], SelfAddress[3], SelfAddress[4], SelfAddress[5],
-				time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H, wind_speed, wind_direction, co2,co_latest, battery, RTC_check_device_time());
-		strcat(all_data_str, data_str);
-		LORA_Get_All_SubNode_Data(all_data_str);	// 获取所有从节点数据
-		printf("all data: \r\n");
-		puts(data_str);
-		printf("sending all node data to MMNode..., len=%d\r\n", strlen(data_str));
+				time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H,wind_speed, wind_direction, co2,co_latest,
+				node_lati_longi_str[0], node_position[0], node_position[1], 
+                node_lati_longi_str[1], node_position[2], node_position[3],
+				battery, RTC_check_device_time());
+		strcat(data_str, SEP_STR);		// 添加分隔符
 		BIGLORA_Send(data_str, strlen(data_str));	// 发送给MMNode
-		// BIGLORA_Send("TEST\r\n", 6);	// 发送给MMNode
-		// BIGLORA_Send(test_data, strlen(test_data));
-		// mqtt4g_send(data_str, strlen(data_str));
+		puts(data_str);
+		printf("data sent to MMNode..., len=%d\r\n", strlen(data_str));
+		// 依次发送从节点数据， 避免数据过长大功率lora发送失败（不超过100个u8）
+		for (i=0;i<SubNodeSet.nNode;i++)
+		{
+			// if (SubNodeSet.Node[i].isOnline)
+			// {
+			// 获取从节点数据
+			flag = LORA_Get_SubNode_Data_idx(i, data_str);
+			if (flag == 0)
+			{
+				printf("get %d node data fail\r\n", i);
+				continue;
+			}
+			strcat(data_str, SEP_STR);		// 添加分隔符
+			BIGLORA_Send(data_str, strlen(data_str));	// 发送idx从节点数据给MMNode
+			puts(data_str);
+			printf("sending %d node data to MMNode..., len=%d\r\n", i, strlen(data_str));
+			// }
+		}
+		BIGLORA_Send(END_STR, 2);	// 发送结束符
 		printf("all node data sent...\r\n");
 	}
 }
