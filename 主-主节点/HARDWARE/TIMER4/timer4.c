@@ -5,6 +5,7 @@
 
 void update_SNode_query_idx(void);
 void update_MSNode_query_idx(void);
+static u8 _count_interrupt = 0;     // 计数中断次数,每24次中断更新一次主从节点查询
 
 void Timer_QueryDelay_Init(u16 interval)
 {
@@ -43,8 +44,14 @@ void TIM4_IRQHandler(void)   // Change the function name to TIM4_IRQHandler
         if (is_need_query_data) // 需要查询子节点数据
             update_SNode_query_idx();   // Update the query index of the subnode
         if (is_need_query_MSnode)   // 需要查询主从节点数据
-            update_MSNode_query_idx();   // Update the query index of the MSnode
-
+        {
+            if (_count_interrupt++ == 24)   // 每24次中断更新一次主从节点查询
+            {
+                _count_interrupt = 0;
+                update_MSNode_query_idx();   // Update the query index of the MSnode
+            }
+        }
+        
         TIM_ClearITPendingBit(TIM4, TIM_IT_Update);
     }
 }
