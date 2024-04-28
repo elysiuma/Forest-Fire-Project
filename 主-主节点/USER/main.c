@@ -13,6 +13,7 @@
 #include "timer.h"
 #include "timer2.h"
 #include "timer3.h"
+#include "timer4.h"
 #include "rtc.h"
 #include "mqtt4g.h"
 #include "biglora.h"
@@ -25,7 +26,8 @@
 
 #define MQ2PreheatInterval			20 				// MQ2预热时间间隔，单位为秒  至少为20秒 （传感器采集数据共用这个）
 #define GPSTimeInterval 			120				// GPS时间校时间隔，单位为秒  测试时2分钟一次，正式为5分钟一次
-#define QueryTimeInterval			120				// 查询从节点数据时间间隔，单位为秒 测试时为5分钟，正式为30分钟
+#define QueryTimeInterval			180				// 查询从节点数据时间间隔，单位为秒 测试时为5分钟，正式为30分钟
+#define QueryDelayTime				5				// 查询从节点数据延时时间，单位为秒,大功率时为QueryDelayTime*24
 #define is_debug					1				// 是否调试模式，1为调试模式，0为正常模式
 #define query_node_data_max_times	5 				// 查询节点数据最大次数
 #define is_lora						1				// 是否启动lora模块
@@ -60,6 +62,8 @@ int main(void)
 	float wind_speed = 0;
 	float wind_direction = 0;
 	float co_latest = 0; // 最新的CO浓度
+	u8 SEP_STR[] = "[SEP]";
+	u8 END_STR[] = {0x0d, 0x0a};
 	u8 time[3] = {0};
 	u8 i = 0, j = 0;
 	u8 MSrec_len = 0;
@@ -96,7 +100,7 @@ int main(void)
 	#if is_lora
 	{
 		is_lora_init = LORA_Init();
-		Timer_querydata_Init(QueryTimeInterval); // 初始化定时器，TIM5用于查询从节点数据，间隔单位为秒
+		
 		if (is_debug) printf("LORA Init OK\r\n");
 	}
 	#endif
@@ -104,6 +108,9 @@ int main(void)
 	#if is_biglora
 		BIGLORA_init();
 	#endif
+
+	Timer_querydata_Init(QueryTimeInterval); // 初始化定时器，TIM5用于查询从节点数据，间隔单位为秒
+	Timer_QueryDelay_Init(QueryDelayTime);	// 初始化定时器，TIM4用于查询从节点数据的延时，间隔单位为秒
 
 	LED = 1;
 	MQ2 = 1;
@@ -231,8 +238,16 @@ int main(void)
 		{
 			printf("***********QEURY LORA***********\r\n");
 			// 向从节点要数据
-			is_need_query_data = 0;
-			LORA_Query_All_SubNode_Data();
+			if (current_query_node_idx < SubNodeSet.nNode)
+			{
+				if (SubNodeSet.SubNode_list[current_query_node_idx].SubNodeStatus != 2 && SubNodeSet.SubNode_list[current_query_node_idx].SubNodeStatus != 3)		// 当前子节点已发送查询命令或已接收数据时不再发送查询命令
+				{
+					LORA_Query_SubNode_Data(SubNodeSet.SubNode_list[current_query_node_idx].address);
+					SubNodeSet.SubNode_list[current_query_node_idx].SubNodeStatus = 2;
+					if (SubNodeSet.SubNode_list[current_query_node_idx].fail_count > 0)
+						printf("Query Node %02x%02x%02x%02x%02x%02x Fail %d Times\r\n", SubNodeSet.SubNode_list[current_query_node_idx].address[0], SubNodeSet.SubNode_list[current_query_node_idx].address[1], SubNodeSet.SubNode_list[current_query_node_idx].address[2], SubNodeSet.SubNode_list[current_query_node_idx].address[3], SubNodeSet.SubNode_list[current_query_node_idx].address[4], SubNodeSet.SubNode_list[current_query_node_idx].address[5], SubNodeSet.SubNode_list[current_query_node_idx].fail_count);
+				}
+			}
 		}
 
 		#if is_4g
@@ -250,11 +265,16 @@ int main(void)
 								"%.2f;"							// 风向
 								"%.2f;"							// CO2浓度
 								"%.2f;"							// CO浓度
+								"%c%.0f*%.5f':%c%.0f*%.5f"		// 纬度，经度
 								"%.2f;"							// 电池电压
 								"%d;",						// RTC校时状态
 								SelfAddress[0], SelfAddress[1], SelfAddress[2], SelfAddress[3], SelfAddress[4], SelfAddress[5],
-				time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H,wind_speed, wind_direction, co2,co_latest, battery, RTC_check_device_time());
+				time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H,wind_speed, wind_direction, co2,co_latest,
+				node_lati_longi_str[0], node_position[0], node_position[1], 
+                node_lati_longi_str[1], node_position[2], node_position[3],
+				battery, RTC_check_device_time());
 			strcat(all_data_str, data_str);
+			strcat(all_data_str, SEP_STR);
 			LORA_Get_All_SubNode_Data(all_data_str);	// 获取所有从节点数据
 			printf("all data: \r\n");
 			puts(all_data_str);printf("\r\n");

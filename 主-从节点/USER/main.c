@@ -33,7 +33,7 @@
 #define is_lora						1				// 是否启动lora模块
 #define is_gps						1				// 是否启动GPS模块
 #define is_battery					1				// 是否启动电池电压检测
-#define is_wind_sensor				0				// 是否启动风速风向传感器 1为启动，0为启动I2C读取模式
+#define is_wind_sensor				1				// 是否启动风速风向传感器 1为启动，0为启动I2C读取模式
 #define is_calibration				0				// 是否启动风速风向校准 1为校准，0为不校准
 #define is_biglora 					1				// 是否启动大功率lora模块
 
@@ -53,13 +53,6 @@ float wind_speed = -1;
 float wind_direction = -1;
 u8 time[3] = {0};
 
-
-// u8 is_4g = 0;					  // 是否启动4G模块,需要先启动lora和gps
-
-union data{
-	float f;
-	u8 ch[4];
-} data_1;							// 用于转换数据格式： char -> float
 
 // 函数申明
 void UART4_Handler(void); 	// 处理串口4PC通信的内容
@@ -203,8 +196,13 @@ int main(void)
 				printf("temperature: %.2f, pressure: %.2f, humidity: %.2f, wind_speed: %.2f, wind_direction: %.2f\r\n", SHT2X_T, BMP280_P, SHT2X_H, wind_speed, wind_direction);
 			}
 		#else
-			I2C_Handler(&SHT2X_T, &BMP280_P, &SHT2X_H);
-			printf("temperature: %.2f, pressure: %.2f, humidity: %.2f\r\n", SHT2X_T, BMP280_P, SHT2X_H);
+			if (flag_wind_is_need_measure)	// 需要测量时采集风速风向数据
+			{
+				printf("***********QEURY WINDSENSOR***********\r\n");
+				I2C_Handler(&SHT2X_T, &BMP280_P, &SHT2X_H);
+				printf("temperature: %.2f, pressure: %.2f, humidity: %.2f\r\n", SHT2X_T, BMP280_P, SHT2X_H);
+				flag_wind_is_need_measure = 0;
+			}
 		#endif
 
 		if (is_lora && is_need_query_data)
