@@ -13,6 +13,7 @@
 #include "timer.h"
 #include "timer2.h"
 #include "timer3.h"
+#include "timer4.h"
 #include "rtc.h"
 #include "tool.h"
 #include "wind.h"
@@ -26,6 +27,7 @@
 #define MQ2PreheatInterval			20 				// MQ2预热时间间隔，单位为秒  至少为20秒 （传感器采集数据共用这个）
 #define GPSTimeInterval 			120				// GPS时间校时间隔，单位为秒  测试时2分钟一次，正式为5分钟一次
 #define QueryTimeInterval			120				// 查询从节点数据时间间隔，单位为秒 测试时为5分钟，正式为30分钟
+#define QueryDelayTime				5				// 查询从节点数据延时时间，单位为秒,大功率时为QueryDelayTime*24
 #define is_debug					1				// 是否调试模式，1为调试模式，0为正常模式
 // #define query_node_data_max_times	5 				// 查询节点数据最大次数
 #define is_lora						1				// 是否启动lora模块
@@ -50,21 +52,6 @@ float battery = 0;	   // 电源电压
 float wind_speed = 0;
 float wind_direction = 0;
 u8 time[3] = {0};
-// 初始化一个100长度U8的测试数据，用于测试数据长度，数据用乱码填充
-u8 test_data[100] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-					 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10,
-					 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
-					 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, 0x20,
-					 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
-					 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30,
-					 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38,
-					 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F, 0x40,
-					 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48,
-					 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F, 0x50,
-					 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58,
-					 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F, 0x60, 0x0d, 0x0a};
-					//  0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68,
-					//  0x69, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F, 0x70};
 
 
 // u8 is_4g = 0;					  // 是否启动4G模块,需要先启动lora和gps
@@ -114,7 +101,6 @@ int main(void)
 	#if is_lora
 	{
 		is_lora_init = LORA_Init();
-		Timer_querydata_Init(QueryTimeInterval); // 初始化定时器，TIM5用于查询从节点数据，间隔单位为秒
 		if (is_debug) printf("LORA Init OK\r\n");
 	}
 	#endif
@@ -122,6 +108,9 @@ int main(void)
 	#if is_biglora
 		BIGLORA_init();
 	#endif
+
+	Timer_querydata_Init(QueryTimeInterval); // 初始化定时器，TIM5用于查询从节点数据，间隔单位为秒
+	Timer_QueryDelay_Init(QueryDelayTime);	// 初始化定时器，TIM4用于查询从节点数据延时，间隔单位为秒
 
 	LED = 1;
 	MQ2 = 1;
@@ -239,8 +228,16 @@ int main(void)
 		{
 			printf("***********QEURY LORA***********\r\n");
 			// 向从节点要数据
-			is_need_query_data = 0;
-			LORA_Query_All_SubNode_Data();
+			if (current_query_node_idx < SubNodeSet.nNode)
+			{
+				if (SubNodeSet.SubNode_list[current_query_node_idx].SubNodeStatus != 2 && SubNodeSet.SubNode_list[current_query_node_idx].SubNodeStatus != 3)		// 当前子节点已发送查询命令或已接收数据时不再发送查询命令
+				{
+					LORA_Query_SubNode_Data(SubNodeSet.SubNode_list[current_query_node_idx].address);
+					SubNodeSet.SubNode_list[current_query_node_idx].SubNodeStatus = 2;
+					if (SubNodeSet.SubNode_list[current_query_node_idx].fail_count > 0)
+						printf("Query Node %02x%02x%02x%02x%02x%02x Fail %d Times\r\n", SubNodeSet.SubNode_list[current_query_node_idx].address[0], SubNodeSet.SubNode_list[current_query_node_idx].address[1], SubNodeSet.SubNode_list[current_query_node_idx].address[2], SubNodeSet.SubNode_list[current_query_node_idx].address[3], SubNodeSet.SubNode_list[current_query_node_idx].address[4], SubNodeSet.SubNode_list[current_query_node_idx].address[5], SubNodeSet.SubNode_list[current_query_node_idx].fail_count);
+				}
+			}
 		}
 
 		#if is_biglora

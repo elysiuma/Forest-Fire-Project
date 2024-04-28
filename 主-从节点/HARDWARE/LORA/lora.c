@@ -15,6 +15,7 @@ u8 is_need_query_data = 0;
 u8 get_data_flag = 0;
 u8 SelfAddress[6] = {0x99, 0x99, 0x99, 0x99};
 u8 query[3] = {0x11, 0x22, 0x33}; // 用于向子节点发送，查询数据
+u8 current_query_node_idx = 200;
 // u8 SubNodeAddress[120] = {
 //         // 0x36, 0x49, 0x01, 0x00, 0x00, 0x00,
 //         // 0x28, 0x49, 0x01, 0x00, 0x00, 0x00,
@@ -33,8 +34,8 @@ typedef struct {
 u8 NodeMappingLen = 10;      // 共有多少组地址映射
 
 NodeMappingStruct NodeMapping[] = {
-    {{0x99, 0x99, 0x99, 0x99, 0x05, 0x50}, 1,  {0x00, 0x00, 0x00, 0x01, 0x58, 0x63,         // 1号主从
-                                                // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+    {{0x99, 0x99, 0x99, 0x99, 0x05, 0x50}, 2,  {0x00, 0x00, 0x00, 0x01, 0x58, 0x63,         // 1号主从
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x64,
                                                 // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
                                                 // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
                                                 // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
@@ -357,6 +358,7 @@ u8 LORA_Add_Slave_Node(u8 nNode, u8 *SubNodeAddress)
                             new_node.address[n] = SubNodeAddress[m * 6 + n];
                         }
                         new_node.SubNodeStatus = 0;
+                        new_node.fail_count = 0;
                         // new_node.wind_speed = 0;
                         // new_node.wind_direction = 0;
                         new_node.temperature = 0;
@@ -874,6 +876,8 @@ u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len)
     SubNodeSet.SubNode_list[node_location].sample_time[1] = time[1];
     SubNodeSet.SubNode_list[node_location].sample_time[2] = time[2];
     SubNodeSet.SubNode_list[node_location].last_gps = last_time_gps;
+    SubNodeSet.SubNode_list[node_location].SubNodeStatus = 3;   // 更新状态为已接收数据
+    SubNodeSet.SubNode_list[node_location].fail_count = 0;      // 重置失败次数   
     flag = 1; // 更新成功
     return flag;
 }
@@ -1070,7 +1074,6 @@ void LORA_Query_SubNode_Data(u8 *address)
     for (i = 0; i < 6; i++)
         current_addr[i] = address[5-i];		// 从节点地址要倒过来查询
     LORA_DATA_Transfer(query, 3, current_addr);
-    printf("query sent...node: %d\r\n", i);
 }
 
 // 查询所有从节点数据
@@ -1135,4 +1138,20 @@ u8 LORA_Get_SubNode_Data_idx(u8 idx, u8 *_data_str)
                         current_node.sample_time[0], current_node.sample_time[1], current_node.sample_time[2], current_node.temperature, current_node.pressure, current_node.humidity,
                         current_node.smoke, current_node.co, current_node.battery, RTC_check_specified_time(current_node.last_gps));
     return 1;
+}
+
+void LORA_Update_All_SubNode_Status(void)
+{
+    // 用于更新所有从节点的状态，若在新一轮查询从节点数据时，某从节点依然是已发送（未响应）状态，则将其状态重置，失败次数+1
+    u8 i;
+    for (i = 0; i < SubNodeSet.nNode; i++)
+    {
+        if (SubNodeSet.SubNode_list[i].SubNodeStatus == 2)
+        {
+            
+            if (SubNodeSet.SubNode_list[i].fail_count < 255)
+                SubNodeSet.SubNode_list[i].fail_count ++;
+        }
+        SubNodeSet.SubNode_list[i].SubNodeStatus = 1;   // 已接收数据也要重置为正常状态
+    }
 }
