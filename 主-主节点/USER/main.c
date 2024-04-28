@@ -177,7 +177,6 @@ int main(void)
 			printf("***********BATTERY***********\r\n");
 			battery = BATTERY_Scan();
 			if (is_debug) printf("battery: %.2f%%\r\n", battery);
-			if (is_debug) printf("\r\n");
 		}
 		#endif
 
@@ -222,7 +221,7 @@ int main(void)
 		{
 			printf("***********QEURY WINDSENSOR***********\r\n");
 			USART6_DATA(query_windsensor, 11);
-			delay_ms(3000);
+			delay_ms(1000);
 			if (USART6_RX_STA&0x8000)
 			{
 				DATA_Handler(&SHT2X_T, &BMP280_P, &SHT2X_H, &wind_speed, &wind_direction);
@@ -234,7 +233,6 @@ int main(void)
 		{
 			printf("***********QEURY LORA***********\r\n");
 			// 向从节点要数据
-			is_need_query_data = 0;
 			if (is_debug) printf("query data...\r\n");
 			for (i = 0; i < SubNodeSet.nNode; i++)
 			{
@@ -288,7 +286,7 @@ int main(void)
 			// 主节点发送自身数据
 			// 打印时间和传感器数据
 			RTC_Get_Time(time);
-			sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %.2f\r\npressure: %.2f\r\nhumidity: %.2f\r\nwind_speed: %.2f\r\nwind_direction: %.2f\r\nsmoke: %.2f\r\nbattery: %.2f%%\r\nisTimeTrue: %d\r\n",
+			sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x;time: %02d:%02d:%02d;temperature: %.2f;pressure: %.2f;humidity: %.2f;wind_speed: %.2f;wind_direction: %.2f;smoke: %.2f;battery: %.2f%%;isTimeTrue: %d;\r\n",
 					SelfAddress[0], SelfAddress[1], SelfAddress[2], SelfAddress[3], SelfAddress[4], SelfAddress[5], time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H, wind_speed, wind_direction, co2, battery, RTC_check_device_time());
 			if (is_debug) {puts(data_str);printf("\r\n");}
 			if (is_debug) printf("sending main node data to server...\r\n");
@@ -297,12 +295,13 @@ int main(void)
 		}
 		#endif
 
-		#if (is_biglora)
+		if (is_biglora)
+		// if (is_biglora && is_need_query_data)
 		{
-			printf("***********QEURY BIGLORA***********\r\n");
+			is_need_query_data = 0;
+			printf("***********QUERY BIGLORA***********\r\n");
 			BIGLORA_send_query();
 		}
-		#endif
 
 		if (is_biglora && check_BIGLORA_Receive())
 		{
@@ -310,7 +309,7 @@ int main(void)
 			BIGLORA_Handler(); // 处理大功率LORA模块通信的内容
 		}
 
-		printf("***********OUT THE LOOP***********\r\n");
+		printf("***********OUT THE LOOP***********\r\n\r\n");
 		delay_ms(1000);
 		DebugLed(); // LED闪烁说明程序正常运行
 	}
