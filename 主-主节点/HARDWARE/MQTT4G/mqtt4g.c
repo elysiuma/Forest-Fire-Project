@@ -2,6 +2,8 @@
 #include "usart1.h"
 #include "delay.h"
 
+u8 is_need_send_4g = 0;   // 是否需要发送4g数据
+
 // 初始化mqtt4g
 void mqtt4g_init(void)
 {

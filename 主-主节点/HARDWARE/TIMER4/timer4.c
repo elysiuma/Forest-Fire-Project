@@ -2,6 +2,7 @@
 #include "timer4.h"
 #include "lora.h"
 #include "biglora.h"
+#include "mqtt4g.h"
 
 void update_SNode_query_idx(void);
 void update_MSNode_query_idx(void);
@@ -51,7 +52,7 @@ void TIM4_IRQHandler(void)   // Change the function name to TIM4_IRQHandler
                 update_MSNode_query_idx();   // Update the query index of the MSnode
             }
         }
-        
+
         TIM_ClearITPendingBit(TIM4, TIM_IT_Update);
     }
 }
@@ -62,6 +63,7 @@ void update_SNode_query_idx(void)
     {
         is_need_query_data = 0;
         current_query_node_idx = 200;
+        is_need_send_4g = 1;   // 查询完所有子节点数据后，需要查询4G数据
     }
     else if (current_query_node_idx < SubNodeSet.nNode)    // 如果还没有查询完所有子节点
     {

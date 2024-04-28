@@ -251,36 +251,40 @@ int main(void)
 		}
 
 		#if is_4g
-			printf("***********4G SENDING ALL DATA***********\r\n");
-			// 主节点发送自身数据
-			// 打印时间和传感器数据
-			memset(all_data_str, 0, sizeof(all_data_str));
-			RTC_Get_Time(time);
-			sprintf(data_str,	"%02x%02x%02x%02x%02x%02x;"		// 主节点地址
-								"%02d:%02d:%02d;"				// 时间
-								"%.2f;"							// 温度
-								"%.2f;"							// 气压
-								"%.2f;"							// 湿度				
-								"%.2f;"							// 风速
-								"%.2f;"							// 风向
-								"%.2f;"							// CO2浓度
-								"%.2f;"							// CO浓度
-								"%c%.0f*%.5f':%c%.0f*%.5f"		// 纬度，经度
-								"%.2f;"							// 电池电压
-								"%d;",							// RTC校时状态
-								SelfAddress[0], SelfAddress[1], SelfAddress[2], SelfAddress[3], SelfAddress[4], SelfAddress[5],
-				time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H,wind_speed, wind_direction, co2,co_latest,
-				node_lati_longi_str[0], node_position[0], node_position[1], 
-                node_lati_longi_str[1], node_position[2], node_position[3],
-				battery, RTC_check_device_time());
-			strcat(all_data_str, data_str);
-			strcat(all_data_str, SEP_STR);
-			LORA_Get_All_SubNode_Data(all_data_str);	// 获取所有从节点数据
-			printf("all data: \r\n");
-			puts(all_data_str);printf("\r\n");
-			if (is_debug) printf("sending main node data to server...\r\n");
-			mqtt4g_send(data_str, strlen(data_str));
-			if (is_debug) printf("data sent...\r\n");
+			if (is_need_send_4g)
+			{
+				is_need_send_4g = 0;
+				printf("***********4G SENDING ALL DATA***********\r\n");
+				// 主节点发送自身数据
+				// 打印时间和传感器数据
+				memset(all_data_str, 0, sizeof(all_data_str));
+				RTC_Get_Time(time);
+				sprintf(data_str,	"%02x%02x%02x%02x%02x%02x;"		// 主节点地址
+									"%02d:%02d:%02d;"				// 时间
+									"%.2f;"							// 温度
+									"%.2f;"							// 气压
+									"%.2f;"							// 湿度				
+									"%.2f;"							// 风速
+									"%.2f;"							// 风向
+									"%.2f;"							// CO2浓度
+									"%.2f;"							// CO浓度
+									"%c%.0f*%.5f':%c%.0f*%.5f"		// 纬度，经度
+									"%.2f;"							// 电池电压
+									"%d;",							// RTC校时状态
+									SelfAddress[0], SelfAddress[1], SelfAddress[2], SelfAddress[3], SelfAddress[4], SelfAddress[5],
+					time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H,wind_speed, wind_direction, co2,co_latest,
+					node_lati_longi_str[0], node_position[0], node_position[1], 
+					node_lati_longi_str[1], node_position[2], node_position[3],
+					battery, RTC_check_device_time());
+				strcat(all_data_str, data_str);
+				strcat(all_data_str, SEP_STR);
+				LORA_Get_All_SubNode_Data(all_data_str);	// 获取所有从节点数据
+				printf("all data: \r\n");
+				puts(all_data_str);printf("\r\n");
+				if (is_debug) printf("sending main node data to server...\r\n");
+				mqtt4g_send(data_str, strlen(data_str));
+				if (is_debug) printf("data sent...\r\n");
+			}
 		#endif
 
 		if (is_biglora && is_need_query_data)
