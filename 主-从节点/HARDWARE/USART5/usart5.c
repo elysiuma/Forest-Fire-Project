@@ -9,59 +9,38 @@ u8 USART5_TX_BUF[USART5_REC_LEN];
 u16 USART5_RX_STA=0;   		//接收状态标记
 
 //串口5中断服务程序
-void USART5_IRQHandler(void)
+void UART5_IRQHandler(void)
 {
 	u8 Res;	    
-	u16 Data_len;
 	if(USART_GetITStatus(UART5, USART_IT_RXNE) != RESET)
 	{	 	
-		//if((USART5_RX_STA==0&&Res==0x24)||USART5_RX_BUF[0]==0X24)
 		Res = USART_ReceiveData(UART5);
 		if((USART5_RX_STA&0x8000)==0)//接收未完成
 		{
-			//GPS模块返回确认帧
-			if((USART5_RX_STA==0&&Res==0xA0)||USART5_RX_BUF[0]==0XA0)
+
+			if(USART5_RX_STA&0x4000)//接收到了0x0d
 			{
-				USART5_RX_BUF[USART5_RX_STA&0X3FFF]=Res;
-				USART5_RX_STA++;
-				if((USART5_RX_STA&0X3FFF)>=4) 
+				if(Res!=0x0a) USART5_RX_STA=0;//接收错误,重新开始
+				else 
 				{
-					Data_len = 256 * USART5_RX_BUF[2] + USART5_RX_BUF[3] + 7; 	// 包含0d0a的长度
-					//printf("USART_RX_BUF[1]: %i\r\n", USART_RX_BUF[1]); //Data_len = Res + 5;
-					//printf("UART4_RX_STA: %i, Data len: %i", UART4_RX_STA, Data_len);
-					if(USART5_RX_STA>(USART5_REC_LEN-1)) 
-						USART5_RX_STA=0;//接收数据错误(超过最大接受字节数),重新开始接收
-					if((USART5_RX_STA&0X3FFF) == Data_len) 
-						USART5_RX_STA|=0x8000;	//接收完成了
+					USART5_RX_BUF[USART5_RX_STA&0X3FFF]=Res;
+					USART5_RX_STA|=0x8000;	//接收完成了 
 				}
 			}
-			
-			else
+			else //还没收到0X0D
 			{	
-				if(USART5_RX_STA&0x4000)//接收到了0x0d
+				if(Res==0x0d) 
 				{
-					if(Res!=0x0a) USART5_RX_STA=0;//接收错误,重新开始
-					else 
-					{
-						USART5_RX_BUF[USART5_RX_STA&0X3FFF]=Res;
-						USART5_RX_STA|=0x8000;	//接收完成了 
-					}
+					USART5_RX_STA|=0x4000;
+					USART5_RX_BUF[USART5_RX_STA&0X3FFF]=Res;
+					USART5_RX_STA++;
 				}
-				else //还没收到0X0D
-				{	
-					if(Res==0x0d) 
-					{
-						USART5_RX_STA|=0x4000;
-						USART5_RX_BUF[USART5_RX_STA&0X3FFF]=Res;
-						USART5_RX_STA++;
-					}
-					else
-					{
-						USART5_RX_BUF[USART5_RX_STA&0X3FFF]=Res;
-						USART5_RX_STA++;
-						if(USART5_RX_STA>(USART5_REC_LEN-1)) USART5_RX_STA=0;//接收数据错误,重新开始接收	  
-					}		 
-				}
+				else
+				{
+					USART5_RX_BUF[USART5_RX_STA&0X3FFF]=Res;
+					USART5_RX_STA++;
+					if(USART5_RX_STA>(USART5_REC_LEN-1)) USART5_RX_STA=0;//接收数据错误,重新开始接收	  
+				}		 
 			}
 		}
 		else
@@ -86,21 +65,21 @@ void uart5_init(u32 bound)
 	NVIC_InitTypeDef NVIC_InitStructure;
 	
 	
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD,ENABLE); 
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC,ENABLE); 
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD,ENABLE); 
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART5,ENABLE);	//使能USART5时钟
 	
 	GPIO_PinAFConfig(GPIOC,GPIO_PinSource12,GPIO_AF_UART5); //PC12复用为USART3
 	GPIO_PinAFConfig(GPIOD,GPIO_PinSource2,GPIO_AF_UART5); //PD2复用为USART3
-	
-  	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12 | GPIO_Pin_2;
+  	
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12 | GPIO_Pin_2; //GPIOC12与GPIOD2
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF; //复用功能 
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;	//速度 50MHz 
 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP; 	//推挽复用输出
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP; 	//上拉 
 	GPIO_Init(GPIOC,&GPIO_InitStructure);	//初始化 PC12
 	GPIO_Init(GPIOD,&GPIO_InitStructure); 	//初始化 PD2
-		
+	
 
 	USART_InitStructure.USART_BaudRate = bound;//波特率设置
 	USART_InitStructure.USART_WordLength = USART_WordLength_8b;//字长为9位数据格式

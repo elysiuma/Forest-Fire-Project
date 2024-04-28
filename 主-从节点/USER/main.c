@@ -50,6 +50,22 @@ float battery = 0;	   // 电源电压
 float wind_speed = 0;
 float wind_direction = 0;
 u8 time[3] = {0};
+// 初始化一个100长度U8的测试数据，用于测试数据长度，数据用乱码填充
+u8 test_data[100] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+					 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10,
+					 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
+					 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, 0x20,
+					 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
+					 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30,
+					 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38,
+					 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F, 0x40,
+					 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48,
+					 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F, 0x50,
+					 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58,
+					 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F, 0x60, 0x0d, 0x0a};
+					//  0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68,
+					//  0x69, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F, 0x70};
+
 
 // u8 is_4g = 0;					  // 是否启动4G模块,需要先启动lora和gps
 
@@ -543,15 +559,27 @@ void BigLORA_Handler(void)
 		// 清空all_data_str
 		memset(all_data_str, 0, sizeof(all_data_str));
 		RTC_Get_Time(time);
-		sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %.2f\r\npressure: %.2f\r\nhumidity: %.2f\r\nwind_speed: %.2f\r\n"
-						"wind_direction: %.2f\r\nsmoke: %.2f\r\nco: %.2f\r\nbattery: %.2f\r\nisTimeTrue: %d\r\n[SEP]",SelfAddress[0], SelfAddress[1], SelfAddress[2], SelfAddress[3], SelfAddress[4], SelfAddress[5],
+		sprintf(data_str,   "%02x%02x%02x%02x%02x%02x;"		// 主节点地址
+							"%02d:%02d:%02d;"				// 时间
+							"%.2f;"							// 温度
+							"%.2f;"							// 气压
+							"%.2f;"							// 湿度				
+							"%.2f;"							// 风速
+							"%.2f;"							// 风向
+							"%.2f;"							// CO2浓度
+							"%.2f;"							// CO浓度
+							"%.2f;"							// 电池电压
+							"%d\r\n",						// RTC校时状态
+							SelfAddress[0], SelfAddress[1], SelfAddress[2], SelfAddress[3], SelfAddress[4], SelfAddress[5],
 				time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H,wind_speed, wind_direction, co2,co_latest, battery, RTC_check_device_time());
 		strcat(all_data_str, data_str);
 		LORA_Get_All_SubNode_Data(all_data_str);	// 获取所有从节点数据
 		printf("all data: \r\n");
-		puts(all_data_str);
-		printf("sending all node data to MMNode..., len=%d\r\n", strlen(all_data_str));
-		BIGLORA_Send("data_str", strlen(data_str));	// 发送给MMNode
+		puts(data_str);
+		printf("sending all node data to MMNode..., len=%d\r\n", strlen(data_str));
+		BIGLORA_Send(data_str, strlen(data_str));	// 发送给MMNode
+		// BIGLORA_Send("TEST\r\n", 6);	// 发送给MMNode
+		// BIGLORA_Send(test_data, strlen(test_data));
 		// mqtt4g_send(data_str, strlen(data_str));
 		printf("all node data sent...\r\n");
 	}
