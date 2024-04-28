@@ -33,7 +33,7 @@
 #define is_lora						1				// 是否启动lora模块
 #define is_gps						1				// 是否启动GPS模块
 #define is_battery					1				// 是否启动电池电压检测
-#define is_wind_sensor				1				// 是否启动风速风向传感器
+#define is_wind_sensor				0				// 是否启动风速风向传感器 1为启动，0为启动I2C读取模式
 #define is_calibration				0				// 是否启动风速风向校准 1为校准，0为不校准
 #define is_biglora 					1				// 是否启动大功率lora模块
 
@@ -49,8 +49,8 @@ float BMP280_T = 25.00;
 float SHT2X_T = 25.00; // temperature of SHT2X
 float SHT2X_H = 40.00; // humidity of SHT2X
 float battery = 0;	   // 电源电压
-float wind_speed = 0;
-float wind_direction = 0;
+float wind_speed = -1;
+float wind_direction = -1;
 u8 time[3] = {0};
 
 
@@ -62,11 +62,11 @@ union data{
 } data_1;							// 用于转换数据格式： char -> float
 
 // 函数申明
-void UART4_Handler(void); // 处理串口4PC通信的内容
-void LORA_Handler(void);  // 处理LORA通信的内容
-void GPS_Handler(void);	  // 处理GPS通信的内容
+void UART4_Handler(void); 	// 处理串口4PC通信的内容
+void LORA_Handler(void);  	// 处理LORA通信的内容
+void GPS_Handler(void);	  	// 处理GPS通信的内容
 void BigLORA_Handler(void); // 处理大功率LORA通信的内容
-
+void I2C_Handler(float* T, float* P, float* H);		// 处理I2C接收温湿压传感器的内容
 
 int main(void)
 {
@@ -80,10 +80,16 @@ int main(void)
 	printf("***********Init***********\r\n");
 	LED_Init();										// 初始化LED
 	#if is_wind_sensor
+		printf("***********WIND SENSOR MODE***********\r\n");
 		Wind_Init();								// 初始化风速风向传感器
+	#else
+		printf("***********I2C MODE***********\r\n");
+		// I2C初始化
+		IIC_Init();
+		SHT2X_Init();
+		bmp280_uint();
 	#endif
 	
-
 	MQ2_Init();
 	MQ7_Init();
 	Timer_mq2_Init(MQ2PreheatInterval);		// 初始化MQ2定时器，每MQ2PreheatInterval秒状态位递增，用于MQ2的预热（20秒）和测量，MQ7共用一个定时器
@@ -115,11 +121,6 @@ int main(void)
 	LED = 1;
 	MQ2 = 1;
 	MQ7 = 1;
-
-	// I2C初始化
-	// IIC_Init(); // I2C initialize
-	// SHT2X_Init();
-	// bmp280_uint();
 	
 	#if is_calibration
 		if (is_debug) printf("calibrating windsensor...please ensure NO WIND\r\n");
@@ -143,26 +144,6 @@ int main(void)
 			printf("CO2: %.2f, CO: %.2f\r\n", co2, co_latest);
 			flag_mq2_is_need_measure = 0;
 		}
-		// printf("bmp T: %f\r\n", bmp280_get_temperature());
-
-		// SHT2X_T = SHT2X_TEST_T(); // get temperature of SHT2X.
-		// // printf("raw T: %f\r\n", SHT2X_T);
-		// SHT2X_T = 1.055 * SHT2X_T - 3.455;
-		// SHT2X_T += 0.4;
-
-		// BMP280_T = bmp280_get_temperature();
-		// // printf("bmp_t:%f\r\n", BMP280_T);
-		// BMP280_P = bmp280_get_pressure(); // get pressure of bmp280.
-		// BMP280_P = (BMP280_P - 1.19) / 100;
-
-		// SHT2X_H = SHT2X_TEST_RH(); // get humidity of SHT2X.
-		// // printf("raw H: %f\r\n", SHT2X_H);
-		// SHT2X_H = 0.976 * SHT2X_H + 6.551;
-
-		// printf("smoke: %f\r\n", co2);
-		// printf("pressure: %f\r\n", BMP280_P);
-		// printf("temperature: %f\r\n", SHT2X_T);
-		// printf("humidity: %f\r\n", SHT2X_H);
 
 		// 读取电池电压
 		#if is_battery
@@ -207,7 +188,7 @@ int main(void)
 			}
 		#endif
 
-		// 向风速风向传感器串口要数据
+		// 向风速风向传感器串口要数据 or 向I2C要数据
 		#if is_wind_sensor
 			if (flag_wind_is_need_measure)	// 需要测量时采集风速风向数据
 			{
@@ -221,6 +202,9 @@ int main(void)
 				Wind_analysis(&SHT2X_T, &BMP280_P, &SHT2X_H, &wind_speed, &wind_direction);
 				printf("temperature: %.2f, pressure: %.2f, humidity: %.2f, wind_speed: %.2f, wind_direction: %.2f\r\n", SHT2X_T, BMP280_P, SHT2X_H, wind_speed, wind_direction);
 			}
+		#else
+			I2C_Handler(&SHT2X_T, &BMP280_P, &SHT2X_H);
+			printf("temperature: %.2f, pressure: %.2f, humidity: %.2f\r\n", SHT2X_T, BMP280_P, SHT2X_H);
 		#endif
 
 		if (is_lora && is_need_query_data)
@@ -599,4 +583,23 @@ void BigLORA_Handler(void)
 		BIGLORA_Send(END_STR, 2);	// 发送结束符
 		printf("all node data sent...\r\n");
 	}
+}
+
+void I2C_Handler(float* T, float* P, float* H)
+{
+	u8 temp = 25.00;
+
+	*T = SHT2X_TEST_T(); // get temperature of SHT2X.
+	// printf("raw T: %f\r\n", SHT2X_T);
+	*T = 1.055 * (*T) - 3.455;
+	*T += 0.4;
+
+	temp = bmp280_get_temperature();
+	// printf("bmp_t:%f\r\n", BMP280_T);
+	*P = bmp280_get_pressure(); // get pressure of bmp280.
+	*P = (*P - 1.19) / 100;
+
+	*H = SHT2X_TEST_RH(); // get humidity of SHT2X.
+	// printf("raw H: %f\r\n", SHT2X_H);
+	*H = 0.976 * (*H) + 6.551;
 }
