@@ -1,8 +1,10 @@
 #include "sys.h"
 #include "timer4.h"
 #include "lora.h"
+#include "biglora.h"
 
 void update_SNode_query_idx(void);
+void update_MSNode_query_idx(void);
 
 void Timer_QueryDelay_Init(u16 interval)
 {
@@ -40,6 +42,8 @@ void TIM4_IRQHandler(void)   // Change the function name to TIM4_IRQHandler
     {
         if (is_need_query_data) // 需要查询子节点数据
             update_SNode_query_idx();   // Update the query index of the subnode
+        if (is_need_query_MSnode)   // 需要查询主从节点数据
+            update_MSNode_query_idx();   // Update the query index of the MSnode
 
         TIM_ClearITPendingBit(TIM4, TIM_IT_Update);
     }
@@ -60,5 +64,23 @@ void update_SNode_query_idx(void)
     {
         LORA_Update_All_SubNode_Status();   // 更新所有子节点状态   
         current_query_node_idx = 0;     // 重新开始查询
+    }
+}
+
+void update_MSNode_query_idx(void)
+{
+    if (current_query_MSnode_idx == MSNodeSet.nNode)     // 如果已经查询完所有主从节点
+    {
+        is_need_query_MSnode = 0;
+        current_query_MSnode_idx = 200;
+    }
+    else if (current_query_MSnode_idx < MSNodeSet.nNode)    // 如果还没有查询完所有主从节点
+    {
+        current_query_MSnode_idx++;
+    }
+    else
+    {
+        BIGLORA_Update_All_MSNode_Status();   // 更新所有主从节点状态   
+        current_query_MSnode_idx = 0;     // 重新开始查询
     }
 }

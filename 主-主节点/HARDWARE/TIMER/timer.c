@@ -43,7 +43,6 @@ void TIM2_IRQHandler(void)
     {
         //printf("tim2\r\n");
         is_need_update_time = 1;
-		get_data_flag++;
     }
     TIM_ClearITPendingBit(TIM2,TIM_IT_Update);
 }

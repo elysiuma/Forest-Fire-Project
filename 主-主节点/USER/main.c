@@ -267,7 +267,7 @@ int main(void)
 								"%.2f;"							// CO浓度
 								"%c%.0f*%.5f':%c%.0f*%.5f"		// 纬度，经度
 								"%.2f;"							// 电池电压
-								"%d;",						// RTC校时状态
+								"%d;",							// RTC校时状态
 								SelfAddress[0], SelfAddress[1], SelfAddress[2], SelfAddress[3], SelfAddress[4], SelfAddress[5],
 				time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H,wind_speed, wind_direction, co2,co_latest,
 				node_lati_longi_str[0], node_position[0], node_position[1], 
@@ -286,7 +286,16 @@ int main(void)
 		if (is_biglora && is_need_query_data)
 			{
 				printf("***********QEURY BIGLORA***********\r\n");
-				BIGLORA_send_query();
+				if (current_query_MSnode_idx < MSNodeSet.nNode)
+				{
+					if (MSNodeSet.MSNode_list[current_query_MSnode_idx].NodeStatus != 2 && MSNodeSet.MSNode_list[current_query_MSnode_idx].NodeStatus != 3)		// 当前子节点已发送查询命令或已接收数据时不再发送查询命令
+					{
+						BIGLORA_send_query_MSNode(MSNodeSet.MSNode_list[current_query_MSnode_idx].address);
+						MSNodeSet.MSNode_list[current_query_MSnode_idx].NodeStatus = 2;
+						if (MSNodeSet.MSNode_list[current_query_MSnode_idx].fail_count > 0)
+							printf("Query MSNode %02x%02x%02x%02x%02x%02x Fail %d Times\r\n", MSNodeSet.MSNode_list[current_query_MSnode_idx].address[0], MSNodeSet.MSNode_list[current_query_MSnode_idx].address[1], MSNodeSet.MSNode_list[current_query_MSnode_idx].address[2], MSNodeSet.MSNode_list[current_query_MSnode_idx].address[3], MSNodeSet.MSNode_list[current_query_MSnode_idx].address[4], MSNodeSet.MSNode_list[current_query_MSnode_idx].address[5], MSNodeSet.MSNode_list[current_query_MSnode_idx].fail_count);
+					}
+				}
 			}
 
 		if (is_biglora && check_BIGLORA_Receive())

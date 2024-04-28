@@ -1,7 +1,6 @@
-#include "lora.h"
+#include "BIGlora.h"
 #include "usart5.h"
 #include "delay.h"
-#include "string.h"
 #include <string.h> // 引入memcmp函数的头文件
 #define nMSnode 1
 

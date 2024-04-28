@@ -1,6 +1,7 @@
 #include "sys.h"
 #include "timer3.h"
 #include "lora.h"
+#include "biglora.h"
 
 void Timer_querydata_Init(u16 interval)
 {
@@ -38,6 +39,7 @@ void TIM5_IRQHandler(void)
     if(TIM_GetITStatus(TIM5,TIM_IT_Update)!=RESET)
     {
 		is_need_query_data = 1;     // 需要查询子节点数据
+        is_need_query_MSnode = 1;   // 需要查询主节点数据
         // printf("is_need_query_data = 1\r\n");
         
         TIM_ClearITPendingBit(TIM5,TIM_IT_Update);

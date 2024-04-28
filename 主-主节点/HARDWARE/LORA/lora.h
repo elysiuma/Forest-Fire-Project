@@ -11,6 +11,7 @@ typedef struct
 {
     u8 address[6];   //从节点地址
     u8 SubNodeStatus;   //从节点状态， 0：初始化，1：正常，2：已发送查询命令, 3: 已接收数据
+    u8 fail_count;  // 查询失败次数
     // float wind_speed; //风速
     // float wind_direction; //风向
     float temperature;    //温度
