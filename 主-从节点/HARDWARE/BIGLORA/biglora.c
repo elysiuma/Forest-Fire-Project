@@ -39,12 +39,12 @@ u8 check_BIGLORA_Receive(void)
     }
 }
 
-void BIGLORA_Receive(u8 *buf, u8 *len)
+void BIGLORA_Receive(u8 *buf, u16 *len)
 {
     USART5_Receive_Data(buf, len);
 }
 
-void BIGLORA_Send(u8 *buf, u8 len)
+void BIGLORA_Send(u8 *buf, u16 len)
 {
     USART5_DATA(buf, len);
 }
@@ -54,8 +54,8 @@ void BIGLORA_init(void)
     uart5_init(9600);
 }
 
-u8 check_addr(u8 *addr, u8 addr_len, u8 *cur_addr) {
-    const u8 CUR_ADDR_LEN = 6; // cur_addr的长度
+u8 check_addr(u8 *addr, u16 addr_len, u8 *cur_addr) {
+    const u8 CUR_ADDR_LEN = 2; // cur_addr的长度
     u8 i;
 
     // 遍历addr数组

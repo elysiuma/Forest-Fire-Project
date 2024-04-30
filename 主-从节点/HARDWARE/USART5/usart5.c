@@ -108,9 +108,9 @@ void uart5_init(u32 bound)
 }
 
 
-void USART5_DATA(u8 *buf,u8 len)
+void USART5_DATA(u8 *buf,u16 len)
 {
-	u8 t;
+	u16 t;
 	//printf("USART3_DATA: %i", buf[1]);
   	for(t=0;t<len;t++)		
 	{
@@ -138,10 +138,10 @@ void USART5_CMD(unsigned char *lb)
 }
 
 
-void USART5_Receive_Data(u8 *buf,u8 *len)
+void USART5_Receive_Data(u8 *buf,u16 *len)
 {
-	u8 i=0;		
-	u8 data_len=USART5_RX_STA&0x3fff;
+	u16 i=0;		
+	u16 data_len=USART5_RX_STA&0x3fff;
 	delay_ms(10);	
 	// 打印接收到的数据
 	// printf("data_len: %i, len: %i", data_len, *len);
@@ -157,9 +157,9 @@ void USART5_Receive_Data(u8 *buf,u8 *len)
 }
 
 
-void USART5_Receive_Data_NoClear(u8 *buf,u8 *len)
+void USART5_Receive_Data_NoClear(u8 *buf,u16 *len)
 {
-	u8 i=0;
+	u16 i=0;
 	*len=0;				
 	delay_ms(10);		
 	if(USART5_RX_STA>0)

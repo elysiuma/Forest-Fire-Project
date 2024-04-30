@@ -205,12 +205,6 @@ int main(void)
 			LORA_Handler(); // 处理LORA通信的内容
 		}
 
-		if (is_biglora && check_BIGLORA_Receive())
-		{
-			printf("***********BIGLORA HANDLING***********\r\n");
-			BIGLORA_Handler();	// 处理大功率LORA通信的内容
-		}
-
 		// TODO: 这一步操作实际没有效果，校时为按需校时
 		if (is_gps && check_GPS_Receive())
 		{
