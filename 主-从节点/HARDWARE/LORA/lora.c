@@ -485,6 +485,9 @@ u8 LORA_Network_Init(void)
             break;
         }
         index_mapping = i;
+    }
+    if (index_mapping == NodeMappingLen)
+    {
         printf("Can't find the master address in the NodeMapping table\r\n");
     }
     flag_add_slave_node = LORA_Add_Slave_Node(NodeMapping[index_mapping]._nNode, NodeMapping[index_mapping].slaveAddress);

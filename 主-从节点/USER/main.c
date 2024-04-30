@@ -557,33 +557,33 @@ void BigLORA_Handler(void)
                 node_lati_longi_str[1], node_position[2], node_position[3],
 				battery, RTC_check_device_time());
 		strcat(data_str, SEP_STR);		// 添加分隔符
-		strcat(data_str, END_STR);		// 添加分隔符
+		// strcat(data_str, END_STR);		// 添加分隔符
 		BIGLORA_Send(data_str, strlen(data_str));	// 发送给MMNode
 		// BIGLORA_Send("TEST\r\n", 6);	// 发送给MMNode
 		puts(data_str);
 		printf("data sent to MMNode..., len=%d\r\n", strlen(data_str));
-		// // 依次发送从节点数据， 避免数据过长大功率lora发送失败（不超过100个u8）
-		// for (i=0;i<SubNodeSet.nNode;i++)
-		// {
-		// 	// if (SubNodeSet.Node[i].isOnline)
-		// 	// {
-		// 	// 获取从节点数据
-		// 	flag = LORA_Get_SubNode_Data_idx(i, data_str);
-		// 	if (flag == 0)
-		// 	{
-		// 		printf("get %d node data fail\r\n", i);
-		// 		continue;
-		// 	}
-		// 	strcat(data_str, SEP_STR);		// 添加分隔符
-		// 	if (i == SubNodeSet.nNode-1)
-		// 		strcat(data_str, END_STR);		// 添加分隔符
-		// 	BIGLORA_Send(data_str, strlen(data_str));	// 发送idx从节点数据给MMNode
-		// 	puts(data_str);
-		// 	printf("sending %d node data to MMNode..., len=%d\r\n", i, strlen(data_str));
-		// 	// }
-		// }
-		// // BIGLORA_Send(END_STR, 2);	// 发送结束符
-		// printf("all node data sent...\r\n");
+		// 依次发送从节点数据， 避免数据过长大功率lora发送失败（不超过100个u8）
+		for (i=0;i<SubNodeSet.nNode;i++)
+		{
+			// if (SubNodeSet.Node[i].isOnline)
+			// {
+			// 获取从节点数据
+			flag = LORA_Get_SubNode_Data_idx(i, data_str);
+			if (flag == 0)
+			{
+				printf("get %d node data fail\r\n", i);
+				continue;
+			}
+			strcat(data_str, SEP_STR);		// 添加分隔符
+			if (i == SubNodeSet.nNode-1)
+				strcat(data_str, END_STR);		// 添加分隔符
+			BIGLORA_Send(data_str, strlen(data_str));	// 发送idx从节点数据给MMNode
+			puts(data_str);
+			printf("sending %d node data to MMNode..., len=%d\r\n", i, strlen(data_str));
+			// }
+		}
+		// BIGLORA_Send(END_STR, 2);	// 发送结束符
+		printf("all node data sent...\r\n");
 	}
 }
 
