@@ -262,7 +262,7 @@ int main(void)
 									"%.2f;"							// 风向
 									"%.2f;"							// CO2浓度
 									"%.2f;"							// CO浓度
-									"%c%.0f*%.5f':%c%.0f*%.5f"		// 纬度，经度
+									"%c%.0f*%.5f:%c%.0f*%.5f;"		// 纬度，经度
 									"%.2f;"							// 电池电压
 									"%d;",							// RTC校时状态
 									SelfAddress[0], SelfAddress[1], SelfAddress[2], SelfAddress[3], SelfAddress[4], SelfAddress[5],
