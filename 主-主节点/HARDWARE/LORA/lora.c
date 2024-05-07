@@ -43,12 +43,12 @@ NodeMappingStruct NodeMapping[] = {
                                                 // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
                                                 // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
                                                 }},
-    {{0x99, 0x99, 0x99, 0x99, 0x05, 0x51}, 3,  {0x00, 0x00, 0x00, 0x01, 0x58, 0x63,      // 2号主从
+    {{0x99, 0x99, 0x99, 0x99, 0x05, 0x51}, 6,  {0x00, 0x00, 0x00, 0x01, 0x58, 0x63,      // 2号主从
                                                 0x00, 0x00, 0x00, 0x01, 0x58, 0x59,
                                                 0x00, 0x00, 0x00, 0x01, 0x58, 0x64,
-                                                // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
-                                                // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
-                                                // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x99,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x67,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x66,
                                                 // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
                                                 // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
                                                 }},
@@ -370,6 +370,7 @@ u8 LORA_Add_Slave_Node(u8 nNode, u8 *SubNodeAddress)
                         new_node.sample_time[0] = 0;
                         new_node.sample_time[1] = 0;
                         new_node.sample_time[2] = 0;
+                        new_node.last_gps = 999;
                         SubNodeSet.SubNode_list[SubNodeSet.nNode] = new_node;
                         SubNodeSet.nNode++;
                         printf("add new SubNodeAddress[%d] = %02x %02x %02x %02x %02x %02x\r\n", m, SubNodeAddress[m * 6], SubNodeAddress[m * 6 + 1], SubNodeAddress[m * 6 + 2], SubNodeAddress[m * 6 + 3], SubNodeAddress[m * 6 + 4], SubNodeAddress[m * 6+5]);
@@ -502,17 +503,17 @@ u8 LORA_Network_Init(void)
         return 0;
     }
 
-    // 3.启动组网
-    flag_network_start = LORA_Network_Start();
-    if (flag_network_start == 1)
-    {
-        printf("Network start success!\r\n");
-    }
-    else
-    {
-        printf("Network start fail!\r\n");
-        return 0;
-    }
+    // // 3.启动组网
+    // flag_network_start = LORA_Network_Start();
+    // if (flag_network_start == 1)
+    // {
+    //     printf("Network start success!\r\n");
+    // }
+    // else
+    // {
+    //     printf("Network start fail!\r\n");
+    //     return 0;
+    // }
 
     printf("LORA network init wait 15 seconds\r\n");
     // 需要延迟15秒，等待组网完成
@@ -837,22 +838,13 @@ u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len)
 	battery_f = u8_to_float(data + 20);
 	isTime = RTC_check_device_time();
     // 打印时间和传感器数据
-	sprintf(data_str,   "%02x%02x%02x%02x%02x%02x;"		// 主节点地址
-                        "%02d:%02d:%02d;"				// 时间
-                        "%.2f;"							// 温度
-                        "%.2f;"							// 气压
-                        "%.2f;"							// 湿度				
-                        "%.2f;"							// 风速
-                        "%.2f;"							// 风向
-                        "%.2f;"							// CO2浓度
-                        "%.2f;"							// CO浓度
-                        "%.2f;"							// 电池电压
-                        "%d\r\n",						// RTC校时状态
-                        SelfAddress[0], SelfAddress[1], SelfAddress[2], SelfAddress[3], SelfAddress[4], SelfAddress[5],
-				time[0], time[1], time[2], temperature_f, pressure_f, humidity_f, smoke_f, co_f, battery_f, isTime);
+	sprintf(data_str, "address: %02x%02x%02x%02x%02x%02x\r\ntime: %02d:%02d:%02d\r\ntemperature: %f\r\npressure: %f\r\nhumidity: %f\r\n"
+            "smoke: %f\r\nco: %f\r\nbattery: %f\r\nisTimeTrue: %d\r\n",
+           address[0], address[1], address[2], address[3], address[4], address[5], time[0], time[1], time[2], temperature_f, pressure_f, humidity_f, 
+           smoke_f,co_f, battery_f, isTime);
 	puts(data_str);
 	printf("data_str len:%d\r\n", strlen(data_str));
-	printf("sending data to server...\r\n");
+	printf("collect data from SNode...\r\n");
 	// mqtt4g_send(data_str, strlen(data_str));
 	// printf("data sent...\r\n");
     //printf("time: %02d:%02d:%02d, wind_speed: %f, wind_direction: %f, temperature: %f, pressure: %f, humidity: %f, smoke: %f\r\n",
