@@ -94,7 +94,7 @@ void USART1_IRQHandler(void)                	//串口1中断服务程序
 
 void usart1_send(u8 *buf,u16 len)
 { 
-    u8 t;
+    u16 t;
     for(t=0;t<len;t++)
     {
         while(USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET);//循环发送,直到发送完毕   
