@@ -33,9 +33,9 @@ typedef struct {
 u8 NodeMappingLen = 10;      // 共有多少组地址映射
 
 NodeMappingStruct NodeMapping[] = {
-    {{0x99, 0x99, 0x99, 0x99, 0x05, 0x50}, 2,  {0x00, 0x00, 0x00, 0x01, 0x58, 0x63,         // 1号主从
+    {{0x99, 0x99, 0x99, 0x99, 0x05, 0x50}, 2,  {0x00, 0x00, 0x00, 0x01, 0x58, 0x67,         // 1号主从
                                                 0x00, 0x00, 0x00, 0x01, 0x58, 0x64,
-                                                // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                // 0x00, 0x00, 0x00, 0x01, 0x58, 0x66,
                                                 // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
                                                 // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
                                                 // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
@@ -324,8 +324,20 @@ u8 LORA_Add_Slave_Node(u8 nNode, u8 *SubNodeAddress)
             content[1 + n * 6 + m] = SubNodeAddress[(n+1) * 6 - m - 1];
         }
     }
+    // 打印content
+    printf("content: ");
+    for (n = 0; n < 1 + nNode * 6; n++)
+    {
+        printf("%02x ", content[n]);
+    }
+    printf("\r\n");
     LORA_Get_Common_Send_Msg(msg, &sen_msg_len, command, content, 1 + nNode * 6);
-
+    printf("msg: ");
+    for (n = 0; n < sen_msg_len; n++)
+    {
+        printf("%02x ", msg[n]);
+    }
+    printf("\r\n");
     LORA_Send(msg, sen_msg_len);
 
     while (1)
@@ -976,7 +988,7 @@ u8 LORA_Network_Start(void)
     //     else
     //     {
     //         printf("LORA_Network_Start: No receive, fail=%d\r\n", ++fail_count);
-    //         if (fail_count >= 10)
+    //         if (fail_count >= 5)
     //         {
     //             break;
     //         }

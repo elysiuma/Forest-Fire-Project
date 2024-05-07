@@ -15,7 +15,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define MQ2PreheatInterval 10 // MQ2预热时间间隔，单位为秒  至少为20秒
+#define MQ2PreheatInterval 20 // MQ2预热时间间隔，单位为秒  至少为20秒
 #define NumOfData 6 		// 数据个数, 温度0 气压1 湿度2 烟雾3 一氧化碳4 电量5
 
 uint8_t EnableMaster=0;				//主从选择 1为主机，0为从机	(FIX:很久没用了，基本无效)
@@ -169,9 +169,9 @@ int main(void)
 		if (check_LORA_Receive())
 		{
 			LORA_Receive(query_rec, &query_rec_len);
-			//printf("lora msg: ");
-			//for(i=0;i<rec_len;i++)
-				//printf("%02x ", temp_rec[i]);
+			printf("lora msg: ");
+			for(i=0;i<rec_len;i++)
+				printf("%02x ", temp_rec[i]);
 		
 			if (query_rec_len==3 & query_rec[0] == 0x11 & query_rec[1] == 0x22 & query_rec[2] == 0x33)
 			{
