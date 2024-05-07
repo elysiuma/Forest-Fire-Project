@@ -39,7 +39,6 @@
 #define is_biglora 					1				// 是否启动大功率lora模块
 
 uint8_t EnableMaster = 1;		  	// 主从选择 1为主机，0为从机
-u8 MSrec[300];						// 用于储存主从节点来的信息，4G发送
 u8 data_str[200];				  	// 用于存储主主自身发送给服务器的数据
 static u8 all_data_str[3000] = {0};	// 用于存储发送给服务器的所有数据(按最大10个节点算)
 
@@ -97,7 +96,7 @@ int main(void)
 	#endif
 	Timer_Init(GPSTimeInterval); // 初始化定时器，TIM2用于读取gps时间给RTC校时, 间隔单位为秒，GPSTimeInterval*12为校时总周期
 	
-	#if is_lora
+	#if is_lora	
 	{
 		is_lora_init = LORA_Init();
 		
@@ -276,7 +275,7 @@ int main(void)
 				printf("all data: \r\n");
 				puts(all_data_str);printf("\r\n");
 				if (is_debug) printf("sending main node data to server...\r\n");
-				mqtt4g_send(data_str, strlen(data_str));
+				mqtt4g_send(all_data_str, strlen(all_data_str));
 				if (is_debug) printf("data sent...\r\n");
 			}
 		#endif
@@ -590,11 +589,11 @@ void GPS_Handler(void)
 
 void BIGLORA_Handler(void)
 {
-	u8 temp_rec[3000] = {0};
-	u8 rec_len = 0;
+	u8 all_data_str[3000] = {0};
+	u16 rec_len = 0;
 
-	BIGLORA_Receive(temp_rec, &rec_len);
+	BIGLORA_Receive(all_data_str, &rec_len);
 	printf("BIGLORA sending to 4G...");
-	mqtt4g_send(temp_rec, strlen(temp_rec));
+	mqtt4g_send(all_data_str, rec_len);
 	printf("BIGLORA sending to 4G DONE!!!");
 }

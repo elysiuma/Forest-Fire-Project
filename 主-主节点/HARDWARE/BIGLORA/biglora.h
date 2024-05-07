@@ -36,7 +36,7 @@ extern u8 is_need_query_MSnode;   // 是否需要查询主从节点数据
 void BIGLORA_send_query(void);                   // 查询所有主从节点数据
 void BIGLORA_send_query_MSNode(u8 *address);    // 查询单个主从节点数据
 u8 check_BIGLORA_Receive(void);
-void BIGLORA_Receive(u8 *buf, u8 *len);
+void BIGLORA_Receive(u8 *buf, u16 *len);
 void BIGLORA_Send(u8 *buf, u8 len);
 void BIGLORA_init(void);
 void BIGLORA_Add_MSNode(u8 nNode, u8 *_addr);

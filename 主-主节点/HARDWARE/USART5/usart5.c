@@ -26,6 +26,7 @@ void UART5_IRQHandler(void)
 				{
 					USART5_RX_BUF[USART5_RX_STA&0X3FFF]=Res;
 					USART5_RX_STA|=0x8000;	//接收完成了 
+					USART5_RX_STA++;
 				}
 			}
 			else //还没收到0X0D
@@ -98,8 +99,8 @@ void uart5_init(u32 bound)
 
 	//Usart2 NVIC 配置
 	NVIC_InitStructure.NVIC_IRQChannel = UART5_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=3;//抢占优先级3
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority =3;		//子优先级3
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=5;//抢占优先级3
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority =5;		//子优先级3
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;			//IRQ通道使能
 	NVIC_Init(&NVIC_InitStructure);	//根据指定的参数初始化VIC寄存器、
 
@@ -107,9 +108,9 @@ void uart5_init(u32 bound)
 }
 
 
-void USART5_DATA(u8 *buf,u8 len)
+void USART5_DATA(u8 *buf,u16 len)
 {
-	u8 t;
+	u16 t;
 	//printf("USART3_DATA: %i", buf[1]);
   	for(t=0;t<len;t++)		
 	{
@@ -137,10 +138,10 @@ void USART5_CMD(unsigned char *lb)
 }
 
 
-void USART5_Receive_Data(u8 *buf,u8 *len)
+void USART5_Receive_Data(u8 *buf,u16 *len)
 {
-	u8 i=0;		
-	u8 data_len=USART5_RX_STA&0x3fff;
+	u16 i=0;		
+	u16 data_len=USART5_RX_STA&0x3fff;
 	delay_ms(10);	
 	// 打印接收到的数据
 	//printf("data_len: %i, len: %i", data_len, *len);
@@ -158,7 +159,7 @@ void USART5_Receive_Data(u8 *buf,u8 *len)
 
 void USART5_Receive_Data_NoClear(u8 *buf,u8 *len)
 {
-	u8 i=0;
+	u16 i=0;
 	*len=0;				
 	delay_ms(10);		
 	if(USART5_RX_STA>0)
