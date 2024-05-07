@@ -46,7 +46,7 @@ void TIM4_IRQHandler(void)   // Change the function name to TIM4_IRQHandler
             update_SNode_query_idx();   // Update the query index of the subnode
         if (is_need_query_MSnode)   // 需要查询主从节点数据
         {
-            if (_count_interrupt++ == 24)   // 每24次中断更新一次主从节点查询
+            if (_count_interrupt++ == 12)   // 每24次中断更新一次主从节点查询
             {
                 _count_interrupt = 0;
                 update_MSNode_query_idx();   // Update the query index of the MSnode

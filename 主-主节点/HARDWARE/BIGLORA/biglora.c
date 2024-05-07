@@ -59,7 +59,7 @@ u8 check_BIGLORA_Receive(void)
     }
 }
 
-void BIGLORA_Receive(u8 *buf, u8 *len)
+void BIGLORA_Receive(u8 *buf, u16 *len)
 {
     USART5_Receive_Data(buf, len);
 }
