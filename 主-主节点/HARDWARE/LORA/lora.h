@@ -50,6 +50,7 @@ u8 LORA_Init_Time(u8 *time);
 u8 LORA_Add_Slave_Node(u8 nNode, u8 *SubNodeAddress);
 u8 LORA_Query_Network_Status(u8 *address, u8 *time, u8 is_debug);     // 查询网络状态
 u8 LORA_Query_Slave_Node_Status(u8 is_debug); //查询从节点状态
+u8 LORA_Query_Node_failure(u8 *address, u8 *num); //查询故障节点地址
 void LORA_DATA_Transfer(u8 *buf, u8 buf_len, u8 *address); //数据传输
 u8 LORA_Network_Clear(void);    //清除网络
 u8 LORA_Receive_Data_Analysis(u8 *buf, u8 buf_len);  //接收数据解析

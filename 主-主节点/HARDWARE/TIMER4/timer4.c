@@ -4,13 +4,14 @@
 #include "biglora.h"
 #include "mqtt4g.h"
 
-#define snode_times 3   // 每2次中断更新一次从节点查询
+#define snode_times 1   // 每2次中断更新一次从节点查询
+#define max_wait_snode_times 14  // 最大等待从节点查询中断数, 14*5 = 70s
 #define msnode_times 12  // 每24次中断更新一次主从节点查询
 
 static u8 _count_interrupt_snode = 0;     // 计数中断次数,每snode_times次中断更新一次从节点查询
 static u8 _count_interrupt_msnode = 0;     // 计数中断次数,每msnode_times次中断更新一次主从节点查询
 
-void update_SNode_query_idx(void);
+u8 update_SNode_query_idx(u8 _count_interrupt);
 void update_MSNode_query_idx(void);
 
 void Timer_QueryDelay_Init(u16 interval)
@@ -45,19 +46,23 @@ void Timer_QueryDelay_Init(u16 interval)
 // TIM4 interrupt handler function
 void TIM4_IRQHandler(void)   // Change the function name to TIM4_IRQHandler
 {
+    u8 flag = 0;
     if (TIM_GetITStatus(TIM4, TIM_IT_Update) != RESET)
     {
         if (is_need_query_data) // 需要查询子节点数据
         {
-            if (_count_interrupt_snode++ == snode_times)   // 每2次中断更新一次从节点查询
+            if (_count_interrupt_snode++ >= snode_times)   // 每2次中断更新一次从节点查询
             {
-                _count_interrupt_snode = 0;
-                update_SNode_query_idx();   // Update the query index of the subnode
+                flag = update_SNode_query_idx(_count_interrupt_snode);   // Update the query index of the subnode
+                if (flag)   // 如果已收到消息或超时
+                {
+                    _count_interrupt_snode = 0;
+                }
             }
         }
         if (is_need_query_MSnode)   // 需要查询主从节点数据
         {
-            if (_count_interrupt_msnode++ == msnode_times)   // 每24次中断更新一次主从节点查询
+            if (_count_interrupt_msnode++ >= msnode_times)   // 每24次中断更新一次主从节点查询
             {
                 _count_interrupt_msnode = 0;
                 update_MSNode_query_idx();   // Update the query index of the MSnode
@@ -68,8 +73,18 @@ void TIM4_IRQHandler(void)   // Change the function name to TIM4_IRQHandler
     }
 }
 
-void update_SNode_query_idx(void)
+u8 update_SNode_query_idx(u8 _count_interrupt)
 {
+
+    if(is_need_query_data && current_query_node_idx < SubNodeSet.nNode)
+    {
+        if(SubNodeSet.SubNode_list[current_query_node_idx].SubNodeStatus == 2 &&
+            _count_interrupt < max_wait_snode_times)   // 如果当前节点状态为已发送查询命令且未超时
+        {
+            return 0;       // 继续等待，不更新查询节点
+        }
+    }
+
     if (current_query_node_idx == SubNodeSet.nNode)     // 如果已经查询完所有子节点
     {
         is_need_query_data = 0;
@@ -85,6 +100,7 @@ void update_SNode_query_idx(void)
         LORA_Update_All_SubNode_Status();   // 更新所有子节点状态   
         current_query_node_idx = 0;     // 重新开始查询
     }
+    return 1;
 }
 
 void update_MSNode_query_idx(void)

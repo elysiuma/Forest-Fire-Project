@@ -344,7 +344,7 @@ u8 LORA_Add_Slave_Node(u8 nNode, u8 *SubNodeAddress)
     {
         if (check_LORA_Receive())
         {
-            delay_ms(1000);
+            delay_ms(5000);
             LORA_Receive(receive_buf, &receive_len);
             // 3,4位为确认位，00,01确认，00,02否认
             if (receive_buf[3] == 0x00 && receive_buf[4] == 0x01) // Confirm command
@@ -396,7 +396,7 @@ u8 LORA_Add_Slave_Node(u8 nNode, u8 *SubNodeAddress)
         }
         else
         {
-            printf("LORA_Add_Slave_Node: No receive, fail=%d\r\n", ++fail_count);
+            printf("Waiting for LORA_Add_Slave_Node: No receive, fail=%d\r\n", ++fail_count);
             if (fail_count >= 10)
             {
                 break;
@@ -514,21 +514,21 @@ u8 LORA_Network_Init(void)
         return 0;
     }
 
-    // 3.启动组网
-    flag_network_start = LORA_Network_Start();
-    if (flag_network_start == 1)
-    {
-        printf("Network start success!\r\n");
-    }
-    else
-    {
-        printf("Network start fail!\r\n");
-        return 0;
-    }
+    // // 3.启动组网
+    // flag_network_start = LORA_Network_Start();
+    // if (flag_network_start == 1)
+    // {
+    //     printf("Network start success!\r\n");
+    // }
+    // else
+    // {
+    //     printf("Network start fail!\r\n");
+    //     return 0;
+    // }
 
-    printf("LORA network init wait 15 seconds\r\n");
-    // 需要延迟15秒，等待组网完成
-    delay_ms(15 * 1000);
+    // printf("LORA network init wait 15 seconds\r\n");
+    // // 需要延迟15秒，等待组网完成
+    // delay_ms(15 * 1000);
     printf("LORA network init success!\r\n");
     return 1;
 }
