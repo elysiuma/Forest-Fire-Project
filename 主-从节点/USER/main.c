@@ -548,9 +548,9 @@ void BigLORA_Handler(void)
 							"%.2f;"							// 风向
 							"%.2f;"							// CO2浓度
 							"%.2f;"							// CO浓度
-							"%c%.0f*%.5f':%c%.0f*%.5f"		// 纬度，经度
+							"%c%.0f*%.5f:%c%.0f*%.5f;"		// 纬度，经度
 							"%.2f;"							// 电池电压
-							"%d",							// RTC校时状态
+							"%d;",							// RTC校时状态
 							SelfAddress[0], SelfAddress[1], SelfAddress[2], SelfAddress[3], SelfAddress[4], SelfAddress[5],
 				time[0], time[1], time[2], SHT2X_T, BMP280_P, SHT2X_H,wind_speed, wind_direction, co2,co_latest,
 				node_lati_longi_str[0], node_position[0], node_position[1], 

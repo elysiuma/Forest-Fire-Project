@@ -381,6 +381,7 @@ u8 LORA_Add_Slave_Node(u8 nNode, u8 *SubNodeAddress)
                         new_node.sample_time[0] = 0;
                         new_node.sample_time[1] = 0;
                         new_node.sample_time[2] = 0;
+                        new_node.last_gps = 999;
                         SubNodeSet.SubNode_list[SubNodeSet.nNode] = new_node;
                         SubNodeSet.nNode++;
                         printf("add new SubNodeAddress[%d] = %02x %02x %02x %02x %02x %02x\r\n", m, SubNodeAddress[m * 6], SubNodeAddress[m * 6 + 1], SubNodeAddress[m * 6 + 2], SubNodeAddress[m * 6 + 3], SubNodeAddress[m * 6 + 4], SubNodeAddress[m * 6+5]);
@@ -1118,7 +1119,7 @@ void LORA_Get_All_SubNode_Data(u8 *_all_data_str)
 							    "%.2f;"							// CO2浓度
 							    "%.2f;"							// CO浓度
 							    "%.2f;"							// 电池电压
-							    "%d",						    // RTC校时状态
+							    "%d;",						    // RTC校时状态
                             current_node.address[0], current_node.address[1], current_node.address[2], current_node.address[3], current_node.address[4], current_node.address[5],
                             current_node.sample_time[0], current_node.sample_time[1], current_node.sample_time[2], current_node.temperature, current_node.pressure, current_node.humidity,
                             current_node.smoke, current_node.co, current_node.battery, RTC_check_specified_time(current_node.last_gps));
@@ -1147,7 +1148,7 @@ u8 LORA_Get_SubNode_Data_idx(u8 idx, u8 *_data_str)
                         "%.2f;"							// CO2浓度
                         "%.2f;"							// CO浓度
                         "%.2f;"							// 电池电压
-                        "%d",						    // RTC校时状态
+                        "%d;",						    // RTC校时状态
                         current_node.address[0], current_node.address[1], current_node.address[2], current_node.address[3], current_node.address[4], current_node.address[5],
                         current_node.sample_time[0], current_node.sample_time[1], current_node.sample_time[2], current_node.temperature, current_node.pressure, current_node.humidity,
                         current_node.smoke, current_node.co, current_node.battery, RTC_check_specified_time(current_node.last_gps));

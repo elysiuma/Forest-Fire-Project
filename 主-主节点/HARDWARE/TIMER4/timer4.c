@@ -4,9 +4,14 @@
 #include "biglora.h"
 #include "mqtt4g.h"
 
+#define snode_times 3   // 每2次中断更新一次从节点查询
+#define msnode_times 12  // 每24次中断更新一次主从节点查询
+
+static u8 _count_interrupt_snode = 0;     // 计数中断次数,每snode_times次中断更新一次从节点查询
+static u8 _count_interrupt_msnode = 0;     // 计数中断次数,每msnode_times次中断更新一次主从节点查询
+
 void update_SNode_query_idx(void);
 void update_MSNode_query_idx(void);
-static u8 _count_interrupt = 0;     // 计数中断次数,每24次中断更新一次主从节点查询
 
 void Timer_QueryDelay_Init(u16 interval)
 {
@@ -43,12 +48,18 @@ void TIM4_IRQHandler(void)   // Change the function name to TIM4_IRQHandler
     if (TIM_GetITStatus(TIM4, TIM_IT_Update) != RESET)
     {
         if (is_need_query_data) // 需要查询子节点数据
-            update_SNode_query_idx();   // Update the query index of the subnode
+        {
+            if (_count_interrupt_snode++ == snode_times)   // 每2次中断更新一次从节点查询
+            {
+                _count_interrupt_snode = 0;
+                update_SNode_query_idx();   // Update the query index of the subnode
+            }
+        }
         if (is_need_query_MSnode)   // 需要查询主从节点数据
         {
-            if (_count_interrupt++ == 12)   // 每24次中断更新一次主从节点查询
+            if (_count_interrupt_msnode++ == msnode_times)   // 每24次中断更新一次主从节点查询
             {
-                _count_interrupt = 0;
+                _count_interrupt_msnode = 0;
                 update_MSNode_query_idx();   // Update the query index of the MSnode
             }
         }
