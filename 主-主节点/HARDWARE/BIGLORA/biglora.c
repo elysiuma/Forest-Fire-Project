@@ -8,6 +8,7 @@ MSNodeSetStruct MSNodeSet;
 
 u8 cur_addr[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0d, 0x0a};
 u8 is_need_query_MSnode = 0;
+u8 is_need_quick_query_MSnode = 0;
 u8 current_query_MSnode_idx = 200;
 u8 MSNodeAddress[120] = {
         // 0x36, 0x49, 0x01, 0x00, 0x00, 0x00,

@@ -7,9 +7,11 @@
 #define snode_times 1   // 每2次中断更新一次从节点查询
 #define max_wait_snode_times 14  // 最大等待从节点查询中断数, 14*5 = 70s
 #define msnode_times 12  // 每24次中断更新一次主从节点查询
+#define quick_query_times 12  // 每12次中断开关快速查询主从节点
 
 static u8 _count_interrupt_snode = 0;     // 计数中断次数,每snode_times次中断更新一次从节点查询
 static u8 _count_interrupt_msnode = 0;     // 计数中断次数,每msnode_times次中断更新一次主从节点查询
+static u8 _count_interrupt_quick_query = 0;     // 计数中断次数,每quick_query_times次中断开关快速查询主从节点
 
 u8 update_SNode_query_idx(u8 _count_interrupt);
 void update_MSNode_query_idx(void);
@@ -68,6 +70,12 @@ void TIM4_IRQHandler(void)   // Change the function name to TIM4_IRQHandler
                 update_MSNode_query_idx();   // Update the query index of the MSnode
             }
         }
+        // 快速查询
+        if (_count_interrupt_quick_query++ >= quick_query_times)   // 每12次中断开关快速查询主从节点
+        {
+            _count_interrupt_quick_query = 0;
+            is_need_quick_query_MSnode = 1;
+        }
 
         TIM_ClearITPendingBit(TIM4, TIM_IT_Update);
     }
@@ -89,7 +97,7 @@ u8 update_SNode_query_idx(u8 _count_interrupt)
     {
         is_need_query_data = 0;
         current_query_node_idx = 200;
-        is_need_send_4g = 1;   // 查询完所有子节点数据后，需要查询4G数据
+        is_need_send_4g = 1;   // 查询完所有子节点数据后，需要发送4G数据
     }
     else if (current_query_node_idx < SubNodeSet.nNode)    // 如果还没有查询完所有子节点
     {

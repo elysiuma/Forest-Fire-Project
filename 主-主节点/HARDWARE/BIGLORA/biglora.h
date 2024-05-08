@@ -31,6 +31,7 @@ typedef struct
 extern MSNodeSetStruct MSNodeSet;
 extern u8 current_query_MSnode_idx;   // 当前查询的主从节点idx
 extern u8 is_need_query_MSnode;   // 是否需要查询主从节点数据
+extern u8 is_need_quick_query_MSnode;   // 是否需要快速查询主从节点数据
 
 
 void BIGLORA_send_query(void);                   // 查询所有主从节点数据

@@ -37,6 +37,7 @@
 #define is_wind_sensor				1				// 是否启动风速风向传感器
 #define is_calibration				0				// 是否启动风速风向校准 1为校准，0为不校准
 #define is_biglora 					1				// 是否启动大功率lora模块
+#define is_quick_biglora			1				// 是否启动快速查询大功率lora模块，测试用
 
 uint8_t EnableMaster = 1;		  	// 主从选择 1为主机，0为从机
 u8 data_str[200];				  	// 用于存储主主自身发送给服务器的数据
@@ -280,7 +281,18 @@ int main(void)
 			}
 		#endif
 
-		if (is_biglora && is_need_query_data)
+		#if is_quick_biglora
+			if (is_need_quick_query_MSnode)
+			{
+				is_need_quick_query_MSnode = 0;
+				printf("***********QEURY BIGLORA***********\r\n");
+				BIGLORA_send_query_MSNode(MSNodeSet.MSNode_list[0].address);
+				MSNodeSet.MSNode_list[0].NodeStatus = 2;
+				if (MSNodeSet.MSNode_list[0].fail_count > 0)
+					printf("Query MSNode %02x%02x%02x%02x%02x%02x Fail %d Times\r\n", MSNodeSet.MSNode_list[0].address[0], MSNodeSet.MSNode_list[0].address[1], MSNodeSet.MSNode_list[0].address[2], MSNodeSet.MSNode_list[0].address[3], MSNodeSet.MSNode_list[0].address[4], MSNodeSet.MSNode_list[0].address[5], MSNodeSet.MSNode_list[0].fail_count);
+			}
+		#else
+		if (is_biglora && is_need_query_MSnode)
 			{
 				printf("***********QEURY BIGLORA***********\r\n");
 				if (current_query_MSnode_idx < MSNodeSet.nNode)
@@ -294,6 +306,7 @@ int main(void)
 					}
 				}
 			}
+		#endif
 
 		if (is_biglora && check_BIGLORA_Receive())
 		{
