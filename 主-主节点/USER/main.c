@@ -26,7 +26,7 @@
 
 #define MQ2PreheatInterval			20 				// MQ2预热时间间隔，单位为秒  至少为20秒 （传感器采集数据共用这个）
 #define GPSTimeInterval 			120				// GPS时间校时间隔，单位为秒  测试时2分钟一次，正式为5分钟一次
-#define QueryTimeInterval			180				// 查询从节点数据时间间隔，单位为秒 测试时为5分钟，正式为30分钟
+#define QueryTimeInterval			90				// 查询从节点数据时间间隔，单位为秒 测试时为5分钟，正式为30分钟
 #define QueryDelayTime				5				// 查询从节点数据延时时间，单位为秒,大功率时为QueryDelayTime*24
 #define is_debug					1				// 是否调试模式，1为调试模式，0为正常模式
 #define query_node_data_max_times	5 				// 查询节点数据最大次数
@@ -247,7 +247,7 @@ int main(void)
 			if (is_need_send_4g)
 			{
 				is_need_send_4g = 0;
-				printf("***********4G SENDING ALL DATA***********\r\n");
+				printf("***********4G SENDING SELF DATA***********\r\n");
 				// 主节点发送自身数据
 				// 打印时间和传感器数据
 				memset(all_data_str, 0, sizeof(all_data_str));

@@ -43,10 +43,10 @@ NodeMappingStruct NodeMapping[] = {
                                                 // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
                                                 // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
                                                 }},
-    {{0x99, 0x99, 0x99, 0x99, 0x05, 0x51}, 3,  {0x00, 0x00, 0x00, 0x01, 0x58, 0x63,      // 2号主从
-                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x59,
+    {{0x99, 0x99, 0x99, 0x99, 0x05, 0x51}, 4,  {0x00, 0x00, 0x00, 0x01, 0x58, 0x59,      // 2号主从
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
+                                                0x00, 0x00, 0x00, 0x01, 0x58, 0x99,
                                                 0x00, 0x00, 0x00, 0x01, 0x58, 0x64,
-                                                // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
                                                 // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
                                                 // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
                                                 // 0x00, 0x00, 0x00, 0x01, 0x58, 0x63,
@@ -502,17 +502,17 @@ u8 LORA_Network_Init(void)
         return 0;
     }
 
-    // 3.启动组网
-    flag_network_start = LORA_Network_Start();
-    if (flag_network_start == 1)
-    {
-        printf("Network start success!\r\n");
-    }
-    else
-    {
-        printf("Network start fail!\r\n");
-        return 0;
-    }
+    // 4.启动组网
+    // flag_network_start = LORA_Network_Start();
+    // if (flag_network_start == 1)
+    // {
+    //     printf("Network start success!\r\n");
+    // }
+    // else
+    // {
+    //     printf("Network start fail!\r\n");
+    //     return 0;
+    // }
 
     printf("LORA network init wait 15 seconds\r\n");
     // 需要延迟15秒，等待组网完成
