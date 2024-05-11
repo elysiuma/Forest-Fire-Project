@@ -208,7 +208,7 @@ int main(void)
 		// TODO: 这一步操作实际没有效果，校时为按需校时
 		if (is_gps && check_GPS_Receive())
 		{
-			printf("***********GPS HANDLING***********\r\n");
+			// printf("***********GPS HANDLING***********\r\n");
 			GPS_Handler(); // 处理GPS通信的内容
 		}
 
@@ -230,7 +230,7 @@ int main(void)
 		
 		if (is_lora && is_need_query_data)
 		{
-			printf("***********QEURY LORA***********\r\n");
+			// printf("***********QEURY LORA***********\r\n");
 			// 向从节点要数据
 			if (current_query_node_idx < SubNodeSet.nNode)
 			{
