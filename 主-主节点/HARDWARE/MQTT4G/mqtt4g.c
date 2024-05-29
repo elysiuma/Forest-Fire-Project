@@ -16,6 +16,8 @@ void mqtt4g_init(void)
 	u8 check_sim_signal[8] = {'A','T','*','C','S','Q','?', 0x0d};
 	u8 check_gstate[11] = {'A','T','*','G','S','T','A','T','E','?', 0x0d};
 	u8 test_msg[8] = {'t','e','s','t','d','a','t','a'};
+	// AT*DFI=300#  //设置数据发送间隔为300ms
+	u8 interval_msg[12] = {'A','T','*','D','F','I','=','3','0','0','#', 0x0d};
 	u8 receive_buf[30];
 	u8 receive_len = 0;
 	u8 fail_count = 0;
@@ -74,6 +76,19 @@ void mqtt4g_init(void)
 	
 	mqtt4g_send(server, 33);//服务器
 	printf("config center server...\r\n");
+	delay_ms(2000);
+	if(mqtt4g_check())
+	{
+		mqtt4g_receive(receive_buf, &receive_len);
+		for(i=0;i<receive_len;i++)
+		{
+			printf("%c", receive_buf[i]);
+		}
+	}
+	receive_len = 0;
+
+	mqtt4g_send(interval_msg, 12);//修改发送间隔
+	printf("set sending interval...\r\n");
 	delay_ms(2000);
 	if(mqtt4g_check())
 	{
