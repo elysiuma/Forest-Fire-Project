@@ -33,7 +33,7 @@
 #define is_lora						1				// 是否启动lora模块
 #define is_gps						1				// 是否启动GPS模块
 #define is_battery					1				// 是否启动电池电压检测
-#define is_wind_sensor				1				// 是否启动风速风向传感器 1为启动，0为启动I2C读取模式
+#define is_wind_sensor				1				// 是否启动风速风向传感器 1为串口，0为启动I2C读取模式
 #define is_calibration				0				// 是否启动风速风向校准 1为校准，0为不校准
 #define is_biglora 					1				// 是否启动大功率lora模块
 

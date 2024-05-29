@@ -24,7 +24,7 @@ void mqtt4g_init(void)
 	
     // 初始化串口1
     usart1_init(9600);
-	 delay_ms(30000);
+	delay_ms(30000);
 	/*
 	while(1)
 	{
