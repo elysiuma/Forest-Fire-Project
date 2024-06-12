@@ -19,9 +19,9 @@
 #include "wind.h"
 #include "biglora.h"
 // #include "mqtt4g.h"
-// #include "i2c.h"
-// #include "bmp280.h"
-// #include "SHT2X.h"
+#include "i2c.h"
+#include "bmp280.h"
+#include "SHT2X.h"
 #include <string.h>
 #include <stdlib.h>
 #define MQ2PreheatInterval			20 				// MQ2预热时间间隔，单位为秒  至少为20秒 （传感器采集数据共用这个）

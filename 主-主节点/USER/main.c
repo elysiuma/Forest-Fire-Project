@@ -37,7 +37,7 @@
 #define is_wind_sensor				1				// 是否启动风速风向传感器
 #define is_calibration				0				// 是否启动风速风向校准 1为校准，0为不校准
 #define is_biglora 					1				// 是否启动大功率lora模块
-#define is_quick_biglora			1				// 是否启动快速查询大功率lora模块，测试用
+#define is_quick_biglora			0				// 是否启动快速查询大功率lora模块，测试用
 
 uint8_t EnableMaster = 1;		  	// 主从选择 1为主机，0为从机
 u8 data_str[200];				  	// 用于存储主主自身发送给服务器的数据

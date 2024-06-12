@@ -170,8 +170,8 @@ int main(void)
 		{
 			LORA_Receive(query_rec, &query_rec_len);
 			printf("lora msg: ");
-			for(i=0;i<rec_len;i++)
-				printf("%02x ", temp_rec[i]);
+			for(i=0;i<query_rec_len;i++)
+				printf("%02x ", query_rec[i]);
 		
 			if (query_rec_len==3 & query_rec[0] == 0x11 & query_rec[1] == 0x22 & query_rec[2] == 0x33)
 			{
